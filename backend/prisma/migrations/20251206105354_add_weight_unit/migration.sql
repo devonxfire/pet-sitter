@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "pets" ADD COLUMN     "photo_offset_x" DOUBLE PRECISION NOT NULL DEFAULT 50,
+ADD COLUMN     "photo_offset_y" DOUBLE PRECISION NOT NULL DEFAULT 50,
+ADD COLUMN     "weight_unit" TEXT;

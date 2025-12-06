@@ -5,6 +5,7 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
+const heicConvert = require('heic-convert');
 const path = require('path');
 const fs = require('fs');
 
@@ -41,14 +42,13 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif/;
-    const mimetype = allowedTypes.test(file.mimetype);
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    console.log('File filter check:', { mimetype: file.mimetype, originalname: file.originalname });
+    const allowedMimetypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/heic', 'image/heif'];
     
-    if (mimetype && extname) {
+    if (allowedMimetypes.includes(file.mimetype)) {
       return cb(null, true);
     }
-    cb(new Error('Only image files are allowed'));
+    cb(new Error(`Only image files are allowed. Received: ${file.mimetype}`));
   }
 });
 
@@ -361,7 +361,8 @@ app.post('/api/households/:householdId/pets', authenticateToken, async (req, res
         vetName,
         vetLocation,
         vetContact,
-        primaryFood
+        primaryFood,
+        weightUnit: req.body.weightUnit || 'lbs',
       },
       include: {
         activityTypes: true
@@ -456,7 +457,8 @@ app.patch('/api/pets/:petId', authenticateToken, async (req, res) => {
         vetContact: vetContact !== undefined ? vetContact : pet.vetContact,
         primaryFood: primaryFood !== undefined ? primaryFood : pet.primaryFood,
         photoOffsetX: photoOffsetX !== undefined ? photoOffsetX : pet.photoOffsetX,
-        photoOffsetY: photoOffsetY !== undefined ? photoOffsetY : pet.photoOffsetY
+        photoOffsetY: photoOffsetY !== undefined ? photoOffsetY : pet.photoOffsetY,
+        weightUnit: req.body.weightUnit !== undefined ? req.body.weightUnit : pet.weightUnit,
       },
       include: {
         activityTypes: true
@@ -503,8 +505,30 @@ app.post('/api/pets/:petId/photo', authenticateToken, upload.single('photo'), as
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
+    // Convert HEIC/HEIF to JPEG for browser compatibility
+    let finalFilename = req.file.filename;
+    const uploadedPath = req.file.path;
+    
+    if (req.file.mimetype === 'image/heic' || req.file.mimetype === 'image/heif') {
+      const jpegFilename = 'photo.jpg';
+      const jpegPath = path.join(path.dirname(uploadedPath), jpegFilename);
+      
+      const inputBuffer = await fs.promises.readFile(uploadedPath);
+      const outputBuffer = await heicConvert({
+        buffer: inputBuffer,
+        format: 'JPEG',
+        quality: 0.9
+      });
+      
+      await fs.promises.writeFile(jpegPath, outputBuffer);
+      
+      // Delete original HEIC file
+      fs.unlinkSync(uploadedPath);
+      finalFilename = jpegFilename;
+    }
+
     // Save photo path to database
-    const photoPath = `/uploads/pets/${petId}/${req.file.filename}`;
+    const photoPath = `/uploads/pets/${petId}/${finalFilename}`;
     
     const updatedPet = await prisma.pet.update({
       where: { id: petId },
@@ -519,7 +543,11 @@ app.post('/api/pets/:petId/photo', authenticateToken, upload.single('photo'), as
     res.json(updatedPet);
   } catch (error) {
     console.error('Photo upload error:', error);
-    res.status(500).json({ error: 'Failed to upload photo' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: error.message || 'Failed to upload photo',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

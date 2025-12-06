@@ -80,6 +80,7 @@ model Pet {
   breed       String?
   age         Int?
   weight      Float?
+  weightUnit  String?  @map("weight_unit")
   photoUrl    String?  @map("photo_url")
   photoOffsetX Float   @default(50) @map("photo_offset_x")
   photoOffsetY Float   @default(50) @map("photo_offset_y")

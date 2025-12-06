@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { apiFetch, API_BASE } from './api';
+import { apiFetch, API_BASE, apiUrl } from './api';
 import TopNav from './TopNav';
 import LogActivity from './LogActivity';
 
@@ -19,6 +19,7 @@ export default function PetDetail({ household, user, onSignOut }) {
   const [editValues, setEditValues] = useState({});
   const [savingSection, setSavingSection] = useState(false);
   const photoContainerRef = useRef(null);
+  const [weightUnit, setWeightUnit] = useState('lbs'); // State for weight unit selection
 
   const resolvePhotoUrl = (url) => {
     if (!url) return '';
@@ -70,6 +71,7 @@ export default function PetDetail({ household, user, onSignOut }) {
         breed: pet.breed || '',
         age: pet.age?.toString() || '',
         weight: pet.weight?.toString() || '',
+        weightUnit: pet.weightUnit || 'lbs',
         notes: pet.notes || ''
       });
     } else if (section === 'vet') {
@@ -99,6 +101,7 @@ export default function PetDetail({ household, user, onSignOut }) {
         updateData.breed = editValues.breed || null;
         updateData.age = editValues.age ? parseInt(editValues.age) : null;
         updateData.weight = editValues.weight ? parseFloat(editValues.weight) : null;
+        updateData.weightUnit = editValues.weightUnit || 'lbs';
         updateData.notes = editValues.notes || null;
       } else if (editingSection === 'vet') {
         updateData.vetName = editValues.vetName || null;
@@ -133,7 +136,9 @@ export default function PetDetail({ household, user, onSignOut }) {
 
       console.log('Uploading photo:', file.name, file.type);
 
-      const response = await fetch(`/api/pets/${petId}/photo`, {
+      const uploadUrl = apiUrl(`/api/pets/${petId}/photo`);
+
+      const response = await fetch(uploadUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -142,11 +147,17 @@ export default function PetDetail({ household, user, onSignOut }) {
       });
 
       console.log('Upload response status:', response.status);
-      const data = await response.json();
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (parseErr) {
+        throw new Error(text || 'Failed to upload photo');
+      }
       console.log('Upload response data:', data);
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to upload photo');
+        throw new Error(data?.error || 'Failed to upload photo');
       }
 
       console.log('Updated pet with photo:', data);
@@ -156,8 +167,10 @@ export default function PetDetail({ household, user, onSignOut }) {
         fileInputRef.current.value = '';
       }
     } catch (err) {
-      setError(err.message || 'Failed to upload photo');
+      const errorMessage = err.message || 'Failed to upload photo';
+      setError(errorMessage);
       console.error('Photo upload error:', err);
+      alert(`Upload failed: ${errorMessage}`);
     }
   };
 
@@ -331,15 +344,25 @@ export default function PetDetail({ household, user, onSignOut }) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-2">Weight</label>
-                  <input
-                    type="number"
-                    value={editValues.weight}
-                    onChange={(e) => setEditValues({ ...editValues, weight: e.target.value })}
-                    placeholder="Lbs/kg"
-                    min="0"
-                    step="0.1"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
-                  />
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="number"
+                      value={editValues.weight}
+                      onChange={(e) => setEditValues({ ...editValues, weight: e.target.value })}
+                      placeholder="Weight"
+                      min="0"
+                      step="0.1"
+                      className="w-24 px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                    />
+                    <select
+                      value={editValues.weightUnit}
+                      onChange={e => setEditValues({ ...editValues, weightUnit: e.target.value })}
+                      className="px-2 py-2 rounded-lg border border-gray-200 focus:border-[#20B2AA] focus:outline-none bg-white text-gray-900"
+                    >
+                      <option value="lbs">lbs</option>
+                      <option value="kg">kg</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -376,7 +399,7 @@ export default function PetDetail({ household, user, onSignOut }) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div>
                 <p className="text-sm text-gray-500">Species</p>
-                <p className="text-lg font-semibold text-gray-900">{pet.species}</p>
+                <p className="text-lg font-semibold text-gray-900">{pet.species.charAt(0).toUpperCase() + pet.species.slice(1)}</p>
               </div>
               {pet.breed && (
                 <div>
@@ -393,7 +416,7 @@ export default function PetDetail({ household, user, onSignOut }) {
               {pet.weight && (
                 <div>
                   <p className="text-sm text-gray-500">Weight</p>
-                  <p className="text-lg font-semibold text-gray-900">{pet.weight} lbs</p>
+                  <p className="text-lg font-semibold text-gray-900">{pet.weight} {pet.weightUnit ? pet.weightUnit : 'lbs'}</p>
                 </div>
               )}
             </div>

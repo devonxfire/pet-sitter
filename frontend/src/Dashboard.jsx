@@ -101,7 +101,7 @@ export default function Dashboard({ user, household, onSignOut }) {
 
                   {/* Pet Details */}
                   <p className="text-lg text-gray-600 mb-2">
-                    {pet.species}
+                    {pet.species.charAt(0).toUpperCase() + pet.species.slice(1)}
                     {pet.breed && ` • ${pet.breed}`}
                   </p>
                   {pet.age && <p className="text-sm text-gray-500">Age: {pet.age} years</p>}
@@ -128,19 +128,58 @@ export default function Dashboard({ user, household, onSignOut }) {
                       <p className="text-xl font-medium text-gray-900">{household.owner_email}</p>
                     </div>
                   )}
+                  {household.mainMemberName && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Main Member</p>
+                      <p className="text-base text-gray-900">{household.mainMemberName}</p>
+                    </div>
+                  )}
                   {household.members && household.members.length > 0 && (
                     <div>
                       <p className="text-sm text-gray-500 mb-2">Members ({household.members.length})</p>
-                      <ul className="space-y-2">
+                      <ul className="space-y-4">
                         {household.members.map((member) => (
-                          <li key={member.id} className="text-gray-700">
-                            <span className="font-medium">{member.email}</span>
-                            {member.role && (
-                              <span className="ml-2 text-sm text-gray-500">({member.role})</span>
-                            )}
+                          <li key={member.id} className="border-b pb-2">
+                            <span className="block text-lg font-semibold text-gray-900">{member.name || member.email}</span>
+                            <span className="block text-sm text-gray-600">{member.email}</span>
+                            <span className="block text-sm text-gray-500">Role: {member.role ? member.role.charAt(0).toUpperCase() + member.role.slice(1) : ''}</span>
                           </li>
                         ))}
                       </ul>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">ID</p>
+                    <p className="text-base text-gray-700">{household.id}</p>
+                  </div>
+                  {household.address && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Address</p>
+                      <p className="text-base text-gray-700">{household.address}</p>
+                    </div>
+                  )}
+                  {household.city && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">City</p>
+                      <p className="text-base text-gray-700">{household.city}</p>
+                    </div>
+                  )}
+                  {household.state && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">State</p>
+                      <p className="text-base text-gray-700">{household.state}</p>
+                    </div>
+                  )}
+                  {household.country && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Country</p>
+                      <p className="text-base text-gray-700">{household.country}</p>
+                    </div>
+                  )}
+                  {household.notes && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Notes</p>
+                      <p className="text-base text-gray-700">{household.notes}</p>
                     </div>
                   )}
                 </div>
