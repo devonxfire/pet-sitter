@@ -1,0 +1,163 @@
+import React, { useState } from 'react';
+import { apiFetch } from './api';
+
+export default function Login({ onLogin }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignup, setIsSignup] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [isMainMember, setIsMainMember] = useState(true);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const endpoint = isSignup ? '/api/auth/signup' : '/api/auth/login';
+      const payload = isSignup 
+        ? { 
+            email, 
+            password, 
+            name: `${firstName} ${lastName}`.trim(),
+            firstName,
+            lastName,
+            phoneNumber: phoneNumber || null,
+            isMainMember
+          } 
+        : { email, password };
+      
+      const data = await apiFetch(endpoint, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      onLogin(data.user, data.token);
+    } catch (err) {
+      setError(err.message || 'Authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-medium text-gray-900 mb-2">
+            Pet-Sitter
+          </h1>
+          <p className="text-gray-500 text-sm">Track pet care with your family</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {isSignup && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-2">First Name</label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-2">Last Name</label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-600 mb-2">Phone Number (optional)</label>
+                <input
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="+1 (555) 123-4567"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                />
+              </div>
+            </>
+          )}
+
+          <div>
+            <label className="block text-sm text-gray-600 mb-2">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-600 mb-2">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              required
+            />
+          </div>
+
+          {isSignup && (
+            <div className="pt-2">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isMainMember}
+                  onChange={(e) => setIsMainMember(e.target.checked)}
+                  className="mt-1 w-5 h-5 rounded border-gray-300 text-[#39FF14] focus:ring-[#39FF14]"
+                />
+                <div>
+                  <div className="text-sm font-medium text-gray-900">I'm the main household member</div>
+                  {!isMainMember && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      You'll be able to join a household when invited by the main member
+                    </div>
+                  )}
+                </div>
+              </label>
+            </div>
+          )}
+
+          {error && (
+            <div className="text-red-500 text-sm text-center">{error}</div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#39FF14] text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+          >
+            {loading ? 'Please wait...' : isSignup ? 'Create Account' : 'Sign In'}
+          </button>
+        </form>
+
+        <div className="text-center mt-6">
+          <button
+            onClick={() => setIsSignup(!isSignup)}
+            className="text-sm text-gray-500 hover:text-gray-700"
+          >
+            {isSignup ? 'Already have an account? Sign in' : 'Create account →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

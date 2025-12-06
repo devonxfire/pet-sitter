@@ -1,0 +1,51 @@
+/* Pet-Sitter - Apple-style clean design */
+
+@import "tailwindcss";
+
+:root {
+  /* Color palette */
+  --color-accent: #39FF14; /* Neon green */
+  --color-bg: #FFFFFF;
+  --color-surface: #F9F9F9;
+  --color-text-primary: #1C1C1E;
+  --color-text-secondary: #8E8E93;
+  --color-border: #D1D1D6;
+  --color-error: #FF3B30;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Custom utility classes */
+.text-accent {
+  color: var(--color-accent);
+}
+
+.bg-accent {
+  background-color: var(--color-accent);
+}
+
+.border-accent {
+  border-color: var(--color-accent);
+}

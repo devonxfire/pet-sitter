@@ -1,0 +1,129 @@
+// Pet-Sitter Database Schema
+// Postgres + Prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// CORE MODELS
+// ============================================================================
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  firstName    String?  @map("first_name")
+  lastName     String?  @map("last_name")
+  phoneNumber  String?  @map("phone_number")
+  isMainMember Boolean  @default(true) @map("is_main_member")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  households   HouseholdMember[]
+  activities   Activity[]
+
+  @@map("users")
+}
+
+model Household {
+  id               Int      @id @default(autoincrement())
+  name             String
+  address          String?
+  city             String?
+  state            String?
+  zipCode          String?  @map("zip_code")
+  country          String?
+  numberOfMembers  Int?     @map("number_of_members")
+  notes            String?  @db.Text
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  members HouseholdMember[]
+  pets    Pet[]
+
+  @@map("households")
+}
+
+model HouseholdMember {
+  id          Int      @id @default(autoincrement())
+  householdId Int      @map("household_id")
+  userId      Int      @map("user_id")
+  role        String   @default("member") // owner, member, sitter
+  startDate   DateTime? @map("start_date") // for temporary sitters
+  endDate     DateTime? @map("end_date")   // for temporary sitters
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([householdId, userId])
+  @@map("household_members")
+}
+
+model Pet {
+  id          Int      @id @default(autoincrement())
+  householdId Int      @map("household_id")
+  name        String
+  species     String   // dog, cat, bird, etc.
+  breed       String?
+  age         Int?
+  weight      Float?
+  photoUrl    String?  @map("photo_url")
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  household     Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  activities    Activity[]
+  activityTypes ActivityType[]
+
+  @@map("pets")
+}
+
+model ActivityType {
+  id          Int      @id @default(autoincrement())
+  petId       Int      @map("pet_id")
+  name        String   // feeding, walk, medication, water, vet, custom
+  frequency   String?  // scheduled, on-demand
+  reminderTime String? @map("reminder_time") // HH:MM format for daily reminders
+  isActive    Boolean  @default(true) @map("is_active")
+  config      Json?    // flexible JSON for type-specific settings
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  pet        Pet        @relation(fields: [petId], references: [id], onDelete: Cascade)
+  activities Activity[]
+
+  @@map("activity_types")
+}
+
+model Activity {
+  id             Int      @id @default(autoincrement())
+  petId          Int      @map("pet_id")
+  activityTypeId Int      @map("activity_type_id")
+  userId         Int      @map("user_id")
+  timestamp      DateTime @default(now())
+  notes          String?  @db.Text
+  photoUrl       String?  @map("photo_url")
+  data           Json?    // flexible JSON for activity-specific data (food type, amount, etc.)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  pet          Pet          @relation(fields: [petId], references: [id], onDelete: Cascade)
+  activityType ActivityType @relation(fields: [activityTypeId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([petId, timestamp])
+  @@map("activities")
+}
