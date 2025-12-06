@@ -125,6 +125,24 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    // Check for and accept any pending household invitations for this email
+    const pendingInvitations = await prisma.householdMember.findMany({
+      where: {
+        invitedEmail: user.email.toLowerCase()
+      }
+    });
+
+    for (const invitation of pendingInvitations) {
+      await prisma.householdMember.update({
+        where: { id: invitation.id },
+        data: {
+          userId: user.id,
+          invitedEmail: null
+        }
+      });
+      console.log(`✅ Auto-accepted invitation to household ${invitation.householdId}`);
+    }
+
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       JWT_SECRET,
@@ -270,7 +288,7 @@ app.get('/api/households/:householdId/pets', authenticateToken, async (req, res)
 app.post('/api/households/:householdId/pets', authenticateToken, async (req, res) => {
   try {
     const { householdId } = req.params;
-    const { name, species, breed, age, weight, photoUrl, notes } = req.body;
+    const { name, species, breed, age, weight, photoUrl, notes, vetName, vetLocation, vetContact, primaryFood } = req.body;
 
     if (!name || !species) {
       return res.status(400).json({ error: 'Pet name and species are required' });
@@ -296,7 +314,11 @@ app.post('/api/households/:householdId/pets', authenticateToken, async (req, res
         age: age ? parseInt(age) : null,
         weight: weight ? parseFloat(weight) : null,
         photoUrl,
-        notes
+        notes,
+        vetName,
+        vetLocation,
+        vetContact,
+        primaryFood
       },
       include: {
         activityTypes: true
@@ -348,9 +370,9 @@ app.get('/api/pets/:petId', authenticateToken, async (req, res) => {
 app.patch('/api/pets/:petId', authenticateToken, async (req, res) => {
   try {
     const { petId } = req.params;
-    const { name, species, breed, age, weight, notes } = req.body;
+    const { name, species, breed, age, weight, notes, vetName, vetLocation, vetContact, primaryFood } = req.body;
 
-    console.log(`📝 Updating pet ${petId} with data:`, { name, species, breed, age, weight, notes });
+    console.log(`📝 Updating pet ${petId} with data:`, { name, species, breed, age, weight, notes, vetName, vetLocation, vetContact, primaryFood });
 
     // Verify user has access to this pet
     const pet = await prisma.pet.findUnique({
@@ -385,7 +407,11 @@ app.patch('/api/pets/:petId', authenticateToken, async (req, res) => {
         breed: breed !== undefined ? breed : pet.breed,
         age: age !== undefined ? age : pet.age,
         weight: weight !== undefined ? weight : pet.weight,
-        notes: notes !== undefined ? notes : pet.notes
+        notes: notes !== undefined ? notes : pet.notes,
+        vetName: vetName !== undefined ? vetName : pet.vetName,
+        vetLocation: vetLocation !== undefined ? vetLocation : pet.vetLocation,
+        vetContact: vetContact !== undefined ? vetContact : pet.vetContact,
+        primaryFood: primaryFood !== undefined ? primaryFood : pet.primaryFood
       },
       include: {
         activityTypes: true
@@ -475,10 +501,35 @@ app.post('/api/pets/:petId/activities', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    // Handle activity type: if activityTypeId is a string (e.g., 'feeding'), find or create it
+    let finalActivityTypeId = activityTypeId;
+    if (typeof activityTypeId === 'string') {
+      const activityType = await prisma.activityType.findFirst({
+        where: {
+          petId: parseInt(petId),
+          name: activityTypeId
+        }
+      });
+
+      if (activityType) {
+        finalActivityTypeId = activityType.id;
+      } else {
+        // Create activity type if it doesn't exist
+        const newActivityType = await prisma.activityType.create({
+          data: {
+            petId: parseInt(petId),
+            name: activityTypeId,
+            frequency: 'on-demand'
+          }
+        });
+        finalActivityTypeId = newActivityType.id;
+      }
+    }
+
     const activity = await prisma.activity.create({
       data: {
         petId: parseInt(petId),
-        activityTypeId: parseInt(activityTypeId),
+        activityTypeId: finalActivityTypeId,
         userId: req.user.userId,
         timestamp: timestamp ? new Date(timestamp) : new Date(),
         notes,
@@ -501,6 +552,276 @@ app.post('/api/pets/:petId/activities', authenticateToken, async (req, res) => {
     res.json(activity);
   } catch (error) {
     console.error('Create activity error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.patch('/api/activities/:activityId', authenticateToken, async (req, res) => {
+  try {
+    const { activityId } = req.params;
+    const { timestamp, notes } = req.body;
+
+    // Get activity and verify user has access
+    const activity = await prisma.activity.findUnique({
+      where: { id: parseInt(activityId) },
+      include: {
+        pet: {
+          include: {
+            household: {
+              include: {
+                members: {
+                  where: { userId: req.user.userId }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!activity) {
+      return res.status(404).json({ error: 'Activity not found' });
+    }
+
+    if (activity.pet.household.members.length === 0) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Update activity
+    const updatedActivity = await prisma.activity.update({
+      where: { id: parseInt(activityId) },
+      data: {
+        timestamp: timestamp ? new Date(timestamp) : activity.timestamp,
+        notes: notes !== undefined ? notes : activity.notes
+      },
+      include: {
+        activityType: true,
+        user: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    });
+
+    console.log(`✅ Activity updated: ${updatedActivity.id}`);
+
+    res.json(updatedActivity);
+  } catch (error) {
+    console.error('Update activity error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/activities/:activityId', authenticateToken, async (req, res) => {
+  try {
+    const { activityId } = req.params;
+
+    // Get activity and verify user has access
+    const activity = await prisma.activity.findUnique({
+      where: { id: parseInt(activityId) },
+      include: {
+        pet: {
+          include: {
+            household: {
+              include: {
+                members: {
+                  where: { userId: req.user.userId }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!activity) {
+      return res.status(404).json({ error: 'Activity not found' });
+    }
+
+    if (activity.pet.household.members.length === 0) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Delete activity
+    await prisma.activity.delete({
+      where: { id: parseInt(activityId) }
+    });
+
+    console.log(`✅ Activity deleted: ${activityId}`);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete activity error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ============================================================================
+// HOUSEHOLD MEMBERS ROUTES
+// ============================================================================
+
+// Get all members (including pending invitations) for a household
+app.get('/api/households/:householdId/members', authenticateToken, async (req, res) => {
+  try {
+    const { householdId } = req.params;
+
+    // Verify user has access to this household
+    const access = await prisma.householdMember.findFirst({
+      where: {
+        householdId: parseInt(householdId),
+        userId: req.user.id
+      }
+    });
+
+    if (!access) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const members = await prisma.householdMember.findMany({
+      where: { householdId: parseInt(householdId) },
+      include: {
+        user: {
+          select: { id: true, email: true, name: true, firstName: true, lastName: true }
+        }
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    res.json(members);
+  } catch (error) {
+    console.error('Get household members error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Invite a new member by email
+app.post('/api/households/:householdId/members/invite', authenticateToken, async (req, res) => {
+  try {
+    const { householdId } = req.params;
+    const { email, role } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Verify user is owner/main member of household
+    const access = await prisma.householdMember.findFirst({
+      where: {
+        householdId: parseInt(householdId),
+        userId: req.user.id,
+        role: { in: ['owner', 'member'] }
+      }
+    });
+
+    if (!access) {
+      return res.status(403).json({ error: 'Only owners/members can invite' });
+    }
+
+    // Check if email already invited or is a member
+    const existing = await prisma.householdMember.findFirst({
+      where: {
+        householdId: parseInt(householdId),
+        OR: [
+          { invitedEmail: email.toLowerCase() },
+          { user: { email: email.toLowerCase() } }
+        ]
+      }
+    });
+
+    if (existing) {
+      return res.status(400).json({ error: 'User already invited or is a member' });
+    }
+
+    // Create pending invitation
+    const invitation = await prisma.householdMember.create({
+      data: {
+        householdId: parseInt(householdId),
+        invitedEmail: email.toLowerCase(),
+        role: role || 'member'
+      },
+      include: {
+        user: {
+          select: { id: true, email: true, name: true }
+        }
+      }
+    });
+
+    console.log(`✅ Invitation sent to ${email} for household ${householdId}`);
+    res.status(201).json(invitation);
+  } catch (error) {
+    console.error('Invite member error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Accept invitation (when invited user logs in with matching email)
+app.post('/api/households/:householdId/members/accept-invitation', authenticateToken, async (req, res) => {
+  try {
+    const { householdId } = req.params;
+    const userEmail = req.user.email;
+
+    // Find pending invitation for this email
+    const invitation = await prisma.householdMember.findFirst({
+      where: {
+        householdId: parseInt(householdId),
+        invitedEmail: userEmail.toLowerCase()
+      }
+    });
+
+    if (!invitation) {
+      return res.status(404).json({ error: 'No invitation found' });
+    }
+
+    // Update invitation with userId, clear invitedEmail
+    const updated = await prisma.householdMember.update({
+      where: { id: invitation.id },
+      data: {
+        userId: req.user.id,
+        invitedEmail: null
+      },
+      include: {
+        user: {
+          select: { id: true, email: true, name: true, firstName: true, lastName: true }
+        }
+      }
+    });
+
+    console.log(`✅ ${userEmail} accepted invitation to household ${householdId}`);
+    res.json(updated);
+  } catch (error) {
+    console.error('Accept invitation error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Remove a member from household
+app.delete('/api/households/:householdId/members/:memberId', authenticateToken, async (req, res) => {
+  try {
+    const { householdId, memberId } = req.params;
+
+    // Verify user is owner of household
+    const access = await prisma.householdMember.findFirst({
+      where: {
+        householdId: parseInt(householdId),
+        userId: req.user.id,
+        role: 'owner'
+      }
+    });
+
+    if (!access) {
+      return res.status(403).json({ error: 'Only owners can remove members' });
+    }
+
+    await prisma.householdMember.delete({
+      where: { id: parseInt(memberId) }
+    });
+
+    console.log(`✅ Member ${memberId} removed from household ${householdId}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Remove member error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

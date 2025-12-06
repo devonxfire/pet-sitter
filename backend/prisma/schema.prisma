@@ -56,7 +56,8 @@ model Household {
 model HouseholdMember {
   id          Int      @id @default(autoincrement())
   householdId Int      @map("household_id")
-  userId      Int      @map("user_id")
+  userId      Int?     @map("user_id") // null if invitation pending
+  invitedEmail String? @map("invited_email") // email of invited user (null if already joined)
   role        String   @default("member") // owner, member, sitter
   startDate   DateTime? @map("start_date") // for temporary sitters
   endDate     DateTime? @map("end_date")   // for temporary sitters
@@ -64,9 +65,10 @@ model HouseholdMember {
 
   // Relations
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([householdId, userId])
+  @@unique([householdId, invitedEmail])
   @@map("household_members")
 }
 
@@ -80,6 +82,12 @@ model Pet {
   weight      Float?
   photoUrl    String?  @map("photo_url")
   notes       String?  @db.Text
+  // Vet information
+  vetName     String?  @map("vet_name")
+  vetLocation String?  @map("vet_location")
+  vetContact  String?  @map("vet_contact") // phone number
+  // Food information
+  primaryFood String?  @map("primary_food") // kibbles, wet food, raw, etc.
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

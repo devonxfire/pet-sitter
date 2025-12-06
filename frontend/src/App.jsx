@@ -7,6 +7,7 @@ import CreateHousehold from './CreateHousehold';
 import AddPet from './AddPet';
 import PetDetail from './PetDetail';
 import EditPet from './EditPet';
+import HouseholdSettings from './HouseholdSettings';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -131,6 +132,16 @@ function App() {
           element={
             user ? (
               <EditPet user={user} onSignOut={handleSignOut} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/household-settings"
+          element={
+            user ? (
+              <HouseholdSettings household={household} user={user} onSignOut={handleSignOut} />
             ) : (
               <Navigate to="/login" />
             )

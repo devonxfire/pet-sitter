@@ -13,6 +13,10 @@ export default function EditPet({ user, onSignOut }) {
   const [age, setAge] = useState('');
   const [weight, setWeight] = useState('');
   const [notes, setNotes] = useState('');
+  const [vetName, setVetName] = useState('');
+  const [vetLocation, setVetLocation] = useState('');
+  const [vetContact, setVetContact] = useState('');
+  const [primaryFood, setPrimaryFood] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -28,6 +32,10 @@ export default function EditPet({ user, onSignOut }) {
         setAge(data.age?.toString() || '');
         setWeight(data.weight?.toString() || '');
         setNotes(data.notes || '');
+        setVetName(data.vetName || '');
+        setVetLocation(data.vetLocation || '');
+        setVetContact(data.vetContact || '');
+        setPrimaryFood(data.primaryFood || '');
       } catch (err) {
         setError(err.message || 'Failed to load pet');
       } finally {
@@ -60,7 +68,11 @@ export default function EditPet({ user, onSignOut }) {
           breed: breed || null,
           age: age ? parseInt(age) : null,
           weight: weight ? parseFloat(weight) : null,
-          notes: notes || null
+          notes: notes || null,
+          vetName: vetName || null,
+          vetLocation: vetLocation || null,
+          vetContact: vetContact || null,
+          primaryFood: primaryFood || null
         })
       });
 
@@ -95,16 +107,11 @@ export default function EditPet({ user, onSignOut }) {
     <div className="min-h-screen bg-white">
       <TopNav user={user} onSignOut={onSignOut} />
 
-      <main className="max-w-2xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <button
-            onClick={() => navigate(`/pet/${petId}`)}
-            className="text-gray-600 hover:text-gray-900 font-medium"
-          >
-            ← Back
-          </button>
+      <main className="flex justify-center py-16">
+        <div className="max-w-6xl px-6 w-full">
+        <div className="mb-48">
+          <h1 className="text-5xl font-bold text-gray-900">Edit {pet?.name}</h1>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">Edit {pet?.name}</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Pet Name */}
@@ -204,6 +211,68 @@ export default function EditPet({ user, onSignOut }) {
             />
           </div>
 
+          {/* Vet Information */}
+          <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="border-b border-gray-200">
+            <h2 className="text-2xl font-bold text-gray-900 mb-16">Vet Information</h2>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                Vet Name (optional)
+              </label>
+              <input
+                type="text"
+                value={vetName}
+                onChange={(e) => setVetName(e.target.value)}
+                placeholder="e.g., Dr. Smith or Happy Paws Vet"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              />
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                Vet Location (optional)
+              </label>
+              <input
+                type="text"
+                value={vetLocation}
+                onChange={(e) => setVetLocation(e.target.value)}
+                placeholder="Clinic address or name"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              />
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                Vet Contact (optional)
+              </label>
+              <input
+                type="tel"
+                value={vetContact}
+                onChange={(e) => setVetContact(e.target.value)}
+                placeholder="Phone number"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Food Information */}
+          <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="border-b border-gray-200">
+            <h2 className="text-2xl font-bold text-gray-900 mb-16">Food Information</h2>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                Primary Food (optional)
+              </label>
+              <input
+                type="text"
+                value={primaryFood}
+                onChange={(e) => setPrimaryFood(e.target.value)}
+                placeholder="e.g., Kibble, Wet food, Raw"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              />
+            </div>
+          </div>
+
           {error && (
             <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">
               {error}
@@ -218,6 +287,7 @@ export default function EditPet({ user, onSignOut }) {
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </form>
+      </div>
       </main>
     </div>
   );

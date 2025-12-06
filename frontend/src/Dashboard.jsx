@@ -25,6 +25,7 @@ export default function Dashboard({ user, household, onSignOut }) {
       }
     };
 
+    console.log('Dashboard household:', household); // Debug log
     fetchPets();
   }, [household?.id, location.state?.petAdded]);
 
@@ -32,7 +33,17 @@ export default function Dashboard({ user, household, onSignOut }) {
     <div className="min-h-screen bg-white">
       <TopNav user={user} household={household} onSignOut={onSignOut} />
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="flex justify-center py-16">
+        <div className="max-w-6xl px-6 w-full">
+        {/* Welcome Message */}
+        {household?.name && (
+          <div className="text-center mb-48">
+            <h1 className="text-5xl font-bold text-gray-900">
+              Welcome, {household.name}!
+            </h1>
+          </div>
+        )}
+
         {loading ? (
           <div className="text-center py-12">
             <p className="text-gray-400">Loading...</p>
@@ -79,6 +90,7 @@ export default function Dashboard({ user, household, onSignOut }) {
             </div>
           </div>
         )}
+        </div>
       </main>
     </div>
   );

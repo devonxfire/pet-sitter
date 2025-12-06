@@ -59,7 +59,8 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
     <div className="min-h-screen bg-white">
       <TopNav user={user} household={null} onSignOut={onSignOut} />
 
-      <main className="max-w-2xl mx-auto px-4 py-8">
+      <main className="flex justify-center py-16">
+        <div className="max-w-6xl px-6 w-full">
         <div className="mb-6">
           <h1 className="text-xl font-medium text-gray-900">Create Household</h1>
           <p className="text-sm text-gray-500 mt-1">Let's set up your household</p>
@@ -194,6 +195,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
             {loading ? 'Creating...' : 'Create Household'}
           </button>
         </form>
+      </div>
       </main>
     </div>
   );
