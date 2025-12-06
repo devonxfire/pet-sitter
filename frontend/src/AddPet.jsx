@@ -86,8 +86,8 @@ export default function AddPet({ user, household, onSignOut }) {
       <TopNav user={user} household={activeHousehold} onSignOut={onSignOut} />
 
       <main className="flex justify-center py-16">
-        <div className="max-w-6xl px-6 w-full">
-        <div className="mb-48">
+        <div className="max-w-6xl px-6 mt-8 w-full">
+        <div className="mb-12">
           <h1 className="text-5xl font-bold text-gray-900">Add a Pet</h1>
         </div>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -101,7 +101,7 @@ export default function AddPet({ user, household, onSignOut }) {
               value={petName}
               onChange={(e) => setPetName(e.target.value)}
               placeholder="e.g., Milo, Luna, Buddy"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+              className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
               required
             />
           </div>
@@ -114,7 +114,7 @@ export default function AddPet({ user, household, onSignOut }) {
             <select
               value={species}
               onChange={(e) => setSpecies(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+              className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
             >
               <option value="dog">Dog</option>
               <option value="cat">Cat</option>
@@ -138,7 +138,7 @@ export default function AddPet({ user, household, onSignOut }) {
               value={breed}
               onChange={(e) => setBreed(e.target.value)}
               placeholder="e.g., Labrador Retriever"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+              className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
             />
           </div>
 
@@ -155,7 +155,7 @@ export default function AddPet({ user, household, onSignOut }) {
                 placeholder="Years"
                 min="0"
                 max="100"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
               />
             </div>
             <div>
@@ -169,7 +169,7 @@ export default function AddPet({ user, household, onSignOut }) {
                 placeholder="Lbs/kg"
                 min="0"
                 step="0.1"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
               />
             </div>
           </div>
@@ -184,7 +184,7 @@ export default function AddPet({ user, household, onSignOut }) {
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Any special info... allergies, preferences, etc."
               rows="3"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+              className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
             />
           </div>
 
@@ -201,7 +201,7 @@ export default function AddPet({ user, household, onSignOut }) {
                 value={vetName}
                 onChange={(e) => setVetName(e.target.value)}
                 placeholder="e.g., Dr. Smith or Happy Paws Vet"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
               />
             </div>
 
@@ -214,7 +214,7 @@ export default function AddPet({ user, household, onSignOut }) {
                 value={vetLocation}
                 onChange={(e) => setVetLocation(e.target.value)}
                 placeholder="Clinic address or name"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
               />
             </div>
 
@@ -227,7 +227,7 @@ export default function AddPet({ user, household, onSignOut }) {
                 value={vetContact}
                 onChange={(e) => setVetContact(e.target.value)}
                 placeholder="Phone number"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
               />
             </div>
           </div>
@@ -245,7 +245,7 @@ export default function AddPet({ user, household, onSignOut }) {
                 value={primaryFood}
                 onChange={(e) => setPrimaryFood(e.target.value)}
                 placeholder="e.g., Kibble, Wet food, Raw"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
               />
             </div>
           </div>

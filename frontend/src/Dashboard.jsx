@@ -44,7 +44,7 @@ export default function Dashboard({ user, household, onSignOut }) {
         <div className="max-w-6xl px-6 w-full">
         {/* Welcome Message */}
         {household?.name && (
-          <div className="text-center mb-48">
+          <div className="text-center my-8">
             <h1 className="text-5xl font-bold text-gray-900">
               Welcome, {household.name}!
             </h1>
@@ -57,7 +57,7 @@ export default function Dashboard({ user, household, onSignOut }) {
           </div>
         ) : pets.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 mb-8">Welcome! Let's set up your first pet.</p>
+            <p className="text-gray-500 mb-2">Welcome! Let's set up your first pet.</p>
             <button
               onClick={() => navigate('/add-pet', { state: { household } })}
               className="bg-[#20B2AA] text-gray-900 font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition"
@@ -67,14 +67,8 @@ export default function Dashboard({ user, household, onSignOut }) {
           </div>
         ) : (
           <div>
-            <div className="flex items-center justify-between mb-32">
+            <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-semibold text-gray-900">Your Pets</h2>
-              <button
-                onClick={() => navigate('/add-pet', { state: { household } })}
-                className="bg-[#20B2AA] text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
-              >
-                + Add Pet
-              </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {pets.map((pet) => (
@@ -109,7 +103,15 @@ export default function Dashboard({ user, household, onSignOut }) {
                 </div>
               ))}
             </div>
-
+            <div className="flex justify-center mt-20 mb-8">
+              <button
+                onClick={() => navigate('/add-pet', { state: { household } })}
+                className="bg-[#20B2AA] text-white text-2xl font-bold px-12 py-4 hover:opacity-90 transition shadow-lg w-auto min-w-[240px] h-auto rounded-none"
+                style={{ letterSpacing: '0.03em' }}
+              >
+                + Add Pet
+              </button>
+            </div>
             {/* Divider */}
             <div style={{ margin: '48px 0', borderBottom: '1px solid #E5E7EB' }}></div>
 
@@ -148,40 +150,11 @@ export default function Dashboard({ user, household, onSignOut }) {
                       </ul>
                     </div>
                   )}
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">ID</p>
-                    <p className="text-base text-gray-700">{household.id}</p>
-                  </div>
-                  {household.address && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Address</p>
-                      <p className="text-base text-gray-700">{household.address}</p>
-                    </div>
-                  )}
-                  {household.city && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">City</p>
-                      <p className="text-base text-gray-700">{household.city}</p>
-                    </div>
-                  )}
-                  {household.state && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">State</p>
-                      <p className="text-base text-gray-700">{household.state}</p>
-                    </div>
-                  )}
-                  {household.country && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Country</p>
-                      <p className="text-base text-gray-700">{household.country}</p>
-                    </div>
-                  )}
-                  {household.notes && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Notes</p>
-                      <p className="text-base text-gray-700">{household.notes}</p>
-                    </div>
-                  )}
+                  
+                  
+                 
+              
+                 
                 </div>
               </div>
             )}
