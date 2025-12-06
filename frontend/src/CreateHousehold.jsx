@@ -76,7 +76,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
               value={householdName}
               onChange={(e) => setHouseholdName(e.target.value)}
               placeholder="e.g., Martindale Family"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
               required
             />
           </div>
@@ -91,7 +91,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Street address"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
             />
           </div>
 
@@ -106,7 +106,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="City"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
               />
             </div>
             <div>
@@ -118,7 +118,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
                 value={state}
                 onChange={(e) => setState(e.target.value)}
                 placeholder="State/Province"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
               />
             </div>
             <div>
@@ -130,7 +130,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
                 value={zipCode}
                 onChange={(e) => setZipCode(e.target.value)}
                 placeholder="Zip code"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
               />
             </div>
           </div>
@@ -145,7 +145,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               placeholder="Country"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
             />
           </div>
 
@@ -160,7 +160,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
               onChange={(e) => setNumberOfMembers(e.target.value)}
               min="1"
               max="20"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
             />
             <p className="text-xs text-gray-500 mt-1">
               You can invite household members later
@@ -177,7 +177,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Any additional info about your household..."
               rows="3"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
             />
           </div>
 
@@ -190,7 +190,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#39FF14] text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+            className="w-full bg-[#20B2AA] text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
           >
             {loading ? 'Creating...' : 'Create Household'}
           </button>

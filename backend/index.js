@@ -4,6 +4,9 @@ const dotenv = require('dotenv');
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 dotenv.config();
 
@@ -12,9 +15,49 @@ const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key';
 
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'public', 'uploads', 'pets');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const petId = req.params.petId || 'temp';
+    const petDir = path.join(__dirname, 'public', 'uploads', 'pets', petId);
+    if (!fs.existsSync(petDir)) {
+      fs.mkdirSync(petDir, { recursive: true });
+    }
+    cb(null, petDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `photo${ext}`);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif/;
+    const mimetype = allowedTypes.test(file.mimetype);
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Only image files are allowed'));
+  }
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/public', express.static(path.join(__dirname, 'public')));
+// Serve uploaded assets directly under /uploads
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 // Auth middleware
 function authenticateToken(req, res, next) {
@@ -370,9 +413,9 @@ app.get('/api/pets/:petId', authenticateToken, async (req, res) => {
 app.patch('/api/pets/:petId', authenticateToken, async (req, res) => {
   try {
     const { petId } = req.params;
-    const { name, species, breed, age, weight, notes, vetName, vetLocation, vetContact, primaryFood } = req.body;
+    const { name, species, breed, age, weight, notes, vetName, vetLocation, vetContact, primaryFood, photoOffsetX, photoOffsetY } = req.body;
 
-    console.log(`📝 Updating pet ${petId} with data:`, { name, species, breed, age, weight, notes, vetName, vetLocation, vetContact, primaryFood });
+    console.log(`📝 Updating pet ${petId} with data:`, { name, species, breed, age, weight, notes, vetName, vetLocation, vetContact, primaryFood, photoOffsetX, photoOffsetY });
 
     // Verify user has access to this pet
     const pet = await prisma.pet.findUnique({
@@ -411,7 +454,9 @@ app.patch('/api/pets/:petId', authenticateToken, async (req, res) => {
         vetName: vetName !== undefined ? vetName : pet.vetName,
         vetLocation: vetLocation !== undefined ? vetLocation : pet.vetLocation,
         vetContact: vetContact !== undefined ? vetContact : pet.vetContact,
-        primaryFood: primaryFood !== undefined ? primaryFood : pet.primaryFood
+        primaryFood: primaryFood !== undefined ? primaryFood : pet.primaryFood,
+        photoOffsetX: photoOffsetX !== undefined ? photoOffsetX : pet.photoOffsetX,
+        photoOffsetY: photoOffsetY !== undefined ? photoOffsetY : pet.photoOffsetY
       },
       include: {
         activityTypes: true
@@ -424,6 +469,57 @@ app.patch('/api/pets/:petId', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Update pet error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Upload pet photo
+app.post('/api/pets/:petId/photo', authenticateToken, upload.single('photo'), async (req, res) => {
+  try {
+    const petId = parseInt(req.params.petId);
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Verify pet exists and user has permission
+    const pet = await prisma.pet.findUnique({
+      where: { id: petId },
+      include: { household: true }
+    });
+
+    if (!pet) {
+      return res.status(404).json({ error: 'Pet not found' });
+    }
+
+    // Check if user is part of the household
+    const householdMember = await prisma.householdMember.findFirst({
+      where: {
+        householdId: pet.householdId,
+        userId: req.user.id
+      }
+    });
+
+    if (!householdMember) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Save photo path to database
+    const photoPath = `/uploads/pets/${petId}/${req.file.filename}`;
+    
+    const updatedPet = await prisma.pet.update({
+      where: { id: petId },
+      data: {
+        photoUrl: photoPath
+      },
+      include: { activityTypes: true }
+    });
+
+    console.log(`✅ Pet photo uploaded: ${pet.name} -> ${photoPath}`);
+
+    res.json(updatedPet);
+  } catch (error) {
+    console.error('Photo upload error:', error);
+    res.status(500).json({ error: 'Failed to upload photo' });
   }
 });
 

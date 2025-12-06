@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { apiFetch } from './api';
+import { apiFetch, API_BASE } from './api';
 import TopNav from './TopNav';
 import LogActivity from './LogActivity';
 
 export default function PetDetail({ household, user, onSignOut }) {
   const navigate = useNavigate();
   const { petId } = useParams();
+  const fileInputRef = useRef(null);
   const [pet, setPet] = useState(null);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,6 +18,13 @@ export default function PetDetail({ household, user, onSignOut }) {
   const [editingSection, setEditingSection] = useState(null); // 'general', 'vet', 'food'
   const [editValues, setEditValues] = useState({});
   const [savingSection, setSavingSection] = useState(false);
+  const photoContainerRef = useRef(null);
+
+  const resolvePhotoUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
 
   // Filter activities based on selected filter
   const filteredActivities = activities.filter(activity => {
@@ -46,7 +54,13 @@ export default function PetDetail({ household, user, onSignOut }) {
     if (petId) {
       fetchPetDetails();
     }
+
+    return () => {
+      // no-op cleanup
+    };
   }, [petId]);
+
+  const clamp = (value, min = 0, max = 100) => Math.min(max, Math.max(min, value));
 
   const startEditingSection = (section) => {
     setEditingSection(section);
@@ -106,6 +120,44 @@ export default function PetDetail({ household, user, onSignOut }) {
       setError(err.message || 'Failed to save changes');
     } finally {
       setSavingSection(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      console.log('Uploading photo:', file.name, file.type);
+
+      const response = await fetch(`/api/pets/${petId}/photo`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      console.log('Upload response status:', response.status);
+      const data = await response.json();
+      console.log('Upload response data:', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to upload photo');
+      }
+
+      console.log('Updated pet with photo:', data);
+      setPet(data);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to upload photo');
+      console.error('Photo upload error:', err);
     }
   };
 
@@ -179,8 +231,40 @@ export default function PetDetail({ household, user, onSignOut }) {
         </div>
 
         {/* Pet Name */}
-        <div className="mb-48">
-          <h1 className="text-5xl font-bold text-gray-900">{pet.name}</h1>
+        <div className="mb-64 flex flex-col items-center gap-6">
+          {/* Circular Photo */}
+          <div className="relative">
+            <div
+              ref={photoContainerRef}
+              className="w-40 h-40 rounded-full bg-gray-200 border-4 border-gray-300 flex items-center justify-center overflow-hidden"
+            >
+              {pet.photoUrl ? (
+                <img
+                  src={resolvePhotoUrl(pet.photoUrl)}
+                  alt={pet.name}
+                  className="w-full h-full object-cover select-none"
+                  draggable={false}
+                />
+              ) : (
+                <div className="text-gray-400 text-6xl">📷</div>
+              )}
+            </div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute bottom-0 right-0 bg-[#20B2AA] hover:opacity-90 text-white rounded-full w-12 h-12 flex items-center justify-center cursor-pointer transition text-lg"
+              type="button"
+            >
+              ➕
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={(e) => handlePhotoUpload(e)}
+              className="hidden"
+            />
+          </div>
+          <h1 className="text-5xl font-bold text-gray-900 text-center">{pet.name}</h1>
         </div>
 
         {/* General Section */}
@@ -205,7 +289,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 <select
                   value={editValues.species}
                   onChange={(e) => setEditValues({ ...editValues, species: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
                 >
                   <option value="dog">Dog</option>
                   <option value="cat">Cat</option>
@@ -227,7 +311,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   value={editValues.breed}
                   onChange={(e) => setEditValues({ ...editValues, breed: e.target.value })}
                   placeholder="e.g., Labrador Retriever"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
                 />
               </div>
 
@@ -242,7 +326,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                     placeholder="Years"
                     min="0"
                     max="100"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -254,7 +338,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                     placeholder="Lbs/kg"
                     min="0"
                     step="0.1"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
                   />
                 </div>
               </div>
@@ -267,7 +351,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   onChange={(e) => setEditValues({ ...editValues, notes: e.target.value })}
                   placeholder="Any special info..."
                   rows="3"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
                 />
               </div>
 
@@ -282,7 +366,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 <button
                   onClick={saveSection}
                   disabled={savingSection}
-                  className="flex-1 bg-[#39FF14] text-gray-900 font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                  className="flex-1 bg-[#20B2AA] text-gray-900 font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
                 >
                   {savingSection ? 'Saving...' : 'Save'}
                 </button>
@@ -347,7 +431,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                     value={editValues.vetName}
                     onChange={(e) => setEditValues({ ...editValues, vetName: e.target.value })}
                     placeholder="e.g., Dr. Smith or Happy Paws Vet"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
                   />
                 </div>
 
@@ -359,7 +443,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                     value={editValues.vetLocation}
                     onChange={(e) => setEditValues({ ...editValues, vetLocation: e.target.value })}
                     placeholder="Clinic address or name"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
                   />
                 </div>
 
@@ -371,7 +455,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                     value={editValues.vetContact}
                     onChange={(e) => setEditValues({ ...editValues, vetContact: e.target.value })}
                     placeholder="Phone number"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
                   />
                 </div>
 
@@ -386,7 +470,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   <button
                     onClick={saveSection}
                     disabled={savingSection}
-                    className="flex-1 bg-[#39FF14] text-gray-900 font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                    className="flex-1 bg-[#20B2AA] text-gray-900 font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
                   >
                     {savingSection ? 'Saving...' : 'Save'}
                   </button>
@@ -448,7 +532,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                     value={editValues.primaryFood}
                     onChange={(e) => setEditValues({ ...editValues, primaryFood: e.target.value })}
                     placeholder="e.g., Kibble, Wet food, Raw"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
                   />
                 </div>
 
@@ -463,7 +547,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   <button
                     onClick={saveSection}
                     disabled={savingSection}
-                    className="flex-1 bg-[#39FF14] text-gray-900 font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                    className="flex-1 bg-[#20B2AA] text-gray-900 font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
                   >
                     {savingSection ? 'Saving...' : 'Save'}
                   </button>
@@ -485,7 +569,7 @@ export default function PetDetail({ household, user, onSignOut }) {
             {activities.length > 0 && (
               <button
                 onClick={() => setShowLogActivity(true)}
-                className="bg-[#39FF14] text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
+                className="bg-[#20B2AA] text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
               >
                 Create New Activity
               </button>
@@ -498,7 +582,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 onClick={() => setActivityFilter('all')}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   activityFilter === 'all'
-                    ? 'bg-[#39FF14] text-gray-900'
+                    ? 'bg-[#20B2AA] text-gray-900'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -508,7 +592,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 onClick={() => setActivityFilter('past')}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   activityFilter === 'past'
-                    ? 'bg-[#39FF14] text-gray-900'
+                    ? 'bg-[#20B2AA] text-gray-900'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -518,7 +602,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 onClick={() => setActivityFilter('upcoming')}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   activityFilter === 'upcoming'
-                    ? 'bg-[#39FF14] text-gray-900'
+                    ? 'bg-[#20B2AA] text-gray-900'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -532,7 +616,7 @@ export default function PetDetail({ household, user, onSignOut }) {
               <p className="text-gray-500">No activities logged yet</p>
               <button
                 onClick={() => setShowLogActivity(true)}
-                className="mt-4 bg-[#39FF14] text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
+                className="mt-4 bg-[#20B2AA] text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
               >
                 Create First Activity
               </button>

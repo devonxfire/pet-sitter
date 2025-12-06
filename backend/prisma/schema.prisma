@@ -81,6 +81,8 @@ model Pet {
   age         Int?
   weight      Float?
   photoUrl    String?  @map("photo_url")
+  photoOffsetX Float   @default(50) @map("photo_offset_x")
+  photoOffsetY Float   @default(50) @map("photo_offset_y")
   notes       String?  @db.Text
   // Vet information
   vetName     String?  @map("vet_name")

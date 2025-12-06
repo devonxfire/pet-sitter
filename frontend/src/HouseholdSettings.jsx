@@ -181,7 +181,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="member@example.com"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#20B2AA]"
               />
             </div>
 
@@ -192,7 +192,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#20B2AA]"
               >
                 <option value="member">Member</option>
                 <option value="sitter">Sitter</option>
@@ -201,7 +201,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
 
             <button
               type="submit"
-              className="w-full bg-[#39FF14] text-gray-900 font-semibold py-3 rounded-lg hover:opacity-90 transition"
+              className="w-full bg-[#20B2AA] text-gray-900 font-semibold py-3 rounded-lg hover:opacity-90 transition"
             >
               Send Invitation
             </button>

@@ -87,7 +87,7 @@ export default function EditActivityModal({ activity, onActivityUpdated, onClose
               type="datetime-local"
               value={timestamp}
               onChange={(e) => setTimestamp(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
             />
           </div>
 
@@ -100,7 +100,7 @@ export default function EditActivityModal({ activity, onActivityUpdated, onClose
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add or edit notes..."
               rows="3"
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
             />
           </div>
 
@@ -129,7 +129,7 @@ export default function EditActivityModal({ activity, onActivityUpdated, onClose
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-[#39FF14] text-gray-900 font-semibold py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50"
+              className="flex-1 bg-[#20B2AA] text-gray-900 font-semibold py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50"
             >
               {loading ? 'Saving...' : 'Save'}
             </button>

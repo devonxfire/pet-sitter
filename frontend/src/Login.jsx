@@ -64,7 +64,7 @@ export default function Login({ onLogin }) {
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
                     required
                   />
                 </div>
@@ -74,7 +74,7 @@ export default function Login({ onLogin }) {
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
                     required
                   />
                 </div>
@@ -87,7 +87,7 @@ export default function Login({ onLogin }) {
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="+1 (555) 123-4567"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
                 />
               </div>
             </>
@@ -99,7 +99,7 @@ export default function Login({ onLogin }) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
               required
             />
           </div>
@@ -110,7 +110,7 @@ export default function Login({ onLogin }) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
               required
             />
           </div>
@@ -122,7 +122,7 @@ export default function Login({ onLogin }) {
                   type="checkbox"
                   checked={isMainMember}
                   onChange={(e) => setIsMainMember(e.target.checked)}
-                  className="mt-1 w-5 h-5 rounded border-gray-300 text-[#39FF14] focus:ring-[#39FF14]"
+                  className="mt-1 w-5 h-5 rounded border-gray-300 text-[#20B2AA] focus:ring-[#20B2AA]"
                 />
                 <div>
                   <div className="text-sm font-medium text-gray-900">I'm the main household member</div>
@@ -143,7 +143,7 @@ export default function Login({ onLogin }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#39FF14] text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+            className="w-full bg-[#20B2AA] text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
           >
             {loading ? 'Please wait...' : isSignup ? 'Create Account' : 'Sign In'}
           </button>

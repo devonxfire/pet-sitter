@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { apiFetch } from './api';
+import { apiFetch, API_BASE } from './api';
 import TopNav from './TopNav';
 
 export default function Dashboard({ user, household, onSignOut }) {
@@ -8,6 +8,13 @@ export default function Dashboard({ user, household, onSignOut }) {
   const location = useLocation();
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const resolvePhotoUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
 
   useEffect(() => {
     const fetchPets = async () => {
@@ -53,41 +60,92 @@ export default function Dashboard({ user, household, onSignOut }) {
             <p className="text-gray-500 mb-8">Welcome! Let's set up your first pet.</p>
             <button
               onClick={() => navigate('/add-pet', { state: { household } })}
-              className="bg-[#39FF14] text-gray-900 font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition"
+              className="bg-[#20B2AA] text-gray-900 font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition"
             >
               Add Your First Pet
             </button>
           </div>
         ) : (
           <div>
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-32">
               <h2 className="text-2xl font-semibold text-gray-900">Your Pets</h2>
               <button
                 onClick={() => navigate('/add-pet', { state: { household } })}
-                className="bg-[#39FF14] text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
+                className="bg-[#20B2AA] text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
               >
                 + Add Pet
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {pets.map((pet) => (
-                <div key={pet.id} className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-2">{pet.name}</h2>
-                  <p className="text-sm text-gray-600">
+                <div
+                  key={pet.id}
+                  onClick={() => navigate(`/pet/${pet.id}`)}
+                  className="bg-gray-50 rounded-2xl p-8 border border-gray-200 hover:shadow-lg transition cursor-pointer h-96 flex flex-col items-center justify-center text-center"
+                >
+                  {/* Circular Photo */}
+                  <div className="w-32 h-32 rounded-full bg-gray-200 border-4 border-gray-300 mb-6 flex items-center justify-center overflow-hidden">
+                    {pet.photoUrl ? (
+                      <img
+                        src={resolvePhotoUrl(pet.photoUrl)}
+                        alt={pet.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-gray-400 text-4xl">📷</div>
+                    )}
+                  </div>
+
+                  {/* Pet Name */}
+                  <h2 className="text-5xl font-bold text-gray-900 mb-4">{pet.name}</h2>
+
+                  {/* Pet Details */}
+                  <p className="text-lg text-gray-600 mb-2">
                     {pet.species}
                     {pet.breed && ` • ${pet.breed}`}
                   </p>
                   {pet.age && <p className="text-sm text-gray-500">Age: {pet.age} years</p>}
                   {pet.weight && <p className="text-sm text-gray-500">Weight: {pet.weight} lbs</p>}
-                  <button
-                    onClick={() => navigate(`/pet/${pet.id}`)}
-                    className="mt-4 w-full bg-[#39FF14] text-gray-900 font-semibold py-2 rounded-lg hover:opacity-90 transition"
-                  >
-                    View Details
-                  </button>
                 </div>
               ))}
             </div>
+
+            {/* Divider */}
+            <div style={{ margin: '48px 0', borderBottom: '1px solid #E5E7EB' }}></div>
+
+            {/* Household Info Section - After Pets */}
+            {household && (
+              <div>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-8">Household</h2>
+                <div className="space-y-4 text-lg text-gray-700">
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Name</p>
+                    <p className="text-xl font-medium text-gray-900">{household.name}</p>
+                  </div>
+                  {household.owner_email && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">Owner</p>
+                      <p className="text-xl font-medium text-gray-900">{household.owner_email}</p>
+                    </div>
+                  )}
+                  {household.members && household.members.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-500 mb-2">Members ({household.members.length})</p>
+                      <ul className="space-y-2">
+                        {household.members.map((member) => (
+                          <li key={member.id} className="text-gray-700">
+                            <span className="font-medium">{member.email}</span>
+                            {member.role && (
+                              <span className="ml-2 text-sm text-gray-500">({member.role})</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
         </div>

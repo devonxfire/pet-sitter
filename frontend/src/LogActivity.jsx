@@ -144,7 +144,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
               <button
                 key={type.id}
                 onClick={() => handleTypeSelect(type.id)}
-                className="py-6 px-4 rounded-xl flex flex-col items-center gap-3 transition border-2 border-gray-200 hover:border-[#39FF14] hover:bg-[#39FF14]/10"
+                className="py-6 px-4 rounded-xl flex flex-col items-center gap-3 transition border-2 border-gray-200 hover:border-[#20B2AA] hover:bg-[#20B2AA]/10"
               >
                 <span className="text-4xl">{type.icon}</span>
                 <span className="text-sm font-medium text-gray-700 text-center">
@@ -181,7 +181,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
           <div className="space-y-4">
             <button
               onClick={() => handleTimingSelect('happened')}
-              className="w-full py-6 px-6 rounded-xl border-2 border-gray-200 hover:border-[#39FF14] hover:bg-[#39FF14]/10 transition text-left"
+              className="w-full py-6 px-6 rounded-xl border-2 border-gray-200 hover:border-[#20B2AA] hover:bg-[#20B2AA]/10 transition text-left"
             >
               <div className="text-2xl mb-2">✓</div>
               <div className="font-semibold text-lg text-gray-900">Already Happened</div>
@@ -190,7 +190,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
 
             <button
               onClick={() => handleTimingSelect('upcoming')}
-              className="w-full py-6 px-6 rounded-xl border-2 border-gray-200 hover:border-[#39FF14] hover:bg-[#39FF14]/10 transition text-left"
+              className="w-full py-6 px-6 rounded-xl border-2 border-gray-200 hover:border-[#20B2AA] hover:bg-[#20B2AA]/10 transition text-left"
             >
               <div className="text-2xl mb-2">📅</div>
               <div className="font-semibold text-lg text-gray-900">Upcoming</div>
@@ -238,7 +238,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
               value={timestamp}
               onChange={(e) => setTimestamp(e.target.value)}
               max={new Date().toISOString().slice(0, 16)}
-              className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-[#39FF14] focus:outline-none text-lg"
+              className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-[#20B2AA] focus:outline-none text-lg"
             />
             <p className="text-sm text-gray-500 mt-2">Defaults to current time</p>
           </div>
@@ -252,7 +252,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
             </button>
             <button
               onClick={handleHappenedSubmit}
-              className="flex-1 py-3 bg-[#39FF14] text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
+              className="flex-1 py-3 bg-[#20B2AA] text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
             >
               Next
             </button>
@@ -291,7 +291,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
               </div>
               <button
                 onClick={() => setReminderEnabled(!reminderEnabled)}
-                className={`relative inline-flex h-8 w-16 items-center rounded-full transition ${reminderEnabled ? 'bg-[#39FF14]' : 'bg-gray-300'}`}
+                className={`relative inline-flex h-8 w-16 items-center rounded-full transition ${reminderEnabled ? 'bg-[#20B2AA]' : 'bg-gray-300'}`}
               >
                 <span
                   className={`inline-block h-6 w-6 transform rounded-full bg-white transition ${reminderEnabled ? 'translate-x-9' : 'translate-x-1'}`}
@@ -309,7 +309,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
                   <select
                     value={reminderTime}
                     onChange={(e) => setReminderTime(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#20B2AA] focus:outline-none"
                   >
                     <option value="5">5 minutes before</option>
                     <option value="15">15 minutes before</option>
@@ -328,7 +328,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
                   </div>
                   <button
                     onClick={() => setAddToGoogleCalendar(!addToGoogleCalendar)}
-                    className={`relative inline-flex h-8 w-16 items-center rounded-full transition ${addToGoogleCalendar ? 'bg-[#39FF14]' : 'bg-gray-300'}`}
+                    className={`relative inline-flex h-8 w-16 items-center rounded-full transition ${addToGoogleCalendar ? 'bg-[#20B2AA]' : 'bg-gray-300'}`}
                   >
                     <span
                       className={`inline-block h-6 w-6 transform rounded-full bg-white transition ${addToGoogleCalendar ? 'translate-x-9' : 'translate-x-1'}`}
@@ -337,7 +337,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
                 </div>
 
                 {/* Email Reminder */}
-                <div className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-xl bg-[#39FF14]/10">
+                <div className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-xl bg-[#20B2AA]/10">
                   <div>
                     <p className="font-semibold text-gray-900">📧 Email Reminder</p>
                     <p className="text-sm text-gray-500\">Always enabled when reminders are on</p>
@@ -357,7 +357,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
             </button>
             <button
               onClick={handleReminderSubmit}
-              className="flex-1 py-3 bg-[#39FF14] text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
+              className="flex-1 py-3 bg-[#20B2AA] text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
             >
               Next
             </button>
@@ -395,7 +395,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
               type="datetime-local"
               value={timestamp}
               onChange={(e) => setTimestamp(e.target.value)}
-              className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-[#39FF14] focus:outline-none text-lg"
+              className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-[#20B2AA] focus:outline-none text-lg"
             />
           </div>
 
@@ -408,7 +408,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
             </button>
             <button
               onClick={handleScheduleSubmit}
-              className="flex-1 py-3 bg-[#39FF14] text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
+              className="flex-1 py-3 bg-[#20B2AA] text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
             >
               Next
             </button>
@@ -467,7 +467,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
                 type="datetime-local"
                 value={timestamp}
                 onChange={(e) => setTimestamp(e.target.value)}
-                className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-[#39FF14] focus:outline-none"
+                className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-[#20B2AA] focus:outline-none"
               />
             </div>
           )}
@@ -482,7 +482,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add any details..."
               rows="4"
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#39FF14] focus:outline-none"
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#20B2AA] focus:outline-none"
             />
           </div>
 
@@ -525,7 +525,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-[#39FF14] text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+              className="flex-1 bg-[#20B2AA] text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
             >
               {loading ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Activity'}
             </button>
