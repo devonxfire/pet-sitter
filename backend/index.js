@@ -295,6 +295,169 @@ app.post('/api/households', authenticateToken, async (req, res) => {
   }
 });
 
+// Quick Actions (server-backed) -------------------------------------------------
+app.get('/api/households/:householdId/quick-actions', authenticateToken, async (req, res) => {
+  try {
+    const { householdId } = req.params;
+    // Verify membership
+    const member = await prisma.householdMember.findFirst({ where: { householdId: parseInt(householdId), userId: req.user.userId } });
+    if (!member) return res.status(403).json({ error: 'Access denied' });
+
+    const actions = await prisma.quickAction.findMany({ where: { householdId: parseInt(householdId) }, orderBy: { ord: 'asc' } });
+    res.json(actions);
+  } catch (err) {
+    console.error('Get quick actions error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/households/:householdId/quick-actions', authenticateToken, async (req, res) => {
+  try {
+    const { householdId } = req.params;
+    // Use `payload` to avoid shadowing and improve clarity
+    const { key, label, icon, data: payload } = req.body;
+
+    if (!key || !label) return res.status(400).json({ error: 'key and label are required' });
+
+    // Verify membership
+    const member = await prisma.householdMember.findFirst({ where: { householdId: parseInt(householdId), userId: req.user.userId } });
+    if (!member) return res.status(403).json({ error: 'Access denied' });
+
+    // Debug: log incoming body to help diagnose 500s during development
+    console.log('Create quick action payload:', { userId: req.user.userId, householdId: parseInt(householdId), body: req.body });
+
+    // Prevent duplicates
+    const existing = await prisma.quickAction.findFirst({ where: { householdId: parseInt(householdId), key } });
+    if (existing) return res.status(200).json(existing);
+
+    const maxOrd = await prisma.quickAction.aggregate({ _max: { ord: true }, where: { householdId: parseInt(householdId) } });
+    // Be defensive: _max or ord may be null depending on Prisma results
+    const prevOrd = (maxOrd && maxOrd._max && typeof maxOrd._max.ord === 'number') ? maxOrd._max.ord : 0;
+    const ord = prevOrd + 1;
+
+    const qa = await prisma.quickAction.create({
+      data: { householdId: parseInt(householdId), key, label, icon: icon || null, ord, data: payload || null }
+    });
+
+    console.log('Created quick action:', { qa });
+    res.json(qa);
+  } catch (err) {
+    console.error('Create quick action error:', err);
+    const payload = { error: err.message || 'Internal server error' };
+    if (process.env.NODE_ENV === 'development') payload.details = err.stack;
+    res.status(500).json(payload);
+  }
+});
+
+app.delete('/api/households/:householdId/quick-actions/:id', authenticateToken, async (req, res) => {
+  try {
+    const { householdId, id } = req.params;
+    // Verify membership
+    const member = await prisma.householdMember.findFirst({ where: { householdId: parseInt(householdId), userId: req.user.userId } });
+    if (!member) return res.status(403).json({ error: 'Access denied' });
+
+    const qa = await prisma.quickAction.findUnique({ where: { id: parseInt(id) } });
+    if (!qa || qa.householdId !== parseInt(householdId)) return res.status(404).json({ error: 'Not found' });
+
+    // Only delete the quick-action shortcut row. Do NOT touch Activity records.
+    await prisma.quickAction.delete({ where: { id: parseInt(id) } });
+    res.json({ success: true, deletedQuickActionId: parseInt(id), note: 'This removes only the quick-action shortcut; it does not delete any logged activities.' });
+  } catch (err) {
+    console.error('Delete quick action error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Replay a quick action: create activities for the saved snapshot
+app.post('/api/households/:householdId/quick-actions/:id/replay', authenticateToken, async (req, res) => {
+  try {
+    const { householdId, id } = req.params;
+
+    console.log(`Replay requested by user ${req.user?.userId} for household ${householdId}, quickAction ${id}`);
+
+    // Verify membership
+    const member = await prisma.householdMember.findFirst({ where: { householdId: parseInt(householdId), userId: req.user.userId } });
+    console.log('Membership check result for replay:', { member });
+    if (!member) return res.status(403).json({ error: 'Access denied' });
+
+    const qa = await prisma.quickAction.findUnique({ where: { id: parseInt(id) } });
+    console.log('Found quickAction:', { qa });
+    if (!qa || qa.householdId !== parseInt(householdId)) {
+      console.warn('Quick action not found or household mismatch', { requestedId: id, householdId, found: qa });
+      return res.status(404).json({ error: 'Quick action not found', details: `requestedId=${id}, householdId=${householdId}, found=${qa ? 'exists' : 'missing'}` });
+    }
+
+    const payload = qa.data || {};
+
+    // Allow client to override target pets by sending { petId } or { petIds } in the POST body.
+    const overridePetId = req.body?.petId;
+    const overridePetIds = req.body?.petIds;
+
+    // Determine target pet ids
+    let targetIds = [];
+    if (overridePetIds && Array.isArray(overridePetIds) && overridePetIds.length > 0) {
+      // validate override pet ids belong to household
+      const pets = await prisma.pet.findMany({ where: { householdId: parseInt(householdId), id: { in: overridePetIds.map(id => parseInt(id)) } }, select: { id: true } });
+      targetIds = pets.map(p => p.id);
+    } else if (overridePetId) {
+      const pet = await prisma.pet.findUnique({ where: { id: parseInt(overridePetId) }, select: { id: true, householdId: true } });
+      if (pet && pet.householdId === parseInt(householdId)) targetIds = [pet.id];
+      else targetIds = [];
+    } else if (payload.applyToAll) {
+      const pets = await prisma.pet.findMany({ where: { householdId: parseInt(householdId) }, select: { id: true } });
+      targetIds = pets.map(p => p.id);
+    } else if (Array.isArray(payload.petIds) && payload.petIds.length > 0) {
+      // ensure petIds belong to household
+      const pets = await prisma.pet.findMany({ where: { householdId: parseInt(householdId), id: { in: payload.petIds.map(id => parseInt(id)) } }, select: { id: true } });
+      targetIds = pets.map(p => p.id);
+    } else {
+      return res.status(400).json({ error: 'No target pets found for quick action' });
+    }
+
+    // For each target pet, create or find activityType by name (qa.key) and create activity
+    const created = [];
+    for (const pid of targetIds) {
+      // find or create activity type for this pet
+      let activityTypeId = null;
+      if (qa.key) {
+        const existing = await prisma.activityType.findFirst({ where: { petId: pid, name: qa.key } });
+        if (existing) activityTypeId = existing.id;
+        else {
+          const createdType = await prisma.activityType.create({ data: { petId: pid, name: qa.key, frequency: 'on-demand' } });
+          activityTypeId = createdType.id;
+        }
+      } else {
+        return res.status(400).json({ error: 'Quick action missing activity key' });
+      }
+
+      const activity = await prisma.activity.create({
+        data: {
+          petId: pid,
+          activityTypeId,
+          userId: req.user.userId,
+          timestamp: new Date(),
+          notes: payload.notes || null,
+          data: payload.data || {}
+        },
+        include: {
+          activityType: true,
+          user: { select: { id: true, name: true } }
+        }
+      });
+
+      created.push(activity);
+    }
+
+    res.json(created.sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp)));
+  } catch (err) {
+    console.error('Replay quick action error:', err);
+    // Return error message in development for easier debugging
+    const payload = { error: err.message || 'Internal server error' };
+    if (process.env.NODE_ENV === 'development') payload.details = err.stack;
+    res.status(500).json(payload);
+  }
+});
+
 // ============================================================================
 // PET ROUTES
 // ============================================================================

@@ -27,41 +27,42 @@ model User {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   // Relations
-  households   HouseholdMember[]
-  activities   Activity[]
+  households HouseholdMember[]
+  activities Activity[]
 
   @@map("users")
 }
 
 model Household {
-  id               Int      @id @default(autoincrement())
-  name             String
-  address          String?
-  city             String?
-  state            String?
-  zipCode          String?  @map("zip_code")
-  country          String?
-  numberOfMembers  Int?     @map("number_of_members")
-  notes            String?  @db.Text
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id              Int      @id @default(autoincrement())
+  name            String
+  address         String?
+  city            String?
+  state           String?
+  zipCode         String?  @map("zip_code")
+  country         String?
+  numberOfMembers Int?     @map("number_of_members")
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   // Relations
-  members HouseholdMember[]
-  pets    Pet[]
+  members      HouseholdMember[]
+  pets         Pet[]
+  quickActions QuickAction[]
 
   @@map("households")
 }
 
 model HouseholdMember {
-  id          Int      @id @default(autoincrement())
-  householdId Int      @map("household_id")
-  userId      Int?     @map("user_id") // null if invitation pending
-  invitedEmail String? @map("invited_email") // email of invited user (null if already joined)
-  role        String   @default("member") // owner, member, sitter
-  startDate   DateTime? @map("start_date") // for temporary sitters
-  endDate     DateTime? @map("end_date")   // for temporary sitters
-  createdAt   DateTime @default(now()) @map("created_at")
+  id           Int       @id @default(autoincrement())
+  householdId  Int       @map("household_id")
+  userId       Int?      @map("user_id") // null if invitation pending
+  invitedEmail String?   @map("invited_email") // email of invited user (null if already joined)
+  role         String    @default("member") // owner, member, sitter
+  startDate    DateTime? @map("start_date") // for temporary sitters
+  endDate      DateTime? @map("end_date") // for temporary sitters
+  createdAt    DateTime  @default(now()) @map("created_at")
 
   // Relations
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
@@ -73,26 +74,26 @@ model HouseholdMember {
 }
 
 model Pet {
-  id          Int      @id @default(autoincrement())
-  householdId Int      @map("household_id")
-  name        String
-  species     String   // dog, cat, bird, etc.
-  breed       String?
-  age         Int?
-  weight      Float?
-  weightUnit  String?  @map("weight_unit")
-  photoUrl    String?  @map("photo_url")
-  photoOffsetX Float   @default(50) @map("photo_offset_x")
-  photoOffsetY Float   @default(50) @map("photo_offset_y")
-  notes       String?  @db.Text
+  id           Int      @id @default(autoincrement())
+  householdId  Int      @map("household_id")
+  name         String
+  species      String // dog, cat, bird, etc.
+  breed        String?
+  age          Int?
+  weight       Float?
+  weightUnit   String?  @map("weight_unit")
+  photoUrl     String?  @map("photo_url")
+  photoOffsetX Float    @default(50) @map("photo_offset_x")
+  photoOffsetY Float    @default(50) @map("photo_offset_y")
+  notes        String?  @db.Text
   // Vet information
-  vetName     String?  @map("vet_name")
-  vetLocation String?  @map("vet_location")
-  vetContact  String?  @map("vet_contact") // phone number
+  vetName      String?  @map("vet_name")
+  vetLocation  String?  @map("vet_location")
+  vetContact   String?  @map("vet_contact") // phone number
   // Food information
-  primaryFood String?  @map("primary_food") // kibbles, wet food, raw, etc.
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  primaryFood  String?  @map("primary_food") // kibbles, wet food, raw, etc.
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   // Relations
   household     Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
@@ -103,14 +104,14 @@ model Pet {
 }
 
 model ActivityType {
-  id          Int      @id @default(autoincrement())
-  petId       Int      @map("pet_id")
-  name        String   // feeding, walk, medication, water, vet, custom
-  frequency   String?  // scheduled, on-demand
-  reminderTime String? @map("reminder_time") // HH:MM format for daily reminders
-  isActive    Boolean  @default(true) @map("is_active")
-  config      Json?    // flexible JSON for type-specific settings
-  createdAt   DateTime @default(now()) @map("created_at")
+  id           Int      @id @default(autoincrement())
+  petId        Int      @map("pet_id")
+  name         String // feeding, walk, medication, water, vet, custom
+  frequency    String? // scheduled, on-demand
+  reminderTime String?  @map("reminder_time") // HH:MM format for daily reminders
+  isActive     Boolean  @default(true) @map("is_active")
+  config       Json? // flexible JSON for type-specific settings
+  createdAt    DateTime @default(now()) @map("created_at")
 
   // Relations
   pet        Pet        @relation(fields: [petId], references: [id], onDelete: Cascade)
@@ -127,7 +128,7 @@ model Activity {
   timestamp      DateTime @default(now())
   notes          String?  @db.Text
   photoUrl       String?  @map("photo_url")
-  data           Json?    // flexible JSON for activity-specific data (food type, amount, etc.)
+  data           Json? // flexible JSON for activity-specific data (food type, amount, etc.)
   createdAt      DateTime @default(now()) @map("created_at")
 
   // Relations
@@ -137,4 +138,21 @@ model Activity {
 
   @@index([petId, timestamp])
   @@map("activities")
+}
+
+// Quick actions available to a household (server-backed)
+model QuickAction {
+  id          Int      @id @default(autoincrement())
+  householdId Int      @map("household_id")
+  key         String // e.g., 'walk', 'feeding', 'medication'
+  label       String
+  icon        String?
+  ord         Int      @default(0)
+  data        Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId, ord])
+  @@map("quick_actions")
 }

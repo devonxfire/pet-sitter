@@ -12,7 +12,7 @@ const ACTIVITY_TYPES = [
   { id: 'other', label: 'Other', icon: '📝', color: 'bg-gray-100' }
 ];
 
-export default function LogActivity({ petId, household, activity, onActivityLogged, onActivityDeleted, onClose }) {
+export default function LogActivity({ petId, household, activity, onActivityLogged, onActivityDeleted, onClose, onQuickActionsUpdated }) {
   const [step, setStep] = useState(activity ? 'edit' : 'selectType'); // selectType -> timing -> happened/schedule -> details -> reminder (if upcoming)
   const [selectedType, setSelectedType] = useState(activity?.activityType?.name || '');
   const [timing, setTiming] = useState(''); // 'happened' or 'upcoming'
@@ -30,6 +30,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
   const isEditing = !!activity;
+  const [addToQuickActions, setAddToQuickActions] = useState(false);
 
   const handleScheduleSubmit = () => {
     if (timing === 'upcoming') {
@@ -77,11 +78,12 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
             notes: notes || null
           })
         });
-        console.log('✅ Activity updated:', data);
         onActivityLogged(data);
       } else {
         // Create new activity(s) for selected pet(s)
-        const petIdsToSend = selectedPetIds && selectedPetIds.length > 0 ? selectedPetIds : (petId ? [petId] : []);
+        const petIdsToSend = (selectedPetIds && selectedPetIds.length > 0)
+          ? selectedPetIds.map(id => parseInt(id))
+          : (petId ? [parseInt(petId)] : []);
         if (petIdsToSend.length === 0) {
           throw new Error('Please select at least one pet to apply this activity to.');
         }
@@ -97,14 +99,37 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
         }));
 
         const results = await Promise.all(promises);
-        results.forEach((res) => {
-          console.log('✅ Activity logged:', res);
-          // notify parent for each created activity
-          onActivityLogged(res);
-        });
+        results.forEach((res) => onActivityLogged(res));
+
+        // Optionally save as a server-backed quick action
+        if (addToQuickActions && selectedType) {
+          if (household?.id) {
+            const typeDef = ACTIVITY_TYPES.find(t => t.id === selectedType) || {};
+            const snapshot = {
+              key: selectedType,
+              label: typeDef.label || selectedType,
+              icon: typeDef.icon || null,
+              data: { petIds: selectedPetIds, applyToAll: allSelected, notes: notes || '', data: {} }
+            };
+            try {
+              await apiFetch(`/api/households/${household.id}/quick-actions`, {
+                method: 'POST',
+                body: JSON.stringify(snapshot)
+              });
+              // Notify parent to refresh quick actions list
+              try { if (typeof onQuickActionsUpdated === 'function') await onQuickActionsUpdated(); } catch (e) { console.warn('onQuickActionsUpdated callback failed', e); }
+            } catch (err) {
+              console.error('Failed to save quick action to server', err);
+            }
+          } else {
+            console.warn('No household context; quick actions require server-backed household. Skipping save.');
+          }
+        }
       }
+
       onClose();
     } catch (err) {
+      console.error('Failed to save activity', err);
       setError(err.message || 'Failed to save activity');
     } finally {
       setLoading(false);
@@ -112,29 +137,28 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this activity?')) {
-      return;
-    }
+    if (!activity) return;
+    if (!window.confirm('Are you sure you want to delete this activity?')) return;
 
     setError('');
     setDeleting(true);
 
     try {
-      await apiFetch(`/api/activities/${activity.id}`, {
-        method: 'DELETE'
-      });
+      await apiFetch(`/api/activities/${activity.id}`, { method: 'DELETE' });
       console.log('✅ Activity deleted');
-      onActivityDeleted(activity.id);
+      if (typeof onActivityDeleted === 'function') onActivityDeleted(activity.id);
+      else if (typeof onActivityLogged === 'function') onActivityLogged(null);
       onClose();
     } catch (err) {
+      console.error('Failed to delete activity', err);
       setError(err.message || 'Failed to delete activity');
       setDeleting(false);
     }
   };
-
   const selectedActivity = ACTIVITY_TYPES.find(t => t.id === selectedType);
   const [pets, setPets] = useState([]);
-  const [selectedPetIds, setSelectedPetIds] = useState(petId ? [petId] : []);
+  // normalize to numbers so comparisons and paras work reliably
+  const [selectedPetIds, setSelectedPetIds] = useState(petId ? [parseInt(petId)] : []);
 
   const allSelected = pets.length > 0 && selectedPetIds.length === pets.length;
 
@@ -147,18 +171,17 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           const data = await apiFetch(`/api/households/${household.id}/pets`);
           if (!mounted) return;
           setPets(data || []);
-          // If no selectedPetIds yet, default to petId
-          if ((!selectedPetIds || selectedPetIds.length === 0) && petId) {
-            setSelectedPetIds([petId]);
-          }
+          // If no selectedPetIds yet, default to the current pet page (as a number)
+          setSelectedPetIds((current) => {
+            if (current && current.length > 0) return current;
+            return petId ? [parseInt(petId)] : [];
+          });
         } catch (err) {
           console.error('Failed to load household pets:', err);
         }
       } else {
         // No household provided; ensure current petId is selected
-        if (petId && (!selectedPetIds || selectedPetIds.length === 0)) {
-          setSelectedPetIds([petId]);
-        }
+        if (petId) setSelectedPetIds([parseInt(petId)]);
       }
     }
     loadPets();
@@ -525,7 +548,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
                     checked={allSelected}
                     onChange={(e) => {
                       if (e.target.checked) setSelectedPetIds(pets.map(p => p.id));
-                      else setSelectedPetIds(petId ? [petId] : []);
+                      else setSelectedPetIds(petId ? [parseInt(petId)] : []);
                     }}
                     className="w-4 h-4"
                   />
@@ -536,21 +559,26 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
                 {pets.length === 0 ? (
                   <p className="text-sm text-gray-500">No other pets found in household.</p>
                 ) : (
-                  pets.map((p) => (
-                    <label key={p.id} className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedPetIds.includes(p.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) setSelectedPetIds((s) => [...new Set([...(s||[]), p.id])]);
-                          else setSelectedPetIds((s) => (s || []).filter(id => id !== p.id));
-                        }}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-gray-700">{p.name}</span>
-                      <span className="text-sm text-gray-400">({p.species})</span>
-                    </label>
-                  ))
+                  pets.map((p) => {
+                    const isCurrent = petId && parseInt(petId) === p.id;
+                    return (
+                      <label key={p.id} className={`flex items-center gap-3 ${isCurrent ? 'opacity-70' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={selectedPetIds.includes(p.id)}
+                          disabled={isCurrent}
+                          onChange={(e) => {
+                            if (isCurrent) return; // should be impossible since disabled, but guard
+                            if (e.target.checked) setSelectedPetIds((s) => [...new Set([...(s||[]), p.id])]);
+                            else setSelectedPetIds((s) => (s || []).filter(id => id !== p.id));
+                          }}
+                          className="w-4 h-4"
+                        />
+                        <span className={`text-gray-700 ${isCurrent ? 'font-semibold' : ''}`}>{p.name}</span>
+                        <span className="text-sm text-gray-400">({p.species})</span>
+                      </label>
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -569,6 +597,21 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
               className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-accent focus:outline-none"
             />
           </div>
+
+          {/* Quick Actions opt-in */}
+          {!isEditing && (
+            <div>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={addToQuickActions}
+                  onChange={(e) => setAddToQuickActions(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm text-gray-700">Add this activity to Quick Actions</span>
+              </label>
+            </div>
+          )}
 
           {/* Photo Upload - Placeholder for future */}
           {!isEditing && (

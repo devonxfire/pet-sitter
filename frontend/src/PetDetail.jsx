@@ -15,6 +15,9 @@ export default function PetDetail({ household, user, onSignOut }) {
   const [showLogActivity, setShowLogActivity] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
   const [activityFilter, setActivityFilter] = useState('all'); // 'all', 'past', 'upcoming'
+  const [quickActions, setQuickActions] = useState([]);
+  const [showManageQuickActions, setShowManageQuickActions] = useState(false);
+  const quickActionsRef = useRef(null);
   const [editingSection, setEditingSection] = useState(null); // 'general', 'vet', 'food'
   const [editValues, setEditValues] = useState({});
   const [savingSection, setSavingSection] = useState(false);
@@ -60,6 +63,141 @@ export default function PetDetail({ household, user, onSignOut }) {
       // no-op cleanup
     };
   }, [petId]);
+
+  // Load quick actions from server; fall back to localStorage
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        if (household?.id) {
+          const serverActions = await apiFetch(`/api/households/${household.id}/quick-actions`);
+          if (mounted && Array.isArray(serverActions)) {
+            // normalize to { id, key, label, icon, data }
+            setQuickActions(serverActions.map(a => ({ id: a.id, key: a.key, label: a.label, icon: a.icon, data: a.data || null })));
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load quick actions from server:', err.message || err);
+      }
+
+      // If server fetch fails or no household, set empty list (server-backed only)
+      if (mounted) setQuickActions([]);
+    };
+    load();
+    return () => { mounted = false; };
+  }, [household?.id]);
+
+  // Expose a loader so child components can refresh quick actions after changes
+  const loadQuickActions = async () => {
+    try {
+      if (!household?.id) return;
+      const serverActions = await apiFetch(`/api/households/${household.id}/quick-actions`);
+      if (Array.isArray(serverActions)) {
+        setQuickActions(serverActions.map(a => ({ id: a.id, key: a.key, label: a.label, icon: a.icon, data: a.data || null })));
+      }
+    } catch (err) {
+      console.warn('Failed to refresh quick actions:', err);
+    }
+  };
+
+  const createQuickAction = async (action) => {
+      // action: { key, label, icon, data }
+    try {
+      // Preferred flow: call server-side replay endpoint when action has an id and household is known
+      if (!household?.id) {
+        alert('No household context available. Quick Actions require a household.');
+        return;
+      }
+
+      if (!action?.id) {
+        console.error('Quick action missing id', { action });
+        alert('Quick action is missing an id. Try refreshing the Quick Actions list.');
+        return;
+      }
+
+      if (action.id && household?.id) {
+        // Use raw fetch so we can show server error details if the replay fails
+        const token = localStorage.getItem('token');
+        const replayUrl = apiUrl(`/api/households/${household.id}/quick-actions/${action.id}/replay`);
+        console.log('Replay request', { replayUrl, householdId: household?.id, actionId: action?.id });
+        const resp = await fetch(replayUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ petId: petId ? parseInt(petId) : undefined })
+        });
+
+        let body = null;
+        try { body = await resp.json(); } catch (e) { body = null; }
+
+        console.log('Replay response', { status: resp.status, body });
+
+        if (!resp.ok) {
+          console.error('Replay error payload:', body);
+          const msg = body?.error || (body?.message) || `HTTP ${resp.status}`;
+          const details = body?.details ? `\n\n${body.details}` : '';
+          alert(`Failed to replay quick action: ${msg}${details}`);
+          return;
+        }
+
+        const created = body;
+        if (Array.isArray(created) && created.length > 0) {
+          setActivities((prev) => [...created, ...(prev || [])]);
+        }
+        // refresh quick actions list
+        try {
+          const serverActions = await apiFetch(`/api/households/${household.id}/quick-actions`);
+          if (Array.isArray(serverActions)) setQuickActions(serverActions.map(a => ({ id: a.id, key: a.key, label: a.label, icon: a.icon, data: a.data || null })));
+        } catch (err) {
+          // ignore
+        }
+        return;
+      }
+
+      // Non-server quick-actions are not supported anymore
+      alert('This quick action is not available. Quick Actions are server-backed only.');
+    } catch (err) {
+      console.error('Failed to create quick action activity', err);
+      alert(err.message || 'Failed to create activity');
+    }
+  };
+
+  const handleDeleteActivity = async (activityId) => {
+    if (!confirm('Delete this activity? This cannot be undone.')) return;
+    try {
+      await apiFetch(`/api/activities/${activityId}`, { method: 'DELETE' });
+      setActivities((prev) => prev.filter(a => a.id !== activityId));
+      if (editingActivity && editingActivity.id === activityId) setEditingActivity(null);
+    } catch (err) {
+      console.error('Failed to delete activity', err);
+      alert(err.message || 'Failed to delete activity');
+    }
+  };
+
+  const handleDeleteQuickAction = async (qa) => {
+    try {
+      if (!confirm('Delete this Quick Action? This will remove the shortcut but will NOT delete any previously logged activities.')) return;
+
+      if (qa.id && household?.id) {
+        const resp = await apiFetch(`/api/households/${household.id}/quick-actions/${qa.id}`, { method: 'DELETE' });
+        console.log('Deleted quick action response', resp);
+      } else {
+        throw new Error('Cannot delete quick action: not a server-backed action');
+      }
+
+      // refresh list
+      const serverActions = await apiFetch(`/api/households/${household.id}/quick-actions`);
+      setQuickActions(serverActions.map(a => ({ id: a.id, key: a.key, label: a.label, icon: a.icon, data: a.data || null })));
+    } catch (err) {
+      console.error('Failed to delete quick action', err);
+      alert(err.message || 'Failed to delete quick action');
+    }
+  };
+
+  const renderedQuickActions = quickActions || [];
 
   const clamp = (value, min = 0, max = 100) => Math.min(max, Math.max(min, value));
 
@@ -188,6 +326,8 @@ export default function PetDetail({ household, user, onSignOut }) {
         <div className="flex items-center justify-center py-12">
           <p className="text-gray-400">Loading...</p>
         </div>
+
+        
       </div>
     );
   }
@@ -269,6 +409,7 @@ export default function PetDetail({ household, user, onSignOut }) {
             >
               ➕
             </button>
+            
             <input
               ref={fileInputRef}
               type="file"
@@ -429,6 +570,178 @@ export default function PetDetail({ household, user, onSignOut }) {
           )}
         </div>
 
+        {/* Activity Timeline */}
+        <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="border-b border-gray-200">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">Activity Timeline</h2>
+            {activities.length > 0 && (
+              <button
+                onClick={() => setShowLogActivity(true)}
+                className="bg-accent text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
+              >
+                Create New Activity
+              </button>
+            )}
+          </div>
+
+          {activities.length > 0 && (
+            <div className="flex gap-3 mb-8">
+              <button
+                onClick={() => {
+                  setActivityFilter('quick');
+                  setTimeout(() => quickActionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  activityFilter === 'quick'
+                    ? 'bg-accent text-gray-900'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Quick Actions
+              </button>
+              <button
+                onClick={() => setActivityFilter('all')}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  activityFilter === 'all'
+                    ? 'bg-accent text-gray-900'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setActivityFilter('past')}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  activityFilter === 'past'
+                    ? 'bg-accent text-gray-900'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                ✓ Past
+              </button>
+              <button
+                onClick={() => setActivityFilter('upcoming')}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  activityFilter === 'upcoming'
+                    ? 'bg-accent text-gray-900'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                📅 Upcoming
+              </button>
+            </div>
+          )}
+
+          {(() => {
+            if (activities.length === 0) {
+              return (
+                <div className="text-center py-12 bg-gray-50 rounded-xl">
+                  <p className="text-gray-500">No activities logged yet</p>
+                  <button
+                    onClick={() => setShowLogActivity(true)}
+                    className="mt-4 bg-accent text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
+                  >
+                    Create First Activity
+                  </button>
+                </div>
+              );
+            }
+
+            if (activityFilter === 'quick') {
+              if (renderedQuickActions.length === 0) {
+                return (
+                  <div className="text-center py-12 bg-gray-50 rounded-xl">
+                    <p className="text-gray-500">No current quick actions</p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-4">
+                  {renderedQuickActions.map((qa) => (
+                    <div key={`qa-${qa.id}`} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-2">
+                          <p className="font-semibold text-gray-900">{qa.label}</p>
+                          <time className="text-sm text-gray-500">{qa.createdAt ? new Date(qa.createdAt).toLocaleString() : ''}</time>
+                        </div>
+                        {qa.data?.notes && (
+                          <p className="text-gray-700 text-sm">{qa.data.notes}</p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-2">Quick Action</p>
+                      </div>
+                      <div className="ml-4 flex items-center gap-2">
+                        <button
+                          onClick={() => createQuickAction(qa)}
+                          className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition"
+                        >
+                          Log
+                        </button>
+                        <button
+                          onClick={() => handleDeleteQuickAction(qa)}
+                          className="px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-100 rounded-lg transition"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            }
+
+            if (filteredActivities.length === 0) {
+              return (
+                <div className="text-center py-12 bg-gray-50 rounded-xl">
+                  <p className="text-gray-500">
+                    {activityFilter === 'past' && 'No past activities'}
+                    {activityFilter === 'upcoming' && 'No upcoming activities'}
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-4">
+                {filteredActivities.map((activity) => (
+                  <div key={activity.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-2">
+                        <p className="font-semibold text-gray-900">
+                          {activity.activityType?.name || 'Activity'}
+                        </p>
+                        <time className="text-sm text-gray-500">
+                          {new Date(activity.timestamp).toLocaleString()}
+                        </time>
+                      </div>
+                      {activity.notes && (
+                        <p className="text-gray-700 text-sm">{activity.notes}</p>
+                      )}
+                      {activity.user && (
+                        <p className="text-xs text-gray-500 mt-2">by {activity.user.name}</p>
+                      )}
+                    </div>
+                    <div className="ml-4 flex items-center gap-2">
+                      <button
+                        onClick={() => setEditingActivity(activity)}
+                        className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteActivity(activity.id)}
+                        className="px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-100 rounded-lg transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+
         {/* Vet Information Section */}
         {(pet.vetName || pet.vetLocation || pet.vetContact) && (
           <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="border-b border-gray-200">
@@ -585,103 +898,7 @@ export default function PetDetail({ household, user, onSignOut }) {
           </div>
         )}
 
-        {/* Activity Timeline */}
-        <div>
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Activity Timeline</h2>
-            {activities.length > 0 && (
-              <button
-                onClick={() => setShowLogActivity(true)}
-                className="bg-accent text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
-              >
-                Create New Activity
-              </button>
-            )}
-          </div>
-
-          {activities.length > 0 && (
-            <div className="flex gap-3 mb-8">
-              <button
-                onClick={() => setActivityFilter('all')}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  activityFilter === 'all'
-                    ? 'bg-accent text-gray-900'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setActivityFilter('past')}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  activityFilter === 'past'
-                    ? 'bg-accent text-gray-900'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                ✓ Past
-              </button>
-              <button
-                onClick={() => setActivityFilter('upcoming')}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  activityFilter === 'upcoming'
-                    ? 'bg-accent text-gray-900'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                📅 Upcoming
-              </button>
-            </div>
-          )}
-
-          {activities.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-xl">
-              <p className="text-gray-500">No activities logged yet</p>
-              <button
-                onClick={() => setShowLogActivity(true)}
-                className="mt-4 bg-accent text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
-              >
-                Create First Activity
-              </button>
-            </div>
-          ) : filteredActivities.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-xl">
-              <p className="text-gray-500">
-                {activityFilter === 'past' && 'No past activities'}
-                {activityFilter === 'upcoming' && 'No upcoming activities'}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredActivities.map((activity) => (
-                <div key={activity.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
-                      <p className="font-semibold text-gray-900">
-                        {activity.activityType?.name || 'Activity'}
-                      </p>
-                      <time className="text-sm text-gray-500">
-                        {new Date(activity.timestamp).toLocaleString()}
-                      </time>
-                    </div>
-                    {activity.notes && (
-                      <p className="text-gray-700 text-sm">{activity.notes}</p>
-                    )}
-                    {activity.user && (
-                      <p className="text-xs text-gray-500 mt-2">by {activity.user.name}</p>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => setEditingActivity(activity)}
-                    className="ml-4 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition"
-                  >
-                    Edit
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        
         </div>
       </main>
 
@@ -694,6 +911,7 @@ export default function PetDetail({ household, user, onSignOut }) {
             setShowLogActivity(false);
           }}
           onClose={() => setShowLogActivity(false)}
+          onQuickActionsUpdated={loadQuickActions}
         />
       )}
 
@@ -715,6 +933,7 @@ export default function PetDetail({ household, user, onSignOut }) {
             setEditingActivity(null);
           }}
           onClose={() => setEditingActivity(null)}
+          onQuickActionsUpdated={loadQuickActions}
         />
       )}
     </div>
