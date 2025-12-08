@@ -416,6 +416,11 @@ app.post('/api/households/:householdId/quick-actions/:id/replay', authenticateTo
 
     // For each target pet, create or find activityType by name (qa.key) and create activity
     const created = [];
+    // Allow client to pass a timestamp override (ISO string). Fallback to payload.timestamp, then server time.
+    const overrideTimestamp = req.body?.timestamp || (payload && payload.timestamp);
+    let parsedOverrideTs = overrideTimestamp ? new Date(overrideTimestamp) : null;
+    if (parsedOverrideTs && isNaN(parsedOverrideTs.getTime())) parsedOverrideTs = null;
+
     for (const pid of targetIds) {
       // find or create activity type for this pet
       let activityTypeId = null;
@@ -435,7 +440,7 @@ app.post('/api/households/:householdId/quick-actions/:id/replay', authenticateTo
           petId: pid,
           activityTypeId,
           userId: req.user.userId,
-          timestamp: new Date(),
+          timestamp: parsedOverrideTs ? parsedOverrideTs : new Date(),
           notes: payload.notes || null,
           data: payload.data || {}
         },

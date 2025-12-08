@@ -17,10 +17,16 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   const [selectedType, setSelectedType] = useState(activity?.activityType?.name || '');
   const [timing, setTiming] = useState(''); // 'happened' or 'upcoming'
   const [notes, setNotes] = useState(activity?.notes || '');
+
+  // Helper to format a Date into a `datetime-local` input value in local time
+  const toLocalInputValue = (date) => {
+    if (!(date instanceof Date)) date = new Date(date);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
   const [timestamp, setTimestamp] = useState(
-    activity 
-      ? new Date(activity.timestamp).toISOString().slice(0, 16)
-      : new Date().toISOString().slice(0, 16)
+    activity ? toLocalInputValue(new Date(activity.timestamp)) : toLocalInputValue(new Date())
   );
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState('30'); // minutes before
@@ -48,7 +54,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   const handleTimingSelect = (timingChoice) => {
     setTiming(timingChoice);
     if (timingChoice === 'happened') {
-      setTimestamp(new Date().toISOString().slice(0, 16));
+      setTimestamp(toLocalInputValue(new Date()));
       setStep('happened');
     } else {
       setStep('schedule');

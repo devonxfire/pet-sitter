@@ -30,9 +30,29 @@ export default function PetDetail({ household, user, onSignOut }) {
     return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
+  // Parse timestamp strings reliably. If the string lacks timezone info, assume UTC
+  // so displayed local time matches the moment intended by the server/client.
+  const parseTimestamp = (ts) => {
+    if (!ts) return new Date(NaN);
+    try {
+      if (typeof ts === 'string') {
+        // ISO-like without timezone (e.g. "2025-12-08T10:00:00" or "2025-12-08T10:00")
+        const isoLike = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(Z)?$/;
+        const m = ts.match(isoLike);
+        if (m) {
+          // If there's no trailing Z (timezone), treat it as UTC by appending Z.
+          if (!m[1]) return new Date(ts + 'Z');
+        }
+      }
+      return new Date(ts);
+    } catch (e) {
+      return new Date(ts);
+    }
+  };
+
   // Filter activities based on selected filter
   const filteredActivities = activities.filter(activity => {
-    const activityTime = new Date(activity.timestamp);
+    const activityTime = parseTimestamp(activity.timestamp);
     const now = new Date();
     if (activityFilter === 'past') return activityTime <= now;
     if (activityFilter === 'upcoming') return activityTime > now;
@@ -41,7 +61,7 @@ export default function PetDetail({ household, user, onSignOut }) {
 
   // Determine latest activity for display in header
   const latestActivity = (activities && activities.length > 0)
-    ? activities.slice().sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]
+    ? activities.slice().sort((a, b) => parseTimestamp(b.timestamp) - parseTimestamp(a.timestamp))[0]
     : null;
 
   const getActivityIcon = (name) => {
@@ -145,7 +165,7 @@ export default function PetDetail({ household, user, onSignOut }) {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {})
           },
-          body: JSON.stringify({ petId: petId ? parseInt(petId) : undefined })
+          body: JSON.stringify({ petId: petId ? parseInt(petId) : undefined, timestamp: new Date().toISOString() })
         });
 
         let body = null;
@@ -718,7 +738,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                             : 'Activity')}
                         </p>
                         <time className="text-sm text-gray-500">
-                          {new Date(activity.timestamp).toLocaleString()}
+                          {parseTimestamp(activity.timestamp).toLocaleString()}
                         </time>
                       </div>
                       {activity.notes && (

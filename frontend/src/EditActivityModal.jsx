@@ -2,8 +2,29 @@ import React, { useState } from 'react';
 import { apiFetch } from './api';
 
 export default function EditActivityModal({ activity, onActivityUpdated, onClose }) {
+  // Parse timestamp robustly and produce a local datetime-local input value
+  const parseTimestamp = (ts) => {
+    if (!ts) return new Date(NaN);
+    try {
+      if (typeof ts === 'string') {
+        const isoLike = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(Z)?$/;
+        const m = ts.match(isoLike);
+        if (m && !m[1]) return new Date(ts + 'Z');
+      }
+      return new Date(ts);
+    } catch (e) {
+      return new Date(ts);
+    }
+  };
+
+  const toLocalInputValue = (date) => {
+    if (!(date instanceof Date)) date = new Date(date);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
   const [timestamp, setTimestamp] = useState(
-    new Date(activity.timestamp).toISOString().slice(0, 16)
+    toLocalInputValue(parseTimestamp(activity.timestamp))
   );
   const [notes, setNotes] = useState(activity.notes || '');
   const [loading, setLoading] = useState(false);
