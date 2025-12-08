@@ -39,6 +39,24 @@ export default function PetDetail({ household, user, onSignOut }) {
     return true; // 'all'
   });
 
+  // Determine latest activity for display in header
+  const latestActivity = (activities && activities.length > 0)
+    ? activities.slice().sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]
+    : null;
+
+  const getActivityIcon = (name) => {
+    if (!name) return '•';
+    const key = name.toLowerCase();
+    if (key.includes('feed')) return '🍽️';
+    if (key.includes('walk')) return '🚶';
+    if (key.includes('water')) return '💧';
+    if (key.includes('groom')) return '🛁';
+    if (key.includes('medicat')) return '💊';
+    if (key.includes('play')) return '🎾';
+    if (key.includes('photo')) return '📸';
+    return '📝';
+  };
+
   useEffect(() => {
     const fetchPetDetails = async () => {
       try {
@@ -372,67 +390,77 @@ export default function PetDetail({ household, user, onSignOut }) {
     <div className="min-h-screen bg-white">
       <TopNav user={user} household={household} onSignOut={onSignOut} />
 
-      <main className="flex justify-center py-16">
+      <main className="flex justify-center py-6">
         <div className="max-w-6xl px-6 w-full">
-          <div className="flex items-center justify-between mb-12">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="text-gray-600 hover:text-gray-900 font-medium"
-            >
-              ← Back
-            </button>
-        </div>
 
-        {/* Pet Name */}
-        <div className="mb-8 flex flex-col items-center gap-6">
-          {/* Circular Photo */}
-          <div className="relative">
-            <div
-              ref={photoContainerRef}
-              className="w-40 h-40 rounded-full bg-gray-200 border-4 border-gray-300 flex items-center justify-center overflow-hidden"
-            >
-              {pet.photoUrl ? (
-                <img
-                  src={resolvePhotoUrl(pet.photoUrl)}
-                  alt={pet.name}
-                  className="w-full h-full object-cover select-none"
-                  draggable={false}
-                />
-              ) : (
-                <div className="text-gray-400 text-6xl">📷</div>
+        {/* Compact Header + General Section */}
+        <div className="mb-6 border-b border-gray-200 py-6">
+          <div className="flex items-start justify-between gap-6">
+            <div className="flex items-start gap-8">
+              <div className="flex flex-col items-start gap-4">
+                <div className="relative">
+                  <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center overflow-hidden">
+                    {pet.photoUrl ? (
+                      <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet.name} className="w-full h-full object-cover select-none" draggable={false} />
+                    ) : (
+                      <div className="text-gray-400 text-4xl">📷</div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute -bottom-1 -right-3 bg-accent hover:opacity-90 text-white rounded-full w-10 h-10 flex items-center justify-center cursor-pointer transition text-sm"
+                    type="button"
+                    aria-label="Change photo"
+                  >
+                    +
+                  </button>
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => handlePhotoUpload(e)} className="hidden" />
+                </div>
+
+                {/* Compact latest activity pill under avatar */}
+                {latestActivity ? (
+                  <div className="mt-4 flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Latest Activity:</span>
+                    <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-sm">
+                      <span className="text-lg">{getActivityIcon(latestActivity.activityType?.name)}</span>
+                      <span className="font-semibold text-gray-900">{(latestActivity.activityType?.name
+                        ? `${latestActivity.activityType.name.charAt(0).toUpperCase()}${latestActivity.activityType.name.slice(1)}`
+                        : 'Activity')}</span>
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="flex-1">
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900">{pet.name}</h1>
+                <div className="mt-6 grid grid-cols-2 gap-4 text-sm text-gray-600">
+                  <div>
+                    <p className="text-xs text-gray-500">Species</p>
+                    <p className="font-semibold text-gray-900">{pet.species ? (pet.species.charAt(0).toUpperCase() + pet.species.slice(1)) : ''}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Breed</p>
+                    <p className="font-semibold text-gray-900">{pet.breed || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Age</p>
+                    <p className="font-semibold text-gray-900">{pet.age ? `${pet.age} years` : '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Weight</p>
+                    <p className="font-semibold text-gray-900">{pet.weight ? `${pet.weight} ${pet.weightUnit || 'lbs'}` : '-'}</p>
+                  </div>
+                </div>
+
+               
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              {editingSection !== 'general' && (
+                <button onClick={() => startEditingSection('general')} className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition">Edit</button>
               )}
             </div>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0 right-0 bg-accent hover:opacity-90 text-white rounded-full w-12 h-12 flex items-center justify-center cursor-pointer transition text-lg"
-              type="button"
-            >
-              ➕
-            </button>
-            
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={(e) => handlePhotoUpload(e)}
-              className="hidden"
-            />
-          </div>
-          <h1 className="text-5xl font-bold text-gray-900 text-center">{pet.name}</h1>
-        </div>
-
-        {/* General Section */}
-        <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="border-b border-gray-200">
-          <div className="flex items-center justify-between mb-16">
-            <h2 className="text-2xl font-bold text-gray-900">General</h2>
-            {editingSection !== 'general' && (
-              <button
-                onClick={() => startEditingSection('general')}
-                className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition"
-              >
-                Edit
-              </button>
-            )}
           </div>
 
           {editingSection === 'general' ? (
@@ -537,30 +565,7 @@ export default function PetDetail({ household, user, onSignOut }) {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div>
-                <p className="text-sm text-gray-500">Species</p>
-                <p className="text-lg font-semibold text-gray-900">{pet.species.charAt(0).toUpperCase() + pet.species.slice(1)}</p>
-              </div>
-              {pet.breed && (
-                <div>
-                  <p className="text-sm text-gray-500">Breed</p>
-                  <p className="text-lg font-semibold text-gray-900">{pet.breed}</p>
-                </div>
-              )}
-              {pet.age && (
-                <div>
-                  <p className="text-sm text-gray-500">Age</p>
-                  <p className="text-lg font-semibold text-gray-900">{pet.age} years</p>
-                </div>
-              )}
-              {pet.weight && (
-                <div>
-                  <p className="text-sm text-gray-500">Weight</p>
-                  <p className="text-lg font-semibold text-gray-900">{pet.weight} {pet.weightUnit ? pet.weightUnit : 'lbs'}</p>
-                </div>
-              )}
-            </div>
+            <div />
           )}
           {!editingSection === 'general' && pet.notes && (
             <div className="mt-8">
@@ -708,7 +713,9 @@ export default function PetDetail({ household, user, onSignOut }) {
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
                         <p className="font-semibold text-gray-900">
-                          {activity.activityType?.name || 'Activity'}
+                          {(activity.activityType?.name
+                            ? `${activity.activityType.name.charAt(0).toUpperCase()}${activity.activityType.name.slice(1)}`
+                            : 'Activity')}
                         </p>
                         <time className="text-sm text-gray-500">
                           {new Date(activity.timestamp).toLocaleString()}
