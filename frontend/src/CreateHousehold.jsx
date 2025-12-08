@@ -3,8 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { apiFetch } from './api';
 import TopNav from './TopNav';
 
-export default function CreateHousehold({ user, onHouseholdCreated, onSignOut }) {
+export default function CreateHousehold({ user, onHouseholdCreated, onSignOut, onSignup }) {
   const navigate = useNavigate();
+  const [signupName, setSignupName] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
   const [householdName, setHouseholdName] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
@@ -22,6 +25,43 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
     setLoading(true);
 
     try {
+      // If there's no authenticated user, first sign the user up
+      if (!user) {
+        if (!signupName.trim() || !signupEmail.trim() || !signupPassword) {
+          setError('Name, email and password are required to create an account');
+          setLoading(false);
+          return;
+        }
+
+        try {
+          const signupData = await apiFetch('/api/auth/signup', {
+            method: 'POST',
+            body: JSON.stringify({ name: signupName.trim(), email: signupEmail.trim(), password: signupPassword })
+          });
+          // Persist token and user in localStorage so subsequent apiFetch calls include the token
+          if (signupData.token) {
+            localStorage.setItem('token', signupData.token);
+          }
+          if (signupData.user) {
+            localStorage.setItem('user', JSON.stringify(signupData.user));
+          }
+
+          // Inform parent app about login/signup so it can update state
+          if (onSignup) {
+            try {
+              onSignup(signupData.user, signupData.token);
+            } catch (e) {
+              console.warn('onSignup callback failed', e);
+            }
+          }
+        } catch (err) {
+          console.error('Signup error:', err);
+          setError(err.message || 'Failed to create account');
+          setLoading(false);
+          return;
+        }
+      }
+
       if (!householdName.trim()) {
         setError('Household name is required');
         setLoading(false);
@@ -66,6 +106,24 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
           <p className="text-sm text-gray-500 mt-1">Let's set up your household</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {!user && (
+            <div className="space-y-4 border-b border-gray-100 pb-4 mb-4">
+              <p className="text-sm text-gray-600">Create an account to manage your household</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Full name *</label>
+                <input value={signupName} onChange={(e) => setSignupName(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none" placeholder="Your full name" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Email *</label>
+                <input value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none" placeholder="you@example.com" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Password *</label>
+                <input type="password" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none" placeholder="Choose a strong password" />
+              </div>
+            </div>
+          )}
+
           {/* Household Name */}
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-2">
@@ -76,7 +134,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
               value={householdName}
               onChange={(e) => setHouseholdName(e.target.value)}
               placeholder="e.g., Martindale Family"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
               required
             />
           </div>
@@ -91,7 +149,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Street address"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
             />
           </div>
 
@@ -106,7 +164,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="City"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
               />
             </div>
             <div>
@@ -118,7 +176,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
                 value={state}
                 onChange={(e) => setState(e.target.value)}
                 placeholder="State/Province"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
               />
             </div>
             <div>
@@ -130,7 +188,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
                 value={zipCode}
                 onChange={(e) => setZipCode(e.target.value)}
                 placeholder="Zip code"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
               />
             </div>
           </div>
@@ -145,7 +203,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               placeholder="Country"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
             />
           </div>
 
@@ -160,7 +218,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
               onChange={(e) => setNumberOfMembers(e.target.value)}
               min="1"
               max="20"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
             />
             <p className="text-xs text-gray-500 mt-1">
               You can invite household members later
@@ -177,7 +235,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Any additional info about your household..."
               rows="3"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
             />
           </div>
 
@@ -190,7 +248,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut })
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#20B2AA] text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+            className="w-full bg-accent text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
           >
             {loading ? 'Creating...' : 'Create Household'}
           </button>

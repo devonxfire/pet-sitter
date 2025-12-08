@@ -950,6 +950,100 @@ app.delete('/api/households/:householdId/members/:memberId', authenticateToken, 
   }
 });
 
+// ---------------------------------------------------------------------------
+// Current user endpoints
+// ---------------------------------------------------------------------------
+
+// Get current authenticated user
+app.get('/api/me', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        firstName: true,
+        lastName: true,
+        phoneNumber: true,
+        isMainMember: true,
+        createdAt: true
+      }
+    });
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    res.json(user);
+  } catch (error) {
+    console.error('Get /api/me error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update current authenticated user (name, phone, etc.)
+app.patch('/api/me', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { name, firstName, lastName, phoneNumber } = req.body;
+
+    const updated = await prisma.user.update({
+      where: { id: parseInt(userId) },
+      data: {
+        name: name !== undefined ? name : undefined,
+        firstName: firstName !== undefined ? firstName : undefined,
+        lastName: lastName !== undefined ? lastName : undefined,
+        phoneNumber: phoneNumber !== undefined ? phoneNumber : undefined
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        firstName: true,
+        lastName: true,
+        phoneNumber: true,
+        isMainMember: true,
+        createdAt: true
+      }
+    });
+
+    console.log(`✅ User ${userId} updated their profile`);
+    res.json(updated);
+  } catch (error) {
+    console.error('Patch /api/me error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Change password while authenticated
+app.post('/api/me/password', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new password are required' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: parseInt(userId) } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) return res.status(401).json({ error: 'Current password is incorrect' });
+
+    if (newPassword.length < 6) return res.status(400).json({ error: 'New password must be at least 6 characters' });
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({ where: { id: parseInt(userId) }, data: { passwordHash: hash } });
+
+    console.log(`🔒 User ${userId} changed password`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('POST /api/me/password error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ============================================================================
 // START SERVER
 // ============================================================================

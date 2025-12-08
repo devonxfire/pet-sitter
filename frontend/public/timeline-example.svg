@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="600" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice">
+  <rect width="1000" height="600" fill="#F8FAFC" />
+  <g transform="translate(30,40)">
+    <rect x="430" y="20" width="520" height="460" rx="20" fill="#F3F4F6" stroke="#ECEFF1" />
+    <text x="0" y="40" font-family="Inter, sans-serif" font-size="28" font-weight="600" fill="#0F172A">Timeline preview</text>
+    <g transform="translate(0,80)" font-family="Inter, sans-serif" fill="#0B1220">
+      <rect x="0" y="0" width="360" height="64" rx="12" fill="#FFFFFF" stroke="#EDEDED" />
+      <text x="16" y="40" font-size="16">Morning feeding</text>
+      <text x="300" y="40" font-size="12" fill="#6B7280">7:00 AM</text>
+
+      <rect x="0" y="86" width="360" height="64" rx="12" fill="#FFFFFF" stroke="#EDEDED" />
+      <text x="16" y="126" font-size="16">Walk (30 min)</text>
+      <text x="300" y="126" font-size="12" fill="#6B7280">9:30 AM</text>
+
+      <rect x="0" y="172" width="360" height="64" rx="12" fill="#FFFFFF" stroke="#EDEDED" />
+      <text x="16" y="212" font-size="16">Medication</text>
+      <text x="300" y="212" font-size="12" fill="#6B7280">2:00 PM</text>
+    </g>
+  </g>
+</svg>

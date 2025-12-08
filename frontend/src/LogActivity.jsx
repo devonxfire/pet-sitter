@@ -12,7 +12,7 @@ const ACTIVITY_TYPES = [
   { id: 'other', label: 'Other', icon: '📝', color: 'bg-gray-100' }
 ];
 
-export default function LogActivity({ petId, activity, onActivityLogged, onActivityDeleted, onClose }) {
+export default function LogActivity({ petId, household, activity, onActivityLogged, onActivityDeleted, onClose }) {
   const [step, setStep] = useState(activity ? 'edit' : 'selectType'); // selectType -> timing -> happened/schedule -> details -> reminder (if upcoming)
   const [selectedType, setSelectedType] = useState(activity?.activityType?.name || '');
   const [timing, setTiming] = useState(''); // 'happened' or 'upcoming'
@@ -80,8 +80,13 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
         console.log('✅ Activity updated:', data);
         onActivityLogged(data);
       } else {
-        // Create new activity
-        const data = await apiFetch(`/api/pets/${petId}/activities`, {
+        // Create new activity(s) for selected pet(s)
+        const petIdsToSend = selectedPetIds && selectedPetIds.length > 0 ? selectedPetIds : (petId ? [petId] : []);
+        if (petIdsToSend.length === 0) {
+          throw new Error('Please select at least one pet to apply this activity to.');
+        }
+
+        const promises = petIdsToSend.map((pid) => apiFetch(`/api/pets/${pid}/activities`, {
           method: 'POST',
           body: JSON.stringify({
             activityTypeId: selectedType,
@@ -89,9 +94,14 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
             notes: notes || null,
             data: {}
           })
+        }));
+
+        const results = await Promise.all(promises);
+        results.forEach((res) => {
+          console.log('✅ Activity logged:', res);
+          // notify parent for each created activity
+          onActivityLogged(res);
         });
-        console.log('✅ Activity logged:', data);
-        onActivityLogged(data);
       }
       onClose();
     } catch (err) {
@@ -123,6 +133,37 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
   };
 
   const selectedActivity = ACTIVITY_TYPES.find(t => t.id === selectedType);
+  const [pets, setPets] = useState([]);
+  const [selectedPetIds, setSelectedPetIds] = useState(petId ? [petId] : []);
+
+  const allSelected = pets.length > 0 && selectedPetIds.length === pets.length;
+
+  // Fetch household pets if provided (always register hook at top-level)
+  React.useEffect(() => {
+    let mounted = true;
+    async function loadPets() {
+      if (household?.id) {
+        try {
+          const data = await apiFetch(`/api/households/${household.id}/pets`);
+          if (!mounted) return;
+          setPets(data || []);
+          // If no selectedPetIds yet, default to petId
+          if ((!selectedPetIds || selectedPetIds.length === 0) && petId) {
+            setSelectedPetIds([petId]);
+          }
+        } catch (err) {
+          console.error('Failed to load household pets:', err);
+        }
+      } else {
+        // No household provided; ensure current petId is selected
+        if (petId && (!selectedPetIds || selectedPetIds.length === 0)) {
+          setSelectedPetIds([petId]);
+        }
+      }
+    }
+    loadPets();
+    return () => { mounted = false; };
+  }, [household?.id, petId]);
 
   // Step 1: Select Activity Type
   if (step === 'selectType') {
@@ -144,7 +185,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
               <button
                 key={type.id}
                 onClick={() => handleTypeSelect(type.id)}
-                className="py-6 px-4 rounded-xl flex flex-col items-center gap-3 transition border-2 border-gray-200 hover:border-[#20B2AA] hover:bg-[#20B2AA]/10"
+                className="py-6 px-4 rounded-xl flex flex-col items-center gap-3 transition border-2 border-gray-200 hover:border-accent hover:bg-accent/10"
               >
                 <span className="text-4xl">{type.icon}</span>
                 <span className="text-sm font-medium text-gray-700 text-center">
@@ -181,7 +222,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
           <div className="space-y-4">
             <button
               onClick={() => handleTimingSelect('happened')}
-              className="w-full py-6 px-6 rounded-xl border-2 border-gray-200 hover:border-[#20B2AA] hover:bg-[#20B2AA]/10 transition text-left"
+              className="w-full py-6 px-6 rounded-xl border-2 border-gray-200 hover:border-accent hover:bg-accent/10 transition text-left"
             >
               <div className="text-2xl mb-2">✓</div>
               <div className="font-semibold text-lg text-gray-900">Already Happened</div>
@@ -190,7 +231,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
 
             <button
               onClick={() => handleTimingSelect('upcoming')}
-              className="w-full py-6 px-6 rounded-xl border-2 border-gray-200 hover:border-[#20B2AA] hover:bg-[#20B2AA]/10 transition text-left"
+              className="w-full py-6 px-6 rounded-xl border-2 border-gray-200 hover:border-accent hover:bg-accent/10 transition text-left"
             >
               <div className="text-2xl mb-2">📅</div>
               <div className="font-semibold text-lg text-gray-900">Upcoming</div>
@@ -238,7 +279,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
               value={timestamp}
               onChange={(e) => setTimestamp(e.target.value)}
               max={new Date().toISOString().slice(0, 16)}
-              className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-[#20B2AA] focus:outline-none text-lg"
+              className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-accent focus:outline-none text-lg"
             />
             <p className="text-sm text-gray-500 mt-2">Defaults to current time</p>
           </div>
@@ -252,7 +293,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
             </button>
             <button
               onClick={handleHappenedSubmit}
-              className="flex-1 py-3 bg-[#20B2AA] text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
+              className="flex-1 py-3 bg-accent text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
             >
               Next
             </button>
@@ -291,7 +332,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
               </div>
               <button
                 onClick={() => setReminderEnabled(!reminderEnabled)}
-                className={`relative inline-flex h-8 w-16 items-center rounded-full transition ${reminderEnabled ? 'bg-[#20B2AA]' : 'bg-gray-300'}`}
+                className={`relative inline-flex h-8 w-16 items-center rounded-full transition ${reminderEnabled ? 'bg-accent' : 'bg-gray-300'}`}
               >
                 <span
                   className={`inline-block h-6 w-6 transform rounded-full bg-white transition ${reminderEnabled ? 'translate-x-9' : 'translate-x-1'}`}
@@ -309,7 +350,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
                   <select
                     value={reminderTime}
                     onChange={(e) => setReminderTime(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-accent focus:outline-none"
                   >
                     <option value="5">5 minutes before</option>
                     <option value="15">15 minutes before</option>
@@ -328,7 +369,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
                   </div>
                   <button
                     onClick={() => setAddToGoogleCalendar(!addToGoogleCalendar)}
-                    className={`relative inline-flex h-8 w-16 items-center rounded-full transition ${addToGoogleCalendar ? 'bg-[#20B2AA]' : 'bg-gray-300'}`}
+                    className={`relative inline-flex h-8 w-16 items-center rounded-full transition ${addToGoogleCalendar ? 'bg-accent' : 'bg-gray-300'}`}
                   >
                     <span
                       className={`inline-block h-6 w-6 transform rounded-full bg-white transition ${addToGoogleCalendar ? 'translate-x-9' : 'translate-x-1'}`}
@@ -337,7 +378,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
                 </div>
 
                 {/* Email Reminder */}
-                <div className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-xl bg-[#20B2AA]/10">
+                <div className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-xl bg-accent/10">
                   <div>
                     <p className="font-semibold text-gray-900">📧 Email Reminder</p>
                     <p className="text-sm text-gray-500\">Always enabled when reminders are on</p>
@@ -357,7 +398,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
             </button>
             <button
               onClick={handleReminderSubmit}
-              className="flex-1 py-3 bg-[#20B2AA] text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
+              className="flex-1 py-3 bg-accent text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
             >
               Next
             </button>
@@ -395,7 +436,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
               type="datetime-local"
               value={timestamp}
               onChange={(e) => setTimestamp(e.target.value)}
-              className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-[#20B2AA] focus:outline-none text-lg"
+              className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-accent focus:outline-none text-lg"
             />
           </div>
 
@@ -408,7 +449,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
             </button>
             <button
               onClick={handleScheduleSubmit}
-              className="flex-1 py-3 bg-[#20B2AA] text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
+              className="flex-1 py-3 bg-accent text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
             >
               Next
             </button>
@@ -419,6 +460,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
   }
 
   // Step 4: Details (notes, photo, etc.) OR Edit Mode
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-8 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
@@ -467,8 +509,50 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
                 type="datetime-local"
                 value={timestamp}
                 onChange={(e) => setTimestamp(e.target.value)}
-                className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-accent focus:outline-none"
               />
+            </div>
+          )}
+
+          {/* Apply To Pets - allow multi-select when creating */}
+          {!isEditing && (
+            <div>
+              <label className="block text-lg font-medium text-gray-900 mb-3">Apply to pets</label>
+              <div className="mb-3">
+                <label className="flex items-center gap-3 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedPetIds(pets.map(p => p.id));
+                      else setSelectedPetIds(petId ? [petId] : []);
+                    }}
+                    className="w-4 h-4"
+                  />
+                  <span className="font-medium">Apply to all</span>
+                </label>
+              </div>
+              <div className="space-y-2">
+                {pets.length === 0 ? (
+                  <p className="text-sm text-gray-500">No other pets found in household.</p>
+                ) : (
+                  pets.map((p) => (
+                    <label key={p.id} className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedPetIds.includes(p.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedPetIds((s) => [...new Set([...(s||[]), p.id])]);
+                          else setSelectedPetIds((s) => (s || []).filter(id => id !== p.id));
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-gray-700">{p.name}</span>
+                      <span className="text-sm text-gray-400">({p.species})</span>
+                    </label>
+                  ))
+                )}
+              </div>
             </div>
           )}
 
@@ -482,7 +566,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add any details..."
               rows="4"
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-accent focus:outline-none"
             />
           </div>
 
@@ -525,7 +609,7 @@ export default function LogActivity({ petId, activity, onActivityLogged, onActiv
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-[#20B2AA] text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+              className="flex-1 bg-accent text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
             >
               {loading ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Activity'}
             </button>

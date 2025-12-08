@@ -179,7 +179,7 @@ export default function PetDetail({ household, user, onSignOut }) {
       <div className="min-h-screen bg-white">
         <header className="border-b border-gray-200 px-4 py-4">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
             className="text-gray-600 hover:text-gray-900"
           >
             ← Back
@@ -197,7 +197,7 @@ export default function PetDetail({ household, user, onSignOut }) {
       <div className="min-h-screen bg-white">
         <header className="border-b border-gray-200 px-4 py-4">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
             className="text-gray-600 hover:text-gray-900"
           >
             ← Back
@@ -215,7 +215,7 @@ export default function PetDetail({ household, user, onSignOut }) {
       <div className="min-h-screen bg-white">
         <header className="border-b border-gray-200 px-4 py-4">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
             className="text-gray-600 hover:text-gray-900"
           >
             ← Back
@@ -234,17 +234,17 @@ export default function PetDetail({ household, user, onSignOut }) {
 
       <main className="flex justify-center py-16">
         <div className="max-w-6xl px-6 w-full">
-        <div className="flex items-center justify-between mb-12">
-          <button
-            onClick={() => navigate('/')}
-            className="text-gray-600 hover:text-gray-900 font-medium"
-          >
-            ← Back
-          </button>
+          <div className="flex items-center justify-between mb-12">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="text-gray-600 hover:text-gray-900 font-medium"
+            >
+              ← Back
+            </button>
         </div>
 
         {/* Pet Name */}
-        <div className="mb-64 flex flex-col items-center gap-6">
+        <div className="mb-8 flex flex-col items-center gap-6">
           {/* Circular Photo */}
           <div className="relative">
             <div
@@ -264,7 +264,7 @@ export default function PetDetail({ household, user, onSignOut }) {
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0 right-0 bg-[#20B2AA] hover:opacity-90 text-white rounded-full w-12 h-12 flex items-center justify-center cursor-pointer transition text-lg"
+              className="absolute bottom-0 right-0 bg-accent hover:opacity-90 text-white rounded-full w-12 h-12 flex items-center justify-center cursor-pointer transition text-lg"
               type="button"
             >
               ➕
@@ -302,7 +302,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 <select
                   value={editValues.species}
                   onChange={(e) => setEditValues({ ...editValues, species: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
                 >
                   <option value="dog">Dog</option>
                   <option value="cat">Cat</option>
@@ -324,7 +324,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   value={editValues.breed}
                   onChange={(e) => setEditValues({ ...editValues, breed: e.target.value })}
                   placeholder="e.g., Labrador Retriever"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
                 />
               </div>
 
@@ -339,7 +339,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                     placeholder="Years"
                     min="0"
                     max="100"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
                   />
                 </div>
                 <div>
@@ -352,12 +352,12 @@ export default function PetDetail({ household, user, onSignOut }) {
                       placeholder="Weight"
                       min="0"
                       step="0.1"
-                      className="w-24 px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                      className="w-24 px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
                     />
                     <select
                       value={editValues.weightUnit}
                       onChange={e => setEditValues({ ...editValues, weightUnit: e.target.value })}
-                      className="px-2 py-2 rounded-lg border border-gray-200 focus:border-[#20B2AA] focus:outline-none bg-white text-gray-900"
+                      className="px-2 py-2 rounded-lg border border-gray-200 focus:border-accent focus:outline-none bg-white text-gray-900"
                     >
                       <option value="lbs">lbs</option>
                       <option value="kg">kg</option>
@@ -374,7 +374,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   onChange={(e) => setEditValues({ ...editValues, notes: e.target.value })}
                   placeholder="Any special info..."
                   rows="3"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
                 />
               </div>
 
@@ -389,7 +389,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 <button
                   onClick={saveSection}
                   disabled={savingSection}
-                  className="flex-1 bg-[#20B2AA] text-gray-900 font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                  className="flex-1 bg-accent text-gray-900 font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
                 >
                   {savingSection ? 'Saving...' : 'Save'}
                 </button>
@@ -454,7 +454,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                     value={editValues.vetName}
                     onChange={(e) => setEditValues({ ...editValues, vetName: e.target.value })}
                     placeholder="e.g., Dr. Smith or Happy Paws Vet"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
                   />
                 </div>
 
@@ -466,7 +466,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                     value={editValues.vetLocation}
                     onChange={(e) => setEditValues({ ...editValues, vetLocation: e.target.value })}
                     placeholder="Clinic address or name"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
                   />
                 </div>
 
@@ -478,7 +478,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                     value={editValues.vetContact}
                     onChange={(e) => setEditValues({ ...editValues, vetContact: e.target.value })}
                     placeholder="Phone number"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
                   />
                 </div>
 
@@ -493,7 +493,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   <button
                     onClick={saveSection}
                     disabled={savingSection}
-                    className="flex-1 bg-[#20B2AA] text-gray-900 font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                    className="flex-1 bg-accent text-gray-900 font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
                   >
                     {savingSection ? 'Saving...' : 'Save'}
                   </button>
@@ -555,7 +555,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                     value={editValues.primaryFood}
                     onChange={(e) => setEditValues({ ...editValues, primaryFood: e.target.value })}
                     placeholder="e.g., Kibble, Wet food, Raw"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
                   />
                 </div>
 
@@ -570,7 +570,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   <button
                     onClick={saveSection}
                     disabled={savingSection}
-                    className="flex-1 bg-[#20B2AA] text-gray-900 font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                    className="flex-1 bg-accent text-gray-900 font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
                   >
                     {savingSection ? 'Saving...' : 'Save'}
                   </button>
@@ -592,7 +592,7 @@ export default function PetDetail({ household, user, onSignOut }) {
             {activities.length > 0 && (
               <button
                 onClick={() => setShowLogActivity(true)}
-                className="bg-[#20B2AA] text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
+                className="bg-accent text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
               >
                 Create New Activity
               </button>
@@ -605,7 +605,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 onClick={() => setActivityFilter('all')}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   activityFilter === 'all'
-                    ? 'bg-[#20B2AA] text-gray-900'
+                    ? 'bg-accent text-gray-900'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -615,7 +615,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 onClick={() => setActivityFilter('past')}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   activityFilter === 'past'
-                    ? 'bg-[#20B2AA] text-gray-900'
+                    ? 'bg-accent text-gray-900'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -625,7 +625,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 onClick={() => setActivityFilter('upcoming')}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   activityFilter === 'upcoming'
-                    ? 'bg-[#20B2AA] text-gray-900'
+                    ? 'bg-accent text-gray-900'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -639,7 +639,7 @@ export default function PetDetail({ household, user, onSignOut }) {
               <p className="text-gray-500">No activities logged yet</p>
               <button
                 onClick={() => setShowLogActivity(true)}
-                className="mt-4 bg-[#20B2AA] text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
+                className="mt-4 bg-accent text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
               >
                 Create First Activity
               </button>
@@ -688,6 +688,7 @@ export default function PetDetail({ household, user, onSignOut }) {
       {showLogActivity && (
         <LogActivity
           petId={petId}
+          household={household}
           onActivityLogged={(newActivity) => {
             setActivities([newActivity, ...activities]);
             setShowLogActivity(false);
@@ -699,6 +700,7 @@ export default function PetDetail({ household, user, onSignOut }) {
       {editingActivity && (
         <LogActivity
           petId={petId}
+          household={household}
           activity={editingActivity}
           onActivityLogged={(updatedActivity) => {
             // Update the activity in the timeline

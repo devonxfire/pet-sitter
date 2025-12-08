@@ -2,9 +2,9 @@
  * Pet-Sitter Theme Configuration
  * 
  * Color Scheme:
- * - Primary Accent: Muted Turquoise (#20B2AA)
+ * - Primary Accent: Soft Sky (var(--color-accent))
  *   Used for: buttons, focus states, hover effects, toggles, accent colors
- *   Reason: Calming, relaxing color that creates a pet-care friendly atmosphere
+ *   Reason: Airy, modern sky blue for a fresh, calm UI
  * 
  * - Background: White (#FFFFFF) with Light Gray (#F3F4F6) for sections
  * - Text: Dark Gray (#1C1C1E) for main text
@@ -15,9 +15,9 @@
 
 export const theme = {
   colors: {
-    primary: '#20B2AA',        // Muted Turquoise - main accent color
-    primaryLight: '#E0F2F1',   // Very light turquoise for backgrounds
-    primaryDark: '#1A9B8E',    // Darker turquoise for hover states
+    primary: 'var(--color-accent)',        // Soft Sky - main accent color
+    primaryLight: '#EFF8FF',   // Very light sky (soft background)
+    primaryDark: '#2563EB',    // Darker sky for hover states
     
     // Neutrals
     white: '#FFFFFF',

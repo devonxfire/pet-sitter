@@ -1,35 +1,58 @@
 /* Pet-Sitter - Apple-style clean design */
 
+/* Load Plus Jakarta Sans for a minimal, modern UI */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
 @import "tailwindcss";
 
 :root {
   /* Color palette */
-  --color-accent: #20B2AA; /* Muted Turquoise */
-  --color-bg: #FFFFFF;
-  --color-surface: #F9F9F9;
-  --color-text-primary: #1C1C1E;
-  --color-text-secondary: #8E8E93;
-  --color-border: #D1D1D6;
-  --color-error: #FF3B30;
+  /* Color palette (new scheme) */
+  --color-accent: #60A5FA; /* Soft Sky (new primary accent) */
+  --color-accent-2: #F59E0B; /* Warm amber accent for highlights */
+  --color-bg: #FFFFFF; /* page background */
+  --color-surface: #F8F5F2; /* soft warm surface */
+  --color-muted-surface: #F1F2F4; /* subtle panels */
+  --color-text-primary: #0F172A; /* deep slate for main text */
+  --color-text-secondary: #6B7280; /* neutral gray for secondary text */
+  --color-border: #E6E9EC; /* faint border */
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  /* Global typography */
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --font-heading-weight: 700;
+  --font-body-weight: 400;
+  --base-line-height: 1.5;
 }
 
+/* Keep box-sizing globally but don't reset padding — Tailwind utilities control spacing */
 * {
-  padding: 0;
   box-sizing: border-box;
 }
 
+/* Ensure no default body/html margins interfere with layout */
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  font-family: var(--font-sans);
   background-color: var(--color-bg);
   color: var(--color-text-primary);
   font-size: 16px;
-  line-height: 1.5;
+  line-height: var(--base-line-height);
+  font-weight: var(--font-body-weight);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-weight: var(--font-heading-weight);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
 }
 
 button {

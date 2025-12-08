@@ -57,7 +57,8 @@ export default function AddPet({ user, household, onSignOut }) {
       });
 
       console.log('✅ Pet created:', data);
-      navigate('/', { state: { household: activeHousehold, petAdded: true } });
+      // Navigate to dashboard and signal a pet was added so Dashboard will refetch
+      navigate('/dashboard', { state: { household: activeHousehold, petAdded: true } });
     } catch (err) {
       setError(err.message || 'Failed to create pet');
     } finally {
@@ -71,8 +72,8 @@ export default function AddPet({ user, household, onSignOut }) {
         <div className="text-center">
           <p className="text-red-500 mb-4">No household found</p>
           <button
-            onClick={() => navigate('/')}
-            className="bg-[#20B2AA] text-gray-900 font-semibold px-6 py-2 rounded-xl"
+              onClick={() => navigate('/dashboard')}
+            className="bg-accent text-gray-900 font-semibold px-6 py-2 rounded-xl"
           >
             Go back
           </button>
@@ -101,7 +102,7 @@ export default function AddPet({ user, household, onSignOut }) {
               value={petName}
               onChange={(e) => setPetName(e.target.value)}
               placeholder="e.g., Milo, Luna, Buddy"
-              className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+              className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-accent focus:outline-none"
               required
             />
           </div>
@@ -114,7 +115,7 @@ export default function AddPet({ user, household, onSignOut }) {
             <select
               value={species}
               onChange={(e) => setSpecies(e.target.value)}
-              className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+              className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-accent focus:outline-none"
             >
               <option value="dog">Dog</option>
               <option value="cat">Cat</option>
@@ -138,7 +139,7 @@ export default function AddPet({ user, household, onSignOut }) {
               value={breed}
               onChange={(e) => setBreed(e.target.value)}
               placeholder="e.g., Labrador Retriever"
-              className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+              className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-accent focus:outline-none"
             />
           </div>
 
@@ -155,7 +156,7 @@ export default function AddPet({ user, household, onSignOut }) {
                 placeholder="Years"
                 min="0"
                 max="100"
-                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-accent focus:outline-none"
               />
             </div>
             <div>
@@ -169,7 +170,7 @@ export default function AddPet({ user, household, onSignOut }) {
                 placeholder="Lbs/kg"
                 min="0"
                 step="0.1"
-                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-accent focus:outline-none"
               />
             </div>
           </div>
@@ -184,7 +185,7 @@ export default function AddPet({ user, household, onSignOut }) {
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Any special info... allergies, preferences, etc."
               rows="3"
-              className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+              className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-accent focus:outline-none"
             />
           </div>
 
@@ -201,7 +202,7 @@ export default function AddPet({ user, household, onSignOut }) {
                 value={vetName}
                 onChange={(e) => setVetName(e.target.value)}
                 placeholder="e.g., Dr. Smith or Happy Paws Vet"
-                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-accent focus:outline-none"
               />
             </div>
 
@@ -214,7 +215,7 @@ export default function AddPet({ user, household, onSignOut }) {
                 value={vetLocation}
                 onChange={(e) => setVetLocation(e.target.value)}
                 placeholder="Clinic address or name"
-                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-accent focus:outline-none"
               />
             </div>
 
@@ -227,7 +228,7 @@ export default function AddPet({ user, household, onSignOut }) {
                 value={vetContact}
                 onChange={(e) => setVetContact(e.target.value)}
                 placeholder="Phone number"
-                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-accent focus:outline-none"
               />
             </div>
           </div>
@@ -245,7 +246,7 @@ export default function AddPet({ user, household, onSignOut }) {
                 value={primaryFood}
                 onChange={(e) => setPrimaryFood(e.target.value)}
                 placeholder="e.g., Kibble, Wet food, Raw"
-                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-[#20B2AA] focus:outline-none"
+                className="w-full px-6 py-4 rounded-none border border-gray-200 focus:border-accent focus:outline-none"
               />
             </div>
           </div>
@@ -259,7 +260,7 @@ export default function AddPet({ user, household, onSignOut }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#20B2AA] text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+            className="w-full bg-accent text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
           >
             {loading ? 'Creating...' : 'Add Pet'}
           </button>

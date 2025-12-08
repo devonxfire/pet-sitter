@@ -14,7 +14,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
 
   useEffect(() => {
     if (!household) {
-      navigate('/');
+      navigate('/dashboard');
       return;
     }
     fetchMembers();
@@ -93,13 +93,13 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
       <main className="flex justify-center py-16">
         <div className="max-w-6xl px-6 w-full">
         <button
-          onClick={() => navigate('/')}
-          className="text-gray-600 hover:text-gray-900 mb-6"
+          onClick={() => navigate('/dashboard')}
+          className="text-gray-600 hover:text-gray-900 mb-4"
         >
           ← Back to Dashboard
         </button>
 
-        <h1 className="text-5xl font-bold text-gray-900 mb-48">Household Settings</h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-8">Household Settings</h1>
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
@@ -114,8 +114,8 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
         )}
 
         {/* Household Info */}
-        <section style={{ marginBottom: '30px', paddingBottom: '30px' }} className="border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900 mb-16">Household Info</h2>
+        <section style={{ marginBottom: '16px', paddingBottom: '8px' }} className="border-b border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Household Info</h2>
           <div className="space-y-2">
             <p><span className="text-gray-500">Name:</span> {household.name}</p>
             {household.address && <p><span className="text-gray-500">Address:</span> {household.address}</p>}
@@ -124,8 +124,8 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
         </section>
 
         {/* Members List */}
-        <section style={{ marginBottom: '30px', paddingBottom: '30px' }} className="border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900 mb-16">Members</h2>
+        <section style={{ marginBottom: '16px', paddingBottom: '8px' }} className="border-b border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Members</h2>
           {members.length === 0 ? (
             <p className="text-gray-500">No members yet</p>
           ) : (
@@ -170,7 +170,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
 
         {/* Invite Members */}
         <section>
-          <h2 className="text-2xl font-bold text-gray-900 mb-16">Invite Members</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Invite Members</h2>
           <form onSubmit={handleInvite} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -181,7 +181,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="member@example.com"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#20B2AA]"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
               />
             </div>
 
@@ -192,7 +192,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#20B2AA]"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
               >
                 <option value="member">Member</option>
                 <option value="sitter">Sitter</option>
@@ -201,7 +201,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
 
             <button
               type="submit"
-              className="w-full bg-[#20B2AA] text-gray-900 font-semibold py-3 rounded-lg hover:opacity-90 transition"
+              className="w-full bg-accent text-gray-900 font-semibold py-3 rounded-lg hover:opacity-90 transition"
             >
               Send Invitation
             </button>

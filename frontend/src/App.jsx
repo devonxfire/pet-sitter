@@ -3,7 +3,9 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { apiFetch } from './api';
 import Login from './Login';
 import Dashboard from './Dashboard';
+import Profile from './Profile';
 import CreateHousehold from './CreateHousehold';
+import Landing from './Landing';
 import AddPet from './AddPet';
 import PetDetail from './PetDetail';
 import EditPet from './EditPet';
@@ -89,21 +91,28 @@ function App() {
     <Routes>
         <Route
           path="/login"
-          element={user ? <Navigate to="/" /> : <Login onLogin={handleLogin} />}
+          element={user ? <Navigate to="/dashboard" /> : <Login onLogin={handleLogin} />}
         />
         <Route
           path="/create-household"
           element={
-            user && user.isMainMember ? (
+            user ? (
+              user.isMainMember ? (
+                <CreateHousehold
+                  user={user}
+                  onHouseholdCreated={handleHouseholdCreated}
+                  onSignOut={handleSignOut}
+                />
+              ) : (
+                <Navigate to="/dashboard" />
+              )
+            ) : (
               <CreateHousehold
-                user={user}
+                user={null}
                 onHouseholdCreated={handleHouseholdCreated}
                 onSignOut={handleSignOut}
+                onSignup={handleLogin}
               />
-            ) : user ? (
-              <Navigate to="/" />
-            ) : (
-              <Navigate to="/login" />
             )
           }
         />
@@ -148,7 +157,19 @@ function App() {
           }
         />
         <Route
-          path="/"
+          path="/profile"
+          element={
+            user ? (
+              <Profile user={user} household={household} onSignOut={handleSignOut} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route path="/" element={<Landing />} />
+
+        <Route
+          path="/dashboard"
           element={
             user ? (
               user.isMainMember && !household ? (

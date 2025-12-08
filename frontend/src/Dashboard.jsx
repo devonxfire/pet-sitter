@@ -60,7 +60,7 @@ export default function Dashboard({ user, household, onSignOut }) {
             <p className="text-gray-500 mb-2">Welcome! Let's set up your first pet.</p>
             <button
               onClick={() => navigate('/add-pet', { state: { household } })}
-              className="bg-[#20B2AA] text-gray-900 font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition"
+              className="bg-accent text-gray-900 font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition"
             >
               Add Your First Pet
             </button>
@@ -106,58 +106,13 @@ export default function Dashboard({ user, household, onSignOut }) {
             <div className="flex justify-center mt-20 mb-8">
               <button
                 onClick={() => navigate('/add-pet', { state: { household } })}
-                className="bg-[#20B2AA] text-white text-2xl font-bold px-12 py-4 hover:opacity-90 transition shadow-lg w-auto min-w-[240px] h-auto rounded-none"
+                className="bg-accent text-white text-2xl font-bold px-12 py-4 hover:opacity-90 transition shadow-lg w-auto min-w-[240px] h-auto rounded-none"
                 style={{ letterSpacing: '0.03em' }}
               >
                 + Add Pet
               </button>
             </div>
-            {/* Divider */}
-            <div style={{ margin: '48px 0', borderBottom: '1px solid #E5E7EB' }}></div>
-
-            {/* Household Info Section - After Pets */}
-            {household && (
-              <div>
-                <h2 className="text-2xl font-semibold text-gray-900 mb-8">Household</h2>
-                <div className="space-y-4 text-lg text-gray-700">
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Name</p>
-                    <p className="text-xl font-medium text-gray-900">{household.name}</p>
-                  </div>
-                  {household.owner_email && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Owner</p>
-                      <p className="text-xl font-medium text-gray-900">{household.owner_email}</p>
-                    </div>
-                  )}
-                  {household.mainMemberName && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Main Member</p>
-                      <p className="text-base text-gray-900">{household.mainMemberName}</p>
-                    </div>
-                  )}
-                  {household.members && household.members.length > 0 && (
-                    <div>
-                      <p className="text-sm text-gray-500 mb-2">Members ({household.members.length})</p>
-                      <ul className="space-y-4">
-                        {household.members.map((member) => (
-                          <li key={member.id} className="border-b pb-2">
-                            <span className="block text-lg font-semibold text-gray-900">{member.name || member.email}</span>
-                            <span className="block text-sm text-gray-600">{member.email}</span>
-                            <span className="block text-sm text-gray-500">Role: {member.role ? member.role.charAt(0).toUpperCase() + member.role.slice(1) : ''}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  
-                  
-                 
-              
-                 
-                </div>
-              </div>
-            )}
+            {/* Household section removed */}
           </div>
         )}
         </div>
