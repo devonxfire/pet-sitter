@@ -40,11 +40,11 @@ export default function Dashboard({ user, household, onSignOut }) {
     <div className="min-h-screen bg-white">
       <TopNav user={user} household={household} onSignOut={onSignOut} />
 
-      <main className="flex justify-center py-16">
+      <main className="flex justify-center py-12">
         <div className="max-w-6xl px-6 w-full">
         {/* Welcome Message */}
         {household?.name && (
-          <div className="text-center my-8">
+          <div className="mb-8">
             <h1 className="text-5xl font-bold text-gray-900">
               Welcome, {household.name}!
             </h1>

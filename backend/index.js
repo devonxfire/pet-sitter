@@ -8,13 +8,84 @@ const multer = require('multer');
 const heicConvert = require('heic-convert');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
+const { Server } = require('socket.io');
 
 dotenv.config();
+// Determine allowed frontend origins (comma-separated env or sensible defaults)
+const DEFAULT_FRONTEND_ORIGINS = ['http://localhost:5173', 'http://localhost:5174'];
+const allowedOrigins = (process.env.FRONTEND_ORIGINS
+  ? process.env.FRONTEND_ORIGINS.split(',').map(s => s.trim()).filter(Boolean)
+  : (process.env.FRONTEND_ORIGIN ? [process.env.FRONTEND_ORIGIN] : DEFAULT_FRONTEND_ORIGINS)
+);
 
+// Enable CORS for the allowed frontend origins (mirrored for Socket.IO below)
+// `cors` accepts an array of origins starting with Express 4.x via custom function;
+// passing the array directly is fine for development.
+ 
 const app = express();
+// Enable CORS for the allowed frontend origins (mirrored for Socket.IO below)
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key';
+
+// Create HTTP server and attach Socket.IO
+const server = http.createServer(app);
+// Socket.IO CORS should mirror allowedOrigins
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true
+  }
+});
+
+// Authenticate socket connections using the same JWT_SECRET
+io.use((socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+    if (!token) return next(); // allow unauthenticated connections but they won't be able to join rooms
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+      if (err) return next();
+      socket.user = decoded;
+      return next();
+    });
+  } catch (err) {
+    return next();
+  }
+});
+
+// Socket connection handling
+io.on('connection', (socket) => {
+  // Auto-join a user-specific room when authenticated so server can target single users
+  if (socket.user) {
+    try {
+      const uid = socket.user.userId || socket.user.id;
+      if (uid) {
+        socket.join(`user:${uid}`);
+        console.log(`Socket ${socket.id} joined user:${uid}`);
+      }
+    } catch (e) {}
+  }
+
+  // Allow client to join household rooms after verifying membership
+  socket.on('joinHousehold', async (householdId) => {
+    try {
+      if (!socket.user) return;
+      const member = await prisma.householdMember.findFirst({ where: { householdId: parseInt(householdId), userId: socket.user.userId || socket.user.id } });
+      if (member) {
+        socket.join(`household:${householdId}`);
+        console.log(`Socket ${socket.id} joined household:${householdId}`);
+      }
+    } catch (err) {
+      // ignore
+    }
+  });
+
+  socket.on('leaveHousehold', (householdId) => {
+    try { socket.leave(`household:${householdId}`); } catch (e) {}
+  });
+});
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'public', 'uploads', 'pets');
@@ -53,7 +124,6 @@ const upload = multer({
 });
 
 // Middleware
-app.use(cors());
 app.use(express.json());
 app.use('/public', express.static(path.join(__dirname, 'public')));
 // Serve uploaded assets directly under /uploads
@@ -841,6 +911,21 @@ app.post('/api/pets/:petId/activities', authenticateToken, async (req, res) => {
 
     console.log(`✅ Activity logged: ${activity.activityType.name} for pet ${petId} by user ${req.user.userId}`);
 
+    // Emit real-time event to household room (if socket server available)
+    try {
+      const householdId = pet && pet.household && (pet.household.id || pet.householdId);
+      if (typeof io !== 'undefined' && householdId) {
+        io.to(`household:${householdId}`).emit('newActivity', { activity });
+        // Also target each member's personal room so users who didn't join household rooms still get it
+        const members = await prisma.householdMember.findMany({ where: { householdId: parseInt(householdId), userId: { not: null } }, select: { userId: true } });
+        members.forEach(m => {
+          try { io.to(`user:${m.userId}`).emit('newActivity', { activity }); } catch (e) {}
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to emit socket newActivity', err);
+    }
+
     res.json(activity);
   } catch (error) {
     console.error('Create activity error:', error);
@@ -893,11 +978,28 @@ app.patch('/api/activities/:activityId', authenticateToken, async (req, res) => 
             id: true,
             name: true
           }
+        },
+        pet: {
+          include: {
+            household: true
+          }
         }
       }
     });
 
     console.log(`✅ Activity updated: ${updatedActivity.id}`);
+    try {
+      const householdId = updatedActivity.pet && (updatedActivity.pet.household?.id || updatedActivity.pet.householdId);
+      if (typeof io !== 'undefined' && householdId) {
+        io.to(`household:${householdId}`).emit('updatedActivity', { activity: updatedActivity });
+        const members = await prisma.householdMember.findMany({ where: { householdId: parseInt(householdId), userId: { not: null } }, select: { userId: true } });
+        members.forEach(m => {
+          try { io.to(`user:${m.userId}`).emit('updatedActivity', { activity: updatedActivity }); } catch (e) {}
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to emit socket updatedActivity', err);
+    }
 
     res.json(updatedActivity);
   } catch (error) {
@@ -942,6 +1044,20 @@ app.delete('/api/activities/:activityId', authenticateToken, async (req, res) =>
     });
 
     console.log(`✅ Activity deleted: ${activityId}`);
+
+    // Emit deletion to household room
+    try {
+      const householdId = activity.pet && (activity.pet.household?.id || activity.pet.householdId);
+      if (typeof io !== 'undefined' && householdId) {
+        io.to(`household:${householdId}`).emit('deletedActivity', { activityId: parseInt(activityId) });
+        const members = await prisma.householdMember.findMany({ where: { householdId: parseInt(householdId), userId: { not: null } }, select: { userId: true } });
+        members.forEach(m => {
+          try { io.to(`user:${m.userId}`).emit('deletedActivity', { activityId: parseInt(activityId) }); } catch (e) {}
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to emit socket deletedActivity', err);
+    }
 
     res.json({ success: true });
   } catch (error) {
@@ -1216,7 +1332,7 @@ app.post('/api/me/password', authenticateToken, async (req, res) => {
 // START SERVER
 // ============================================================================
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🐾 Pet-Sitter API running on port ${PORT}`);
   console.log(`   Health check: http://localhost:${PORT}/health`);
 });

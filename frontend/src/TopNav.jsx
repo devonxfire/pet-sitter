@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import NotificationBell from './NotificationBell';
 
 export default function TopNav({ user, household, onSignOut }) {
   const navigate = useNavigate();
@@ -20,17 +21,15 @@ export default function TopNav({ user, household, onSignOut }) {
       <div className="flex justify-center">
         <div className="max-w-6xl w-full px-6">
           <div className="flex items-center justify-between">
-            {/* Left - primary nav */}
             <div className="flex items-center gap-6">
               <Link to="/" className="text-lg text-white hover:opacity-80 font-medium transition">Home</Link>
               <Link to="/dashboard" className="text-lg text-white hover:opacity-80 font-medium transition">My Household</Link>
               <Link to="/plans" className="text-lg text-white hover:opacity-80 font-medium transition">Plans</Link>
             </div>
 
-            {/* Right - user area */}
-            <div className="relative">
+            <div className="relative flex items-center gap-4">
               {user ? (
-                <>
+                <div className="relative flex items-center gap-3">
                   <button
                     onClick={() => setOpen((s) => !s)}
                     className="flex items-center gap-3 text-white focus:outline-none"
@@ -63,13 +62,16 @@ export default function TopNav({ user, household, onSignOut }) {
                       </button>
                     </div>
                   )}
-                </>
+                  {/* Notification bell sits to the right of the welcome button */}
+                  <NotificationBell navigate={navigate} />
+                </div>
               ) : (
                 <div className="flex items-center gap-4">
                   <Link to="/login" className="text-white hover:opacity-80 font-medium">Log in</Link>
                   <Link to="/create-household" className="text-sm font-medium text-white bg-white/20 px-3 py-2 rounded-lg">Get started</Link>
                 </div>
               )}
+
             </div>
           </div>
         </div>

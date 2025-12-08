@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { apiFetch, API_BASE, apiUrl } from './api';
 import TopNav from './TopNav';
 import LogActivity from './LogActivity';
+import ActivityView from './ActivityView';
+import ACTIVITY_TYPES from './activityTypes';
 
 export default function PetDetail({ household, user, onSignOut }) {
   const navigate = useNavigate();
@@ -14,7 +16,15 @@ export default function PetDetail({ household, user, onSignOut }) {
   const [error, setError] = useState('');
   const [showLogActivity, setShowLogActivity] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
+  const [viewingActivity, setViewingActivity] = useState(null);
   const [activityFilter, setActivityFilter] = useState('all'); // 'all', 'past', 'upcoming'
+  // UI: pagination, sorting, filtering
+  const [pageSize, setPageSize] = useState(5);
+  const [page, setPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState('newest'); // 'newest' | 'oldest'
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [memberFilter, setMemberFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [quickActions, setQuickActions] = useState([]);
   const [showManageQuickActions, setShowManageQuickActions] = useState(false);
   const quickActionsRef = useRef(null);
@@ -50,14 +60,96 @@ export default function PetDetail({ household, user, onSignOut }) {
     }
   };
 
-  // Filter activities based on selected filter
-  const filteredActivities = activities.filter(activity => {
+  // Filter activities based on selected filter (time filter)
+  const timeFilteredActivities = activities.filter(activity => {
     const activityTime = parseTimestamp(activity.timestamp);
     const now = new Date();
     if (activityFilter === 'past') return activityTime <= now;
     if (activityFilter === 'upcoming') return activityTime > now;
     return true; // 'all'
   });
+
+  // Member options: prefer household members if provided, otherwise derive from activities
+  const memberOptions = (() => {
+    const hw = household && (household.members || household.users || []);
+    if (Array.isArray(hw) && hw.length) {
+      // Normalize household member shape to { id: string, name, email }
+      return hw.map(m => {
+        if (m.user) {
+          const uname = m.user.name || ([m.user.firstName, m.user.lastName].filter(Boolean).join(' ').trim()) || m.user.email || '';
+          return { id: String(m.user.id), name: uname || String(m.user.id), email: m.user.email || '' };
+        }
+        // invited member record
+        return { id: String(m.id), name: m.invitedEmail || m.email || `Invite ${m.id}`, email: m.invitedEmail || m.email || '' };
+      });
+    }
+
+    const seen = new Set();
+    const list = [];
+    (activities || []).forEach(a => {
+      const u = a.user;
+      if (u && (u.id || u.name)) {
+        const key = String(u.id || u.name);
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push({ id: String(u.id || key), name: u.name || u.email || String(u.id), email: u.email || '' });
+        }
+      }
+    });
+    return list;
+  })();
+
+  // Helper: normalize activity label/key for matching
+  const activityKey = (a) => (a._clientActionLabel || a.activityType?.name || a.activityType?.label || a.type || '').toString().toLowerCase();
+
+  // Apply type filter and search
+  const searchedActivities = timeFilteredActivities.filter(a => {
+    // Member filter (who logged the activity)
+    if (memberFilter && memberFilter !== 'all') {
+      const mf = String(memberFilter);
+      if (!a.user) return false;
+      const uid = a.user.id ? String(a.user.id) : '';
+      const uname = (a.user.name || '').toLowerCase();
+      const uemail = (a.user.email || '').toLowerCase();
+      if (uid === mf) {
+        // matched by id
+      } else if (uemail === mf.toLowerCase()) {
+        // matched by email
+      } else if (uname === mf.toLowerCase()) {
+        // matched by name
+      } else {
+        return false;
+      }
+    }
+    if (typeFilter && typeFilter !== 'all') {
+      const key = activityKey(a);
+      const candidate = String(typeFilter).toLowerCase();
+      if (!key.includes(candidate) && !String(a.activityType?.id || '').toLowerCase().includes(candidate)) return false;
+    }
+    if (searchQuery && String(searchQuery).trim() !== '') {
+      const q = String(searchQuery).toLowerCase();
+      const hay = [
+        a.notes || '',
+        a.user?.name || '',
+        activityKey(a),
+      ].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // Sort
+  const sortedActivities = searchedActivities.slice().sort((a, b) => {
+    const ta = parseTimestamp(a.timestamp).getTime() || 0;
+    const tb = parseTimestamp(b.timestamp).getTime() || 0;
+    return sortOrder === 'newest' ? tb - ta : ta - tb;
+  });
+
+  // Pagination
+  const totalItems = sortedActivities.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const clampedPage = Math.min(Math.max(1, page), totalPages);
+  const visibleActivities = sortedActivities.slice((clampedPage - 1) * pageSize, clampedPage * pageSize);
 
   // Determine latest activity for display in header
   const latestActivity = (activities && activities.length > 0)
@@ -125,6 +217,55 @@ export default function PetDetail({ household, user, onSignOut }) {
     load();
     return () => { mounted = false; };
   }, [household?.id]);
+
+  // Listen for in-page activity events (dispatched by LogActivity or forwarded from socket)
+  useEffect(() => {
+    const handleNew = (e) => {
+      try {
+        const activity = e?.detail?.activity;
+        if (!activity) return;
+        const targetPetId = petId ? parseInt(petId) : null;
+        const activityPetId = activity.petId || (activity.pet && activity.pet.id) || activity.pet?.id || null;
+        if (targetPetId && activityPetId && parseInt(activityPetId) !== targetPetId) return;
+        setActivities((prev = []) => {
+          // replace if exists, otherwise prepend
+          if (prev.some(a => a.id === activity.id)) return prev.map(a => a.id === activity.id ? activity : a);
+          return [activity, ...prev];
+        });
+      } catch (err) {
+        // ignore malformed events
+      }
+    };
+
+    const handleUpdated = (e) => {
+      try {
+        const activity = e?.detail?.activity;
+        if (!activity) return;
+        const targetPetId = petId ? parseInt(petId) : null;
+        const activityPetId = activity.petId || (activity.pet && activity.pet.id) || activity.pet?.id || null;
+        if (targetPetId && activityPetId && parseInt(activityPetId) !== targetPetId) return;
+        setActivities((prev = []) => prev.map(a => a.id === activity.id ? activity : a));
+      } catch (err) {}
+    };
+
+    const handleDeleted = (e) => {
+      try {
+        const activityId = e?.detail?.activityId;
+        if (!activityId) return;
+        setActivities((prev = []) => prev.filter(a => String(a.id) !== String(activityId)));
+      } catch (err) {}
+    };
+
+    window.addEventListener('petSitter:newActivity', handleNew);
+    window.addEventListener('petSitter:updatedActivity', handleUpdated);
+    window.addEventListener('petSitter:deletedActivity', handleDeleted);
+
+    return () => {
+      window.removeEventListener('petSitter:newActivity', handleNew);
+      window.removeEventListener('petSitter:updatedActivity', handleUpdated);
+      window.removeEventListener('petSitter:deletedActivity', handleDeleted);
+    };
+  }, [petId]);
 
   // Expose a loader so child components can refresh quick actions after changes
   const loadQuickActions = async () => {
@@ -416,7 +557,7 @@ export default function PetDetail({ household, user, onSignOut }) {
         {/* Compact Header + General Section */}
         <div className="mb-6 border-b border-gray-200 py-6">
           <div className="flex items-start justify-between gap-6">
-            <div className="flex items-start gap-8">
+            <div className="flex items-start ">
               <div className="flex flex-col items-start gap-4">
                 <div className="relative">
                   <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center overflow-hidden">
@@ -610,6 +751,7 @@ export default function PetDetail({ household, user, onSignOut }) {
           </div>
 
           {activities.length > 0 && (
+            <>
             <div className="flex gap-3 mb-8">
               <button
                 onClick={() => {
@@ -655,6 +797,55 @@ export default function PetDetail({ household, user, onSignOut }) {
                 📅 Upcoming
               </button>
             </div>
+
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                placeholder="Search activities..."
+                className="px-3 py-2 rounded-lg border border-gray-200 focus:outline-none w-60"
+              />
+
+              <select
+                value={memberFilter}
+                onChange={(e) => { setMemberFilter(e.target.value); setPage(1); }}
+                className="px-3 py-2 rounded-lg border border-gray-200 bg-white"
+              >
+                <option value="all">All members</option>
+                {memberOptions.map(m => (
+                  <option key={String(m.id || m.name)} value={m.id || m.name}>{m.name || m.displayName || m.email || String(m.id)}</option>
+                ))}
+              </select>
+
+              <select
+                value={typeFilter}
+                onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
+                className="px-3 py-2 rounded-lg border border-gray-200 bg-white"
+              >
+                <option value="all">All types</option>
+                {ACTIVITY_TYPES.map(t => (
+                  <option key={t.id} value={t.id}>{t.label}</option>
+                ))}
+              </select>
+
+              <select
+                value={sortOrder}
+                onChange={(e) => { setSortOrder(e.target.value); setPage(1); }}
+                className="px-3 py-2 rounded-lg border border-gray-200 bg-white"
+              >
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+              </select>
+
+              <button
+                onClick={() => { setPageSize(prev => prev === 5 ? 10 : 5); setPage(1); }}
+                className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+              >
+                {pageSize === 5 ? 'Show more (10)' : 'Show less (5)'}
+              </button>
+            </div>
+            </>
           )}
 
           {(() => {
@@ -715,7 +906,7 @@ export default function PetDetail({ household, user, onSignOut }) {
               );
             }
 
-            if (filteredActivities.length === 0) {
+            if (sortedActivities.length === 0) {
               return (
                 <div className="text-center py-12 bg-gray-50 rounded-xl">
                   <p className="text-gray-500">
@@ -728,14 +919,18 @@ export default function PetDetail({ household, user, onSignOut }) {
 
             return (
               <div className="space-y-4">
-                {filteredActivities.map((activity) => (
-                  <div key={activity.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-start justify-between">
+                {visibleActivities.map((activity) => (
+                  <div
+                    key={activity.id}
+                    onClick={() => setViewingActivity(activity)}
+                    className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-start justify-between cursor-pointer"
+                  >
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
                         <p className="font-semibold text-gray-900">
                           {(activity.activityType?.name
                             ? `${activity.activityType.name.charAt(0).toUpperCase()}${activity.activityType.name.slice(1)}`
-                            : 'Activity')}
+                            : (activity._clientActionLabel || 'Activity'))}
                         </p>
                         <time className="text-sm text-gray-500">
                           {parseTimestamp(activity.timestamp).toLocaleString()}
@@ -750,13 +945,19 @@ export default function PetDetail({ household, user, onSignOut }) {
                     </div>
                     <div className="ml-4 flex items-center gap-2">
                       <button
-                        onClick={() => setEditingActivity(activity)}
+                        onClick={(ev) => { ev.stopPropagation(); setViewingActivity(activity); }}
+                        className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={(ev) => { ev.stopPropagation(); setEditingActivity(activity); }}
                         className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition"
                       >
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDeleteActivity(activity.id)}
+                        onClick={(ev) => { ev.stopPropagation(); handleDeleteActivity(activity.id); }}
                         className="px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-100 rounded-lg transition"
                       >
                         Delete
@@ -934,7 +1135,7 @@ export default function PetDetail({ household, user, onSignOut }) {
           petId={petId}
           household={household}
           onActivityLogged={(newActivity) => {
-            setActivities([newActivity, ...activities]);
+            setActivities(prev => [newActivity, ...prev]);
             setShowLogActivity(false);
           }}
           onClose={() => setShowLogActivity(false)}
@@ -949,18 +1150,24 @@ export default function PetDetail({ household, user, onSignOut }) {
           activity={editingActivity}
           onActivityLogged={(updatedActivity) => {
             // Update the activity in the timeline
-            setActivities(activities.map(a => 
-              a.id === updatedActivity.id ? updatedActivity : a
-            ));
+            setActivities(prev => prev.map(a => a.id === updatedActivity.id ? updatedActivity : a));
             setEditingActivity(null);
           }}
           onActivityDeleted={(activityId) => {
             // Remove the activity from the timeline
-            setActivities(activities.filter(a => a.id !== activityId));
+            setActivities(prev => prev.filter(a => a.id !== activityId));
             setEditingActivity(null);
           }}
           onClose={() => setEditingActivity(null)}
           onQuickActionsUpdated={loadQuickActions}
+        />
+      )}
+      {viewingActivity && (
+        <ActivityView
+          activity={viewingActivity}
+          onClose={() => setViewingActivity(null)}
+          onEdit={(act) => { setViewingActivity(null); setEditingActivity(act); }}
+          onDelete={(id) => { setViewingActivity(null); handleDeleteActivity(id); }}
         />
       )}
     </div>

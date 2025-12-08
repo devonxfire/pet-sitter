@@ -1,16 +1,6 @@
 import React, { useState } from 'react';
 import { apiFetch } from './api';
-
-const ACTIVITY_TYPES = [
-  { id: 'feeding', label: 'Feeding', icon: '🍽️', color: 'bg-orange-100' },
-  { id: 'walk', label: 'Walk', icon: '🚶', color: 'bg-blue-100' },
-  { id: 'play', label: 'Play', icon: '🎾', color: 'bg-pink-100' },
-  { id: 'medication', label: 'Medication', icon: '💊', color: 'bg-red-100' },
-  { id: 'water', label: 'Water', icon: '💧', color: 'bg-cyan-100' },
-  { id: 'grooming', label: 'Grooming', icon: '🛁', color: 'bg-purple-100' },
-  { id: 'photo', label: 'Photo', icon: '📸', color: 'bg-yellow-100' },
-  { id: 'other', label: 'Other', icon: '📝', color: 'bg-gray-100' }
-];
+import ACTIVITY_TYPES from './activityTypes';
 
 export default function LogActivity({ petId, household, activity, onActivityLogged, onActivityDeleted, onClose, onQuickActionsUpdated }) {
   const [step, setStep] = useState(activity ? 'edit' : 'selectType'); // selectType -> timing -> happened/schedule -> details -> reminder (if upcoming)
@@ -75,6 +65,9 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
     setLoading(true);
 
     try {
+      // derive client-side type info so we can label notifications immediately
+      const typeDef = ACTIVITY_TYPES.find(t => t.id === selectedType) || {};
+
       if (isEditing) {
         // Update existing activity
         const data = await apiFetch(`/api/activities/${activity.id}`, {
@@ -84,7 +77,14 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
             notes: notes || null
           })
         });
-        onActivityLogged(data);
+        // attach client-side label if available
+        const augmented = { ...data, _clientActionLabel: (data.activityType?.label || data.activityType?.name || typeDef.label || selectedType) };
+        if (typeof onActivityLogged === 'function') onActivityLogged(augmented);
+        try { window.dispatchEvent(new CustomEvent('petSitter:updatedActivity', { detail: { activity: augmented } })); } catch (e) {}
+        try {
+          const payload = { householdId: household?.id, activity: augmented, ts: Date.now() };
+          localStorage.setItem('petSitter:latestActivity', JSON.stringify(payload));
+        } catch (e) {}
       } else {
         // Create new activity(s) for selected pet(s)
         const petIdsToSend = (selectedPetIds && selectedPetIds.length > 0)
@@ -105,7 +105,17 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
         }));
 
         const results = await Promise.all(promises);
-        results.forEach((res) => onActivityLogged(res));
+        results.forEach((res) => {
+          // augment with client-side action label so notifications display correctly immediately
+          const clientLabel = typeDef.label || selectedType;
+          const augmented = { ...res, _clientActionLabel: clientLabel };
+          try { if (typeof onActivityLogged === 'function') onActivityLogged(augmented); } catch (e) {}
+          try { window.dispatchEvent(new CustomEvent('petSitter:newActivity', { detail: { activity: augmented } })); } catch (e) {}
+          try {
+            const payload = { householdId: household?.id, activity: augmented, ts: Date.now() };
+            localStorage.setItem('petSitter:latestActivity', JSON.stringify(payload));
+          } catch (e) {}
+        });
 
         // Optionally save as a server-backed quick action
         if (addToQuickActions && selectedType) {
@@ -122,7 +132,6 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
                 method: 'POST',
                 body: JSON.stringify(snapshot)
               });
-              // Notify parent to refresh quick actions list
               try { if (typeof onQuickActionsUpdated === 'function') await onQuickActionsUpdated(); } catch (e) { console.warn('onQuickActionsUpdated callback failed', e); }
             } catch (err) {
               console.error('Failed to save quick action to server', err);
@@ -155,6 +164,10 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
       if (typeof onActivityDeleted === 'function') onActivityDeleted(activity.id);
       else if (typeof onActivityLogged === 'function') onActivityLogged(null);
       onClose();
+          try { window.dispatchEvent(new CustomEvent('petSitter:deletedActivity', { detail: { activityId: activity.id } })); } catch (e) {}
+          try {
+            localStorage.setItem('petSitter:deletedActivity', JSON.stringify({ householdId: household?.id, activityId: activity.id, ts: Date.now() }));
+          } catch (e) {}
     } catch (err) {
       console.error('Failed to delete activity', err);
       setError(err.message || 'Failed to delete activity');
