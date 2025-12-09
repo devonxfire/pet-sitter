@@ -40,6 +40,11 @@ export default function PetDetail({ household, user, onSignOut }) {
     return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
+  // Helper: join sibling names for compact display in header
+  const siblingNames = (pet && Array.isArray(pet.siblings) && pet.siblings.length)
+    ? pet.siblings.map(s => (s && s.name) ? s.name : String(s)).filter(Boolean).join(', ')
+    : '';
+
   // Parse timestamp strings reliably. If the string lacks timezone info, assume UTC
   // so displayed local time matches the moment intended by the server/client.
   const parseTimestamp = (ts) => {
@@ -620,34 +625,48 @@ export default function PetDetail({ household, user, onSignOut }) {
                   </div>
                 </div>
 
-                <div className="mt-4 md:mt-0 grid grid-cols-2 gap-4 md:gap-3 text-sm text-gray-600">
-                  <div>
-                    <p className="text-xs text-gray-500">Species</p>
-                    <p className="font-semibold text-gray-900">{pet.species ? (pet.species.charAt(0).toUpperCase() + pet.species.slice(1)) : '-'}</p>
+                <div className="mt-4 md:mt-0 flex items-start gap-6 text-sm text-gray-600">
+                  {/* Vertical divider between name and info on md+ */}
+                  <div className="hidden md:block w-px bg-gray-200 h-20" />
 
-                    <div className="mt-4">
-                      <p className="text-xs text-gray-500">Breed</p>
-                      <p className="font-semibold text-gray-900">{pet.breed || '-'}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 w-full">
+                    <div>
+                      <p className="text-xs text-gray-500">Species</p>
+                      <p className="font-semibold text-gray-900">{pet.species ? (pet.species.charAt(0).toUpperCase() + pet.species.slice(1)) : '-'}</p>
+
+                      <div className="mt-4">
+                        <p className="text-xs text-gray-500">Breed</p>
+                        <p className="font-semibold text-gray-900">{pet.breed || '-'}</p>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="relative pr-12 md:pr-14">
-                    <p className="text-xs text-gray-500">Age</p>
-                    <p className="font-semibold text-gray-900">{pet.age ? `${pet.age} years` : '-'}</p>
+                    <div>
+                      <p className="text-xs text-gray-500">Age</p>
+                      <p className="font-semibold text-gray-900">{pet.age ? `${pet.age} years` : '-'}</p>
 
-                    {editingSection !== 'general' && (
-                      <button
-                        onClick={() => startEditingSection('general')}
-                        aria-label="Edit general info"
-                        className="absolute bottom-0 right-0 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 shadow-sm transition"
-                      >
-                        <span className="text-sm">✎</span>
-                      </button>
-                    )}
+                      <div className="mt-4">
+                        <p className="text-xs text-gray-500">Weight</p>
+                        <p className="font-semibold text-gray-900">{pet.weight ? `${pet.weight} ${pet.weightUnit || 'lbs'}` : '-'}</p>
+                      </div>
+                    </div>
 
-                    <div className="mt-4">
-                      <p className="text-xs text-gray-500">Weight</p>
-                      <p className="font-semibold text-gray-900">{pet.weight ? `${pet.weight} ${pet.weightUnit || 'lbs'}` : '-'}</p>
+                    <div className="relative">
+                      <p className="text-xs text-gray-500">Siblings</p>
+                      <p className="font-semibold text-gray-900">{siblingNames || '-'}</p>
+
+                      <div className="mt-4">
+                        <p className="text-xs text-gray-500">Notes</p>
+                        <p className="font-semibold text-gray-900">{pet.notes || '-'}</p>
+                      </div>
+                      {editingSection !== 'general' && (
+                        <button
+                          onClick={() => startEditingSection('general')}
+                          aria-label="Edit general info"
+                          className="absolute top-0 right-0 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 shadow-sm transition"
+                        >
+                          <span className="text-sm">✎</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -656,9 +675,9 @@ export default function PetDetail({ household, user, onSignOut }) {
 
             {/* Actions moved inline with Age value */}
               </div>
-              {/* Right-side pet quote (decorative) - aligned to inner container right edge */}
-              <div className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2">
-                <blockquote className="text-right text-gray-500 italic" style={{ fontFamily: `'Dancing Script', cursive`, fontSize: '1.15rem' }}>
+              {/* Right-side pet quote (decorative) - offset below header on md+ */}
+              <div className="hidden md:flex absolute right-0 top-full mt-4">
+                <blockquote className="text-right text-gray-500 italic" style={{ fontFamily: `'Dancing Script', cursive`, fontSize: '1.25rem' }}>
                   “{getPetQuote(pet.name)}”
                 </blockquote>
               </div>
@@ -773,13 +792,7 @@ export default function PetDetail({ household, user, onSignOut }) {
           )}
         </div>
 
-        {/* Notes (full width below header) */}
-        {editingSection !== 'general' && pet.notes && (
-          <div className="mt-6 mb-6 max-w-3xl">
-            <p className="text-sm text-gray-500">Notes</p>
-            <p className="text-lg text-gray-900">{pet.notes}</p>
-          </div>
-        )}
+        {/* Notes block removed (now shown in header) */}
 
         {/* Activity Timeline */}
         <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200">
