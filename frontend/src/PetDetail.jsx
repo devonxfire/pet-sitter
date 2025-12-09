@@ -556,15 +556,17 @@ export default function PetDetail({ household, user, onSignOut }) {
       <TopNav user={user} household={household} onSignOut={onSignOut} />
 
       <main className="flex flex-col items-stretch py-6">
-        <div className="mx-auto max-w-6xl px-6 w-full">
+        {/* Full-bleed header band */}
+        <div className="w-full bg-gray-50 border-b border-gray-200">
+          <div className="mx-auto max-w-6xl px-6 w-full">
 
-          {/* Compact Header + General Section (grid layout) */}
-          <div className="mb-6 border-b border-gray-200 py-6 bg-gray-50">
-            <div className="grid grid-cols-[auto_1fr_auto] items-start gap-6">
+            {/* Compact Header + General Section (grid layout) */}
+            <div className="mb-6 py-4">
+              <div className="grid md:grid-flow-col md:auto-cols-max items-center gap-6 md:gap-6">
             {/* Avatar */}
             <div className="shrink-0">
-              <div className="relative">
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center overflow-hidden">
+                <div className="relative">
+                <div className="w-52 h-52 md:w-56 md:h-56 rounded-full bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
                   {pet.photoUrl ? (
                     <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet.name} className="w-full h-full object-cover select-none" draggable={false} />
                   ) : (
@@ -573,7 +575,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 </div>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-1 -right-3 bg-accent hover:opacity-90 text-white rounded-full w-10 h-10 flex items-center justify-center cursor-pointer transition text-sm avatar-action"
+                  className="absolute -bottom-3 -right-3 md:-bottom-2 md:-right-2 bg-accent text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center cursor-pointer transition transform hover:scale-105 text-sm avatar-action z-20 ring-2 ring-white shadow"
                   type="button"
                   aria-label="Change photo"
                 >
@@ -584,53 +586,64 @@ export default function PetDetail({ household, user, onSignOut }) {
             </div>
 
             {/* Main info */}
-            <div className="min-w-0">
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">{pet.name}</h1>
+              <div className="min-w-0">
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <h1 className="text-4xl md:text-5xl font-bold leading-tight text-gray-900">{pet.name}</h1>
 
-              <div className="mt-3 flex items-center gap-3">
-                {latestActivity ? (
-                  <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-sm">
-                    <span className="text-lg">{getActivityIcon(latestActivity.activityType?.name)}</span>
-                    <span className="font-semibold text-gray-900">{(latestActivity.activityType?.name
-                      ? `${latestActivity.activityType.name.charAt(0).toUpperCase()}${latestActivity.activityType.name.slice(1)}`
-                      : 'Activity')}</span>
-                  </span>
-                ) : null}
-              </div>
-
-              <div className="mt-6 grid grid-cols-2 gap-6 text-sm text-gray-600">
-                <div>
-                  <p className="text-xs text-gray-500">Species</p>
-                  <p className="font-semibold text-gray-900">{pet.species ? (pet.species.charAt(0).toUpperCase() + pet.species.slice(1)) : '-'}</p>
-
-                  <div className="mt-4">
-                    <p className="text-xs text-gray-500">Breed</p>
-                    <p className="font-semibold text-gray-900">{pet.breed || '-'}</p>
+                  <div className="flex items-center gap-3">
+                    {latestActivity ? (
+                      <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-sm">
+                        <span className="text-lg">{getActivityIcon(latestActivity.activityType?.name)}</span>
+                        <span className="font-semibold text-gray-900">{(latestActivity.activityType?.name
+                          ? `${latestActivity.activityType.name.charAt(0).toUpperCase()}${latestActivity.activityType.name.slice(1)}`
+                          : 'Activity')}</span>
+                      </span>
+                    ) : null}
                   </div>
                 </div>
 
-                <div>
-                  <p className="text-xs text-gray-500">Age</p>
-                  <p className="font-semibold text-gray-900">{pet.age ? `${pet.age} years` : '-'}</p>
+                <div className="mt-4 md:mt-0 grid grid-cols-2 gap-4 md:gap-3 text-sm text-gray-600">
+                  <div>
+                    <p className="text-xs text-gray-500">Species</p>
+                    <p className="font-semibold text-gray-900">{pet.species ? (pet.species.charAt(0).toUpperCase() + pet.species.slice(1)) : '-'}</p>
 
-                  <div className="mt-4">
-                    <p className="text-xs text-gray-500">Weight</p>
-                    <p className="font-semibold text-gray-900">{pet.weight ? `${pet.weight} ${pet.weightUnit || 'lbs'}` : '-'}</p>
+                    <div className="mt-4">
+                      <p className="text-xs text-gray-500">Breed</p>
+                      <p className="font-semibold text-gray-900">{pet.breed || '-'}</p>
+                    </div>
+                  </div>
+
+                  <div className="relative pr-12 md:pr-14">
+                    <p className="text-xs text-gray-500">Age</p>
+                    <p className="font-semibold text-gray-900">{pet.age ? `${pet.age} years` : '-'}</p>
+
+                    {editingSection !== 'general' && (
+                      <button
+                        onClick={() => startEditingSection('general')}
+                        className="absolute bottom-0 right-0 text-gray-600 hover:bg-gray-100 px-2 py-1 rounded-lg text-sm font-medium transition"
+                      >
+                        Edit
+                      </button>
+                    )}
+
+                    <div className="mt-4">
+                      <p className="text-xs text-gray-500">Weight</p>
+                      <p className="font-semibold text-gray-900">{pet.weight ? `${pet.weight} ${pet.weightUnit || 'lbs'}` : '-'}</p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-start">
-              {editingSection !== 'general' && (
-                <button onClick={() => startEditingSection('general')} className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition">Edit</button>
-              )}
-            </div>
+            {/* Actions moved inline with Age value */}
+              </div>
             </div>
           </div>
+        </div>
 
         {/* Editing form (keeps existing behavior) */}
+        <div className="mx-auto max-w-6xl px-6 w-full">
           {editingSection === 'general' ? (
             <div className="space-y-6 mt-6">
               {/* Species */}
@@ -747,7 +760,7 @@ export default function PetDetail({ household, user, onSignOut }) {
 
         {/* Activity Timeline */}
         <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-8 pt-8">
             <h2 className="text-2xl font-bold text-gray-900">Activity Timeline</h2>
             <div className="flex items-center gap-3">
               {/* Intentionally left blank - action buttons live below the header */}
