@@ -365,23 +365,25 @@ app.post('/api/households', authenticateToken, async (req, res) => {
   }
 });
 
-// Quick Actions (server-backed) -------------------------------------------------
-app.get('/api/households/:householdId/quick-actions', authenticateToken, async (req, res) => {
+// Places functionality removed: server no longer proxies Google Places or Mapbox.
+
+// Favourites (server-backed) -------------------------------------------------
+app.get('/api/households/:householdId/favourites', authenticateToken, async (req, res) => {
   try {
     const { householdId } = req.params;
     // Verify membership
     const member = await prisma.householdMember.findFirst({ where: { householdId: parseInt(householdId), userId: req.user.userId } });
     if (!member) return res.status(403).json({ error: 'Access denied' });
 
-    const actions = await prisma.quickAction.findMany({ where: { householdId: parseInt(householdId) }, orderBy: { ord: 'asc' } });
+    const actions = await prisma.favourite.findMany({ where: { householdId: parseInt(householdId) }, orderBy: { ord: 'asc' } });
     res.json(actions);
   } catch (err) {
-    console.error('Get quick actions error:', err);
+    console.error('Get favourites error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-app.post('/api/households/:householdId/quick-actions', authenticateToken, async (req, res) => {
+app.post('/api/households/:householdId/favourites', authenticateToken, async (req, res) => {
   try {
     const { householdId } = req.params;
     // Use `payload` to avoid shadowing and improve clarity
@@ -394,67 +396,67 @@ app.post('/api/households/:householdId/quick-actions', authenticateToken, async 
     if (!member) return res.status(403).json({ error: 'Access denied' });
 
     // Debug: log incoming body to help diagnose 500s during development
-    console.log('Create quick action payload:', { userId: req.user.userId, householdId: parseInt(householdId), body: req.body });
+    console.log('Create favourite payload:', { userId: req.user.userId, householdId: parseInt(householdId), body: req.body });
 
     // Prevent duplicates
-    const existing = await prisma.quickAction.findFirst({ where: { householdId: parseInt(householdId), key } });
+    const existing = await prisma.favourite.findFirst({ where: { householdId: parseInt(householdId), key } });
     if (existing) return res.status(200).json(existing);
 
-    const maxOrd = await prisma.quickAction.aggregate({ _max: { ord: true }, where: { householdId: parseInt(householdId) } });
+    const maxOrd = await prisma.favourite.aggregate({ _max: { ord: true }, where: { householdId: parseInt(householdId) } });
     // Be defensive: _max or ord may be null depending on Prisma results
     const prevOrd = (maxOrd && maxOrd._max && typeof maxOrd._max.ord === 'number') ? maxOrd._max.ord : 0;
     const ord = prevOrd + 1;
 
-    const qa = await prisma.quickAction.create({
+    const qa = await prisma.favourite.create({
       data: { householdId: parseInt(householdId), key, label, icon: icon || null, ord, data: payload || null }
     });
 
-    console.log('Created quick action:', { qa });
+    console.log('Created favourite:', { qa });
     res.json(qa);
   } catch (err) {
-    console.error('Create quick action error:', err);
+    console.error('Create favourite error:', err);
     const payload = { error: err.message || 'Internal server error' };
     if (process.env.NODE_ENV === 'development') payload.details = err.stack;
     res.status(500).json(payload);
   }
 });
 
-app.delete('/api/households/:householdId/quick-actions/:id', authenticateToken, async (req, res) => {
+app.delete('/api/households/:householdId/favourites/:id', authenticateToken, async (req, res) => {
   try {
     const { householdId, id } = req.params;
     // Verify membership
     const member = await prisma.householdMember.findFirst({ where: { householdId: parseInt(householdId), userId: req.user.userId } });
     if (!member) return res.status(403).json({ error: 'Access denied' });
 
-    const qa = await prisma.quickAction.findUnique({ where: { id: parseInt(id) } });
+    const qa = await prisma.favourite.findUnique({ where: { id: parseInt(id) } });
     if (!qa || qa.householdId !== parseInt(householdId)) return res.status(404).json({ error: 'Not found' });
 
-    // Only delete the quick-action shortcut row. Do NOT touch Activity records.
-    await prisma.quickAction.delete({ where: { id: parseInt(id) } });
-    res.json({ success: true, deletedQuickActionId: parseInt(id), note: 'This removes only the quick-action shortcut; it does not delete any logged activities.' });
+    // Only delete the favourite shortcut row. Do NOT touch Activity records.
+    await prisma.favourite.delete({ where: { id: parseInt(id) } });
+    res.json({ success: true, deletedFavouriteId: parseInt(id), note: 'This removes only the favourite shortcut; it does not delete any logged activities.' });
   } catch (err) {
-    console.error('Delete quick action error:', err);
+    console.error('Delete favourite error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Replay a quick action: create activities for the saved snapshot
-app.post('/api/households/:householdId/quick-actions/:id/replay', authenticateToken, async (req, res) => {
+// Replay a favourite: create activities for the saved snapshot
+app.post('/api/households/:householdId/favourites/:id/replay', authenticateToken, async (req, res) => {
   try {
     const { householdId, id } = req.params;
 
-    console.log(`Replay requested by user ${req.user?.userId} for household ${householdId}, quickAction ${id}`);
+    console.log(`Replay requested by user ${req.user?.userId} for household ${householdId}, favourite ${id}`);
 
     // Verify membership
     const member = await prisma.householdMember.findFirst({ where: { householdId: parseInt(householdId), userId: req.user.userId } });
     console.log('Membership check result for replay:', { member });
     if (!member) return res.status(403).json({ error: 'Access denied' });
 
-    const qa = await prisma.quickAction.findUnique({ where: { id: parseInt(id) } });
-    console.log('Found quickAction:', { qa });
+    const qa = await prisma.favourite.findUnique({ where: { id: parseInt(id) } });
+    console.log('Found favourite:', { qa });
     if (!qa || qa.householdId !== parseInt(householdId)) {
-      console.warn('Quick action not found or household mismatch', { requestedId: id, householdId, found: qa });
-      return res.status(404).json({ error: 'Quick action not found', details: `requestedId=${id}, householdId=${householdId}, found=${qa ? 'exists' : 'missing'}` });
+      console.warn('Favourite not found or household mismatch', { requestedId: id, householdId, found: qa });
+      return res.status(404).json({ error: 'Favourite not found', details: `requestedId=${id}, householdId=${householdId}, found=${qa ? 'exists' : 'missing'}` });
     }
 
     const payload = qa.data || {};
@@ -481,7 +483,7 @@ app.post('/api/households/:householdId/quick-actions/:id/replay', authenticateTo
       const pets = await prisma.pet.findMany({ where: { householdId: parseInt(householdId), id: { in: payload.petIds.map(id => parseInt(id)) } }, select: { id: true } });
       targetIds = pets.map(p => p.id);
     } else {
-      return res.status(400).json({ error: 'No target pets found for quick action' });
+      return res.status(400).json({ error: 'No target pets found for favourite' });
     }
 
     // For each target pet, create or find activityType by name (qa.key) and create activity
@@ -502,7 +504,7 @@ app.post('/api/households/:householdId/quick-actions/:id/replay', authenticateTo
           activityTypeId = createdType.id;
         }
       } else {
-        return res.status(400).json({ error: 'Quick action missing activity key' });
+        return res.status(400).json({ error: 'Favourite missing activity key' });
       }
 
       const activity = await prisma.activity.create({
@@ -521,6 +523,37 @@ app.post('/api/households/:householdId/quick-actions/:id/replay', authenticateTo
       });
 
       created.push(activity);
+    }
+
+    // Emit real-time events for each created activity so other household members receive them instantly
+    try {
+      const householdIdNum = parseInt(householdId);
+      if (typeof io !== 'undefined' && householdIdNum) {
+        console.debug(`Emitting ${created.length} favourite activity events for household:${householdIdNum}`);
+        for (const activity of created) {
+          try {
+            console.debug('Emitting newActivity for activity id', activity.id, 'to household', householdIdNum);
+            io.to(`household:${householdIdNum}`).emit('newActivity', { activity });
+          } catch (e) {
+            console.warn('Failed to emit newActivity to household room', e);
+          }
+        }
+
+        // Also emit to individual user rooms for reliability
+        const members = await prisma.householdMember.findMany({ where: { householdId: householdIdNum, userId: { not: null } }, select: { userId: true } });
+        for (const m of members) {
+          for (const activity of created) {
+            try {
+              console.debug('Emitting newActivity for activity id', activity.id, 'to user', m.userId);
+              io.to(`user:${m.userId}`).emit('newActivity', { activity });
+            } catch (e) {
+              console.warn('Failed to emit newActivity to user room', m.userId, e);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to emit socket events for favourite replay', err);
     }
 
     res.json(created.sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp)));

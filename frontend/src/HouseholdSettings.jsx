@@ -181,7 +181,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="member@example.com"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--color-accent)"
               />
             </div>
 
@@ -192,7 +192,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--color-accent)"
               >
                 <option value="member">Member</option>
                 <option value="sitter">Sitter</option>

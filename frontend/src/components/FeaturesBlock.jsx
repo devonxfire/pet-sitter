@@ -1,4 +1,5 @@
 import React from 'react'
+import featurePet from '/features-pet.png'
 
 function Icon({name}){
   const common = { className: 'w-5 h-5', strokeWidth: 1.5, fill: 'none', stroke: 'currentColor' }
@@ -49,9 +50,9 @@ function Icon({name}){
 
 function FeatureCard({icon, title, desc}){
   return (
-    <div className="p-6 bg-white border border-gray-100 rounded-xl shadow-sm">
+    <div className="p-6 bg-white rounded-xl">
       <div className="flex items-start gap-4">
-        <div className="w-11 h-11 rounded-md bg-[#E6FFFB] flex items-center justify-center text-accent">
+        <div className="w-11 h-11 flex items-center justify-center text-accent">
           <Icon name={icon} />
         </div>
         <div>
@@ -65,18 +66,32 @@ function FeatureCard({icon, title, desc}){
 
 export default function FeaturesBlock(){
   return (
-    <section className="py-16 bg-white">
+    <section className="pt-4 pb-0 bg-white">
       <div className="max-w-7xl mx-auto px-6">
-        <h3 className="text-2xl font-semibold text-center mb-8">Features</h3>
-        <p className="text-center text-gray-600 max-w-2xl mx-auto mb-10">Everything a household and their sitters need to keep pet care predictable — timelines, reminders, records and sharing.</p>
+        {/* Heading moved into left column to avoid duplication on narrow screens */}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          <FeatureCard icon="timeline" title="Activity Timeline" desc="Log and view pet care actions in one place." />
-          <FeatureCard icon="users" title="Household Sharing" desc="Invite family and sitters to share care plans." />
-          <FeatureCard icon="bell" title="Reminders & Alerts" desc="Never miss medication or feeding times again." />
-          <FeatureCard icon="camera" title="Photo & Records" desc="Store photos, vet info and dietary notes." />
-          <FeatureCard icon="pin" title="Visit Logs" desc="Track sitters and visits with quick notes." />
-          <FeatureCard icon="lock" title="Privacy Controls" desc="Keep household data private and share selectively." />
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+          {/* Left: large image (spans larger portion on desktop) */}
+          <div className="md:col-span-4">
+            <div className="w-full h-72 md:h-[560px] rounded-2xl overflow-hidden flex items-center justify-center bg-transparent">
+              <img src={featurePet} alt="App features" className="max-w-full max-h-full object-contain" loading="lazy" decoding="async" />
+            </div>
+          </div>
+
+          {/* Right: features list */}
+          <div className="md:col-span-8 flex flex-col justify-center">
+            <h3 className="text-4xl md:text-5xl font-extrabold leading-tight mb-4">Features</h3>
+            <p className="text-gray-600 mb-6">Everything a household and their sitters need to keep pet care predictable — timelines, reminders, records and sharing.</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <FeatureCard icon="timeline" title="Activity Timeline" desc="Log and view pet care actions in one place." />
+              <FeatureCard icon="users" title="Household Sharing" desc="Invite family and sitters to share care plans." />
+              <FeatureCard icon="bell" title="Reminders & Alerts" desc="Never miss medication or feeding times again." />
+              <FeatureCard icon="camera" title="Photo & Records" desc="Store photos, vet info and dietary notes." />
+              <FeatureCard icon="pin" title="Visit Logs" desc="Track sitters and visits with quick notes." />
+              <FeatureCard icon="lock" title="Privacy Controls" desc="Keep household data private and share selectively." />
+            </div>
+          </div>
         </div>
       </div>
     </section>

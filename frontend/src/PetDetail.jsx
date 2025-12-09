@@ -25,9 +25,9 @@ export default function PetDetail({ household, user, onSignOut }) {
   const [typeFilter, setTypeFilter] = useState('all');
   const [memberFilter, setMemberFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [quickActions, setQuickActions] = useState([]);
-  const [showManageQuickActions, setShowManageQuickActions] = useState(false);
-  const quickActionsRef = useRef(null);
+  const [favourites, setFavourites] = useState([]);
+  const [showManageFavourites, setShowManageFavourites] = useState(false);
+  const favouritesRef = useRef(null);
   const [editingSection, setEditingSection] = useState(null); // 'general', 'vet', 'food'
   const [editValues, setEditValues] = useState({});
   const [savingSection, setSavingSection] = useState(false);
@@ -194,25 +194,25 @@ export default function PetDetail({ household, user, onSignOut }) {
     };
   }, [petId]);
 
-  // Load quick actions from server; fall back to localStorage
+  // Load favourites from server; fall back to localStorage
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       try {
         if (household?.id) {
-          const serverActions = await apiFetch(`/api/households/${household.id}/quick-actions`);
+          const serverActions = await apiFetch(`/api/households/${household.id}/favourites`);
           if (mounted && Array.isArray(serverActions)) {
             // normalize to { id, key, label, icon, data }
-            setQuickActions(serverActions.map(a => ({ id: a.id, key: a.key, label: a.label, icon: a.icon, data: a.data || null })));
+            setFavourites(serverActions.map(a => ({ id: a.id, key: a.key, label: a.label, icon: a.icon, data: a.data || null })));
             return;
           }
         }
       } catch (err) {
-        console.warn('Failed to load quick actions from server:', err.message || err);
+        console.warn('Failed to load favourites from server:', err.message || err);
       }
 
       // If server fetch fails or no household, set empty list (server-backed only)
-      if (mounted) setQuickActions([]);
+      if (mounted) setFavourites([]);
     };
     load();
     return () => { mounted = false; };
@@ -228,8 +228,9 @@ export default function PetDetail({ household, user, onSignOut }) {
         const activityPetId = activity.petId || (activity.pet && activity.pet.id) || activity.pet?.id || null;
         if (targetPetId && activityPetId && parseInt(activityPetId) !== targetPetId) return;
         setActivities((prev = []) => {
-          // replace if exists, otherwise prepend
-          if (prev.some(a => a.id === activity.id)) return prev.map(a => a.id === activity.id ? activity : a);
+          // replace if exists (normalize id to string), otherwise prepend
+          const found = prev.some(a => String(a.id) === String(activity.id));
+          if (found) return prev.map(a => String(a.id) === String(activity.id) ? activity : a);
           return [activity, ...prev];
         });
       } catch (err) {
@@ -244,7 +245,7 @@ export default function PetDetail({ household, user, onSignOut }) {
         const targetPetId = petId ? parseInt(petId) : null;
         const activityPetId = activity.petId || (activity.pet && activity.pet.id) || activity.pet?.id || null;
         if (targetPetId && activityPetId && parseInt(activityPetId) !== targetPetId) return;
-        setActivities((prev = []) => prev.map(a => a.id === activity.id ? activity : a));
+        setActivities((prev = []) => prev.map(a => String(a.id) === String(activity.id) ? activity : a));
       } catch (err) {}
     };
 
@@ -267,38 +268,38 @@ export default function PetDetail({ household, user, onSignOut }) {
     };
   }, [petId]);
 
-  // Expose a loader so child components can refresh quick actions after changes
-  const loadQuickActions = async () => {
+  // Expose a loader so child components can refresh favourites after changes
+  const loadFavourites = async () => {
     try {
       if (!household?.id) return;
-      const serverActions = await apiFetch(`/api/households/${household.id}/quick-actions`);
+      const serverActions = await apiFetch(`/api/households/${household.id}/favourites`);
       if (Array.isArray(serverActions)) {
-        setQuickActions(serverActions.map(a => ({ id: a.id, key: a.key, label: a.label, icon: a.icon, data: a.data || null })));
+        setFavourites(serverActions.map(a => ({ id: a.id, key: a.key, label: a.label, icon: a.icon, data: a.data || null })));
       }
     } catch (err) {
-      console.warn('Failed to refresh quick actions:', err);
+      console.warn('Failed to refresh favourites:', err);
     }
   };
 
-  const createQuickAction = async (action) => {
+  const createFavourite = async (action) => {
       // action: { key, label, icon, data }
     try {
       // Preferred flow: call server-side replay endpoint when action has an id and household is known
       if (!household?.id) {
-        alert('No household context available. Quick Actions require a household.');
+        alert('No household context available. Favourites require a household.');
         return;
       }
 
       if (!action?.id) {
-        console.error('Quick action missing id', { action });
-        alert('Quick action is missing an id. Try refreshing the Quick Actions list.');
+        console.error('Favourite missing id', { action });
+        alert('Favourite is missing an id. Try refreshing the Favourites list.');
         return;
       }
 
       if (action.id && household?.id) {
         // Use raw fetch so we can show server error details if the replay fails
         const token = localStorage.getItem('token');
-        const replayUrl = apiUrl(`/api/households/${household.id}/quick-actions/${action.id}/replay`);
+        const replayUrl = apiUrl(`/api/households/${household.id}/favourites/${action.id}/replay`);
         console.log('Replay request', { replayUrl, householdId: household?.id, actionId: action?.id });
         const resp = await fetch(replayUrl, {
           method: 'POST',
@@ -318,28 +319,33 @@ export default function PetDetail({ household, user, onSignOut }) {
           console.error('Replay error payload:', body);
           const msg = body?.error || (body?.message) || `HTTP ${resp.status}`;
           const details = body?.details ? `\n\n${body.details}` : '';
-          alert(`Failed to replay quick action: ${msg}${details}`);
+          alert(`Failed to apply Favourite: ${msg}${details}`);
           return;
         }
 
         const created = body;
         if (Array.isArray(created) && created.length > 0) {
-          setActivities((prev) => [...created, ...(prev || [])]);
+          setActivities((prev = []) => {
+            const existingIds = new Set(prev.map(a => String(a.id)));
+            const toAdd = created.filter(c => !existingIds.has(String(c.id)));
+            if (toAdd.length === 0) return prev;
+            return [...toAdd, ...prev];
+          });
         }
-        // refresh quick actions list
+        // refresh favourites list
         try {
-          const serverActions = await apiFetch(`/api/households/${household.id}/quick-actions`);
-          if (Array.isArray(serverActions)) setQuickActions(serverActions.map(a => ({ id: a.id, key: a.key, label: a.label, icon: a.icon, data: a.data || null })));
+          const serverActions = await apiFetch(`/api/households/${household.id}/favourites`);
+          if (Array.isArray(serverActions)) setFavourites(serverActions.map(a => ({ id: a.id, key: a.key, label: a.label, icon: a.icon, data: a.data || null })));
         } catch (err) {
           // ignore
         }
         return;
       }
 
-      // Non-server quick-actions are not supported anymore
-      alert('This quick action is not available. Quick Actions are server-backed only.');
+      // Non-server favourites are not supported anymore
+      alert('This Favourite is not available. Favourites are server-backed only.');
     } catch (err) {
-      console.error('Failed to create quick action activity', err);
+      console.error('Failed to create favourite activity', err);
       alert(err.message || 'Failed to create activity');
     }
   };
@@ -356,27 +362,27 @@ export default function PetDetail({ household, user, onSignOut }) {
     }
   };
 
-  const handleDeleteQuickAction = async (qa) => {
+  const handleDeleteFavourite = async (qa) => {
     try {
-      if (!confirm('Delete this Quick Action? This will remove the shortcut but will NOT delete any previously logged activities.')) return;
+      if (!confirm('Delete this Favourite? This will remove the favourite but will NOT delete any previously logged activities.')) return;
 
       if (qa.id && household?.id) {
-        const resp = await apiFetch(`/api/households/${household.id}/quick-actions/${qa.id}`, { method: 'DELETE' });
-        console.log('Deleted quick action response', resp);
+        const resp = await apiFetch(`/api/households/${household.id}/favourites/${qa.id}`, { method: 'DELETE' });
+        console.log('Deleted favourite response', resp);
       } else {
-        throw new Error('Cannot delete quick action: not a server-backed action');
+        throw new Error('Cannot delete favourite: not a server-backed action');
       }
 
       // refresh list
-      const serverActions = await apiFetch(`/api/households/${household.id}/quick-actions`);
-      setQuickActions(serverActions.map(a => ({ id: a.id, key: a.key, label: a.label, icon: a.icon, data: a.data || null })));
+      const serverActions = await apiFetch(`/api/households/${household.id}/favourites`);
+      setFavourites(serverActions.map(a => ({ id: a.id, key: a.key, label: a.label, icon: a.icon, data: a.data || null })));
     } catch (err) {
-      console.error('Failed to delete quick action', err);
-      alert(err.message || 'Failed to delete quick action');
+      console.error('Failed to delete favourite', err);
+      alert(err.message || 'Failed to delete favourite');
     }
   };
 
-  const renderedQuickActions = quickActions || [];
+  const renderedFavourites = favourites || [];
 
   const clamp = (value, min = 0, max = 100) => Math.min(max, Math.max(min, value));
 
@@ -554,78 +560,80 @@ export default function PetDetail({ household, user, onSignOut }) {
       <main className="flex justify-center py-6">
         <div className="max-w-6xl px-6 w-full">
 
-        {/* Compact Header + General Section */}
+        {/* Compact Header + General Section (grid layout) */}
         <div className="mb-6 border-b border-gray-200 py-6">
-          <div className="flex items-start justify-between gap-6">
-            <div className="flex items-start ">
-              <div className="flex flex-col items-start gap-4">
-                <div className="relative">
-                  <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center overflow-hidden">
-                    {pet.photoUrl ? (
-                      <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet.name} className="w-full h-full object-cover select-none" draggable={false} />
-                    ) : (
-                      <div className="text-gray-400 text-4xl">📷</div>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute -bottom-1 -right-3 bg-accent hover:opacity-90 text-white rounded-full w-10 h-10 flex items-center justify-center cursor-pointer transition text-sm"
-                    type="button"
-                    aria-label="Change photo"
-                  >
-                    +
-                  </button>
-                  <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => handlePhotoUpload(e)} className="hidden" />
+          <div className="grid grid-cols-[auto_1fr_auto] items-start gap-6">
+            {/* Avatar */}
+            <div className="shrink-0">
+              <div className="relative">
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center overflow-hidden">
+                  {pet.photoUrl ? (
+                    <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet.name} className="w-full h-full object-cover select-none" draggable={false} />
+                  ) : (
+                    <div className="text-gray-400 text-4xl">📷</div>
+                  )}
                 </div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute -bottom-1 -right-3 bg-accent hover:opacity-90 text-white rounded-full w-10 h-10 flex items-center justify-center cursor-pointer transition text-sm"
+                  type="button"
+                  aria-label="Change photo"
+                >
+                  +
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => handlePhotoUpload(e)} className="hidden" />
+              </div>
+            </div>
 
-                {/* Compact latest activity pill under avatar */}
+            {/* Main info */}
+            <div className="min-w-0">
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">{pet.name}</h1>
+
+              <div className="mt-3 flex items-center gap-3">
                 {latestActivity ? (
-                  <div className="mt-4 flex items-center gap-2">
-                    <span className="text-xs text-gray-500">Latest Activity:</span>
-                    <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-sm">
-                      <span className="text-lg">{getActivityIcon(latestActivity.activityType?.name)}</span>
-                      <span className="font-semibold text-gray-900">{(latestActivity.activityType?.name
-                        ? `${latestActivity.activityType.name.charAt(0).toUpperCase()}${latestActivity.activityType.name.slice(1)}`
-                        : 'Activity')}</span>
-                    </span>
-                  </div>
+                  <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-sm">
+                    <span className="text-lg">{getActivityIcon(latestActivity.activityType?.name)}</span>
+                    <span className="font-semibold text-gray-900">{(latestActivity.activityType?.name
+                      ? `${latestActivity.activityType.name.charAt(0).toUpperCase()}${latestActivity.activityType.name.slice(1)}`
+                      : 'Activity')}</span>
+                  </span>
                 ) : null}
               </div>
 
-              <div className="flex-1">
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900">{pet.name}</h1>
-                <div className="mt-6 grid grid-cols-2 gap-4 text-sm text-gray-600">
-                  <div>
-                    <p className="text-xs text-gray-500">Species</p>
-                    <p className="font-semibold text-gray-900">{pet.species ? (pet.species.charAt(0).toUpperCase() + pet.species.slice(1)) : ''}</p>
-                  </div>
-                  <div>
+              <div className="mt-6 grid grid-cols-2 gap-6 text-sm text-gray-600">
+                <div>
+                  <p className="text-xs text-gray-500">Species</p>
+                  <p className="font-semibold text-gray-900">{pet.species ? (pet.species.charAt(0).toUpperCase() + pet.species.slice(1)) : ''}</p>
+
+                  <div className="mt-4">
                     <p className="text-xs text-gray-500">Breed</p>
                     <p className="font-semibold text-gray-900">{pet.breed || '-'}</p>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Age</p>
-                    <p className="font-semibold text-gray-900">{pet.age ? `${pet.age} years` : '-'}</p>
-                  </div>
-                  <div>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500">Age</p>
+                  <p className="font-semibold text-gray-900">{pet.age ? `${pet.age} years` : '-'}</p>
+
+                  <div className="mt-4">
                     <p className="text-xs text-gray-500">Weight</p>
                     <p className="font-semibold text-gray-900">{pet.weight ? `${pet.weight} ${pet.weightUnit || 'lbs'}` : '-'}</p>
                   </div>
                 </div>
-
-               
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
+            {/* Actions */}
+            <div className="flex items-start">
               {editingSection !== 'general' && (
                 <button onClick={() => startEditingSection('general')} className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition">Edit</button>
               )}
             </div>
           </div>
 
+          {/* Editing form (keeps existing behavior) */}
           {editingSection === 'general' ? (
-            <div className="space-y-6">
+            <div className="space-y-6 mt-6">
               {/* Species */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">Species</label>
@@ -719,7 +727,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 <button
                   onClick={saveSection}
                   disabled={savingSection}
-                  className="flex-1 bg-accent text-gray-900 font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                  className="flex-1 bg-accent text-white font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
                 >
                   {savingSection ? 'Saving...' : 'Save'}
                 </button>
@@ -728,49 +736,53 @@ export default function PetDetail({ household, user, onSignOut }) {
           ) : (
             <div />
           )}
-          {!editingSection === 'general' && pet.notes && (
-            <div className="mt-8">
-              <p className="text-sm text-gray-500">Notes</p>
-              <p className="text-gray-700">{pet.notes}</p>
-            </div>
-          )}
         </div>
+
+        {/* Notes (full width below header) */}
+        {editingSection !== 'general' && pet.notes && (
+          <div className="mt-6 mb-6 max-w-3xl">
+            <p className="text-sm text-gray-500">Notes</p>
+            <p className="text-lg text-gray-900">{pet.notes}</p>
+          </div>
+        )}
 
         {/* Activity Timeline */}
         <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="border-b border-gray-200">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-gray-900">Activity Timeline</h2>
-            {activities.length > 0 && (
+            <div className="flex items-center gap-3">
               <button
-                onClick={() => setShowLogActivity(true)}
-                className="bg-accent text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
+                onClick={() => {
+                  setActivityFilter('quick');
+                  setTimeout(() => favouritesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  activityFilter === 'quick'
+                    ? 'bg-accent text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
               >
-                Create New Activity
+                Favourites
               </button>
-            )}
+              {activities.length > 0 && (
+                <button
+                  onClick={() => setShowLogActivity(true)}
+                  className="bg-accent text-white font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
+                >
+                  Create New Activity
+                </button>
+              )}
+            </div>
           </div>
 
           {activities.length > 0 && (
             <>
             <div className="flex gap-3 mb-8">
               <button
-                onClick={() => {
-                  setActivityFilter('quick');
-                  setTimeout(() => quickActionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
-                }}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  activityFilter === 'quick'
-                    ? 'bg-accent text-gray-900'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                Quick Actions
-              </button>
-              <button
                 onClick={() => setActivityFilter('all')}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   activityFilter === 'all'
-                    ? 'bg-accent text-gray-900'
+                    ? 'bg-accent text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -780,7 +792,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 onClick={() => setActivityFilter('past')}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   activityFilter === 'past'
-                    ? 'bg-accent text-gray-900'
+                    ? 'bg-accent text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -790,7 +802,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 onClick={() => setActivityFilter('upcoming')}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   activityFilter === 'upcoming'
-                    ? 'bg-accent text-gray-900'
+                    ? 'bg-accent text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -855,7 +867,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   <p className="text-gray-500">No activities logged yet</p>
                   <button
                     onClick={() => setShowLogActivity(true)}
-                    className="mt-4 bg-accent text-gray-900 font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
+                    className="mt-4 bg-accent text-white font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
                   >
                     Create First Activity
                   </button>
@@ -864,17 +876,17 @@ export default function PetDetail({ household, user, onSignOut }) {
             }
 
             if (activityFilter === 'quick') {
-              if (renderedQuickActions.length === 0) {
+              if (renderedFavourites.length === 0) {
                 return (
-                  <div className="text-center py-12 bg-gray-50 rounded-xl">
-                    <p className="text-gray-500">No current quick actions</p>
+                <div className="text-center py-12 bg-gray-50 rounded-xl">
+                    <p className="text-gray-500">No current Favourites</p>
                   </div>
                 );
               }
 
               return (
                 <div className="space-y-4">
-                  {renderedQuickActions.map((qa) => (
+                  {renderedFavourites.map((qa) => (
                     <div key={`qa-${qa.id}`} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
@@ -884,17 +896,17 @@ export default function PetDetail({ household, user, onSignOut }) {
                         {qa.data?.notes && (
                           <p className="text-gray-700 text-sm">{qa.data.notes}</p>
                         )}
-                        <p className="text-xs text-gray-500 mt-2">Quick Action</p>
+                        <p className="text-xs text-gray-500 mt-2">Favourite</p>
                       </div>
                       <div className="ml-4 flex items-center gap-2">
                         <button
-                          onClick={() => createQuickAction(qa)}
+                          onClick={() => createFavourite(qa)}
                           className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition"
                         >
                           Log
                         </button>
                         <button
-                          onClick={() => handleDeleteQuickAction(qa)}
+                          onClick={() => handleDeleteFavourite(qa)}
                           className="px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-100 rounded-lg transition"
                         >
                           Delete
@@ -1034,7 +1046,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   <button
                     onClick={saveSection}
                     disabled={savingSection}
-                    className="flex-1 bg-accent text-gray-900 font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                    className="flex-1 bg-accent text-white font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
                   >
                     {savingSection ? 'Saving...' : 'Save'}
                   </button>
@@ -1111,7 +1123,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   <button
                     onClick={saveSection}
                     disabled={savingSection}
-                    className="flex-1 bg-accent text-gray-900 font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                    className="flex-1 bg-accent text-white font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
                   >
                     {savingSection ? 'Saving...' : 'Save'}
                   </button>
@@ -1135,11 +1147,18 @@ export default function PetDetail({ household, user, onSignOut }) {
           petId={petId}
           household={household}
           onActivityLogged={(newActivity) => {
-            setActivities(prev => [newActivity, ...prev]);
+            setActivities(prev => {
+              const existingIds = new Set(prev.map(a => String(a.id)));
+              if (existingIds.has(String(newActivity.id))) {
+                // replace existing entry with fresh data
+                return prev.map(a => String(a.id) === String(newActivity.id) ? newActivity : a);
+              }
+              return [newActivity, ...prev];
+            });
             setShowLogActivity(false);
           }}
           onClose={() => setShowLogActivity(false)}
-          onQuickActionsUpdated={loadQuickActions}
+          onFavouritesUpdated={loadFavourites}
         />
       )}
 
@@ -1149,17 +1168,17 @@ export default function PetDetail({ household, user, onSignOut }) {
           household={household}
           activity={editingActivity}
           onActivityLogged={(updatedActivity) => {
-            // Update the activity in the timeline
-            setActivities(prev => prev.map(a => a.id === updatedActivity.id ? updatedActivity : a));
+            // Update the activity in the timeline (normalize id comparison)
+            setActivities(prev => prev.map(a => String(a.id) === String(updatedActivity.id) ? updatedActivity : a));
             setEditingActivity(null);
           }}
           onActivityDeleted={(activityId) => {
-            // Remove the activity from the timeline
-            setActivities(prev => prev.filter(a => a.id !== activityId));
+            // Remove the activity from the timeline (normalize id comparison)
+            setActivities(prev => prev.filter(a => String(a.id) !== String(activityId)));
             setEditingActivity(null);
           }}
           onClose={() => setEditingActivity(null)}
-          onQuickActionsUpdated={loadQuickActions}
+          onFavouritesUpdated={loadFavourites}
         />
       )}
       {viewingActivity && (

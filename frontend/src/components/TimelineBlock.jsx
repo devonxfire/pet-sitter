@@ -2,11 +2,11 @@ import React from 'react'
 
 export default function TimelineBlock(){
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="pt-0 pb-12 bg-gray-50">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
-            <h3 className="text-2xl font-semibold mb-4">Example timeline</h3>
+            <h3 className="text-2xl font-semibold mb-2">Example timeline</h3>
             <p className="text-gray-600 mb-8">See how a household uses the timeline to coordinate daily care — meals, walks, meds and sitter notes.</p>
 
             <div className="bg-white border border-gray-100 rounded-xl p-8 shadow-sm">
@@ -32,7 +32,7 @@ export default function TimelineBlock(){
           </div>
 
           <div>
-            <div className="rounded-2xl overflow-hidden shadow-lg border border-gray-100 h-80 bg-gray-100">
+            <div className="rounded-2xl overflow-hidden shadow-lg border border-gray-100 h-80 bg-gray-50">
               <picture>
                 <source srcSet="/timeline-photo.svg" type="image/svg+xml" />
                 <img src="/timeline-example.svg" alt="Timeline example" className="object-cover w-full h-full" onError={(e)=>{e.currentTarget.style.display='none'}} />

@@ -60,7 +60,7 @@ export default function Dashboard({ user, household, onSignOut }) {
             <p className="text-gray-500 mb-2">Welcome! Let's set up your first pet.</p>
             <button
               onClick={() => navigate('/add-pet', { state: { household } })}
-              className="bg-accent text-gray-900 font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition"
+              className="bg-accent text-white font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition"
             >
               Add Your First Pet
             </button>
@@ -95,18 +95,18 @@ export default function Dashboard({ user, household, onSignOut }) {
 
                   {/* Pet Details */}
                   <p className="text-lg text-gray-600 mb-2">
-                    {pet.species.charAt(0).toUpperCase() + pet.species.slice(1)}
-                    {pet.breed && ` • ${pet.breed}`}
+                    {(pet.species || '').charAt(0).toUpperCase() + (pet.species || '').slice(1)}
+                      {pet.breed && ` • ${pet.breed}`}
                   </p>
                   {pet.age && <p className="text-sm text-gray-500">Age: {pet.age} years</p>}
-                  {pet.weight && <p className="text-sm text-gray-500">Weight: {pet.weight} lbs</p>}
+                  {pet.weight && <p className="text-sm text-gray-500">Weight: {pet.weight} {pet.weightUnit || 'lbs'}</p>}
                 </div>
               ))}
             </div>
             <div className="flex justify-center mt-20 mb-8">
               <button
                 onClick={() => navigate('/add-pet', { state: { household } })}
-                className="bg-accent text-white text-2xl font-bold px-12 py-4 hover:opacity-90 transition shadow-lg w-auto min-w-[240px] h-auto rounded-none"
+                className="bg-accent text-white text-2xl font-bold px-12 py-4 hover:opacity-90 transition shadow-lg w-auto min-w-60 h-auto rounded-none"
                 style={{ letterSpacing: '0.03em' }}
               >
                 + Add Pet

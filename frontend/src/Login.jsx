@@ -128,7 +128,7 @@ export default function Login({ onLogin }) {
                   type="checkbox"
                   checked={isMainMember}
                   onChange={(e) => setIsMainMember(e.target.checked)}
-                  className="mt-1 w-5 h-5 rounded border-gray-300 text-accent focus:ring-[var(--color-accent)]"
+                  className="mt-1 w-5 h-5 rounded border-gray-300 text-accent focus:ring-(--color-accent)"
                 />
                 <div>
                   <div className="text-sm font-medium text-gray-900">I'm the main household member</div>

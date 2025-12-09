@@ -12,6 +12,7 @@ export default function EditPet({ user, onSignOut }) {
   const [breed, setBreed] = useState('');
   const [age, setAge] = useState('');
   const [weight, setWeight] = useState('');
+  const [weightUnit, setWeightUnit] = useState('kg');
   const [notes, setNotes] = useState('');
   const [vetName, setVetName] = useState('');
   const [vetLocation, setVetLocation] = useState('');
@@ -31,6 +32,7 @@ export default function EditPet({ user, onSignOut }) {
         setBreed(data.breed || '');
         setAge(data.age?.toString() || '');
         setWeight(data.weight?.toString() || '');
+        setWeightUnit(data.weightUnit || 'kg');
         setNotes(data.notes || '');
         setVetName(data.vetName || '');
         setVetLocation(data.vetLocation || '');
@@ -68,6 +70,7 @@ export default function EditPet({ user, onSignOut }) {
           breed: breed || null,
           age: age ? parseInt(age) : null,
           weight: weight ? parseFloat(weight) : null,
+          weightUnit: weightUnit || 'kg',
           notes: notes || null,
           vetName: vetName || null,
           vetLocation: vetLocation || null,
@@ -84,6 +87,8 @@ export default function EditPet({ user, onSignOut }) {
       setSaving(false);
     }
   };
+
+  // map helper removed — users will type addresses manually
 
   if (loading) {
     return (
@@ -185,15 +190,25 @@ export default function EditPet({ user, onSignOut }) {
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Weight (optional)
               </label>
-              <input
-                type="number"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                placeholder="Lbs/kg"
-                min="0"
-                step="0.1"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
-              />
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  placeholder="Amount"
+                  min="0"
+                  step="0.1"
+                  className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
+                />
+                <select
+                  value={weightUnit}
+                  onChange={(e) => setWeightUnit(e.target.value)}
+                  className="w-28 px-3 py-3 rounded-xl border border-gray-200 bg-white focus:border-accent focus:outline-none"
+                >
+                  <option value="kg">Kg</option>
+                  <option value="lbs">Lbs</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -214,11 +229,22 @@ export default function EditPet({ user, onSignOut }) {
           {/* Vet Information */}
           <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="border-b border-gray-200">
             <h2 className="text-2xl font-bold text-gray-900 mb-16">Vet Information</h2>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Vet Name (optional)
-              </label>
+              <label className="block text-sm font-medium text-gray-900 mb-2">Vet Location (optional)</label>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={vetLocation}
+                  onChange={(e) => setVetLocation(e.target.value)}
+                  placeholder="Clinic address or name"
+                  className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-900 mb-2">Vet Name (optional)</label>
               <input
                 type="text"
                 value={vetName}
@@ -229,22 +255,7 @@ export default function EditPet({ user, onSignOut }) {
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Vet Location (optional)
-              </label>
-              <input
-                type="text"
-                value={vetLocation}
-                onChange={(e) => setVetLocation(e.target.value)}
-                placeholder="Clinic address or name"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
-              />
-            </div>
-
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Vet Contact (optional)
-              </label>
+              <label className="block text-sm font-medium text-gray-900 mb-2">Vet Contact (optional)</label>
               <input
                 type="tel"
                 value={vetContact}

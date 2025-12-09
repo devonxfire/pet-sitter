@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { apiFetch } from './api';
 import ACTIVITY_TYPES from './activityTypes';
 
-export default function LogActivity({ petId, household, activity, onActivityLogged, onActivityDeleted, onClose, onQuickActionsUpdated }) {
+export default function LogActivity({ petId, household, activity, onActivityLogged, onActivityDeleted, onClose, onFavouritesUpdated }) {
   const [step, setStep] = useState(activity ? 'edit' : 'selectType'); // selectType -> timing -> happened/schedule -> details -> reminder (if upcoming)
   const [selectedType, setSelectedType] = useState(activity?.activityType?.name || '');
   const [timing, setTiming] = useState(''); // 'happened' or 'upcoming'
@@ -26,7 +26,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
   const isEditing = !!activity;
-  const [addToQuickActions, setAddToQuickActions] = useState(false);
+  const [addToFavourites, setAddToFavourites] = useState(false);
 
   const handleScheduleSubmit = () => {
     if (timing === 'upcoming') {
@@ -117,8 +117,8 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           } catch (e) {}
         });
 
-        // Optionally save as a server-backed quick action
-        if (addToQuickActions && selectedType) {
+        // Optionally save as a server-backed Favourite
+        if (addToFavourites && selectedType) {
           if (household?.id) {
             const typeDef = ACTIVITY_TYPES.find(t => t.id === selectedType) || {};
             const snapshot = {
@@ -128,16 +128,16 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
               data: { petIds: selectedPetIds, applyToAll: allSelected, notes: notes || '', data: {} }
             };
             try {
-              await apiFetch(`/api/households/${household.id}/quick-actions`, {
+              await apiFetch(`/api/households/${household.id}/favourites`, {
                 method: 'POST',
                 body: JSON.stringify(snapshot)
               });
-              try { if (typeof onQuickActionsUpdated === 'function') await onQuickActionsUpdated(); } catch (e) { console.warn('onQuickActionsUpdated callback failed', e); }
+              try { if (typeof onFavouritesUpdated === 'function') await onFavouritesUpdated(); } catch (e) { console.warn('onFavouritesUpdated callback failed', e); }
             } catch (err) {
-              console.error('Failed to save quick action to server', err);
+              console.error('Failed to save favourite to server', err);
             }
           } else {
-            console.warn('No household context; quick actions require server-backed household. Skipping save.');
+            console.warn('No household context; Favourites require server-backed household. Skipping save.');
           }
         }
       }
@@ -617,17 +617,17 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
             />
           </div>
 
-          {/* Quick Actions opt-in */}
+          {/* Favourites opt-in (server-backed) */}
           {!isEditing && (
             <div>
               <label className="flex items-center gap-3">
                 <input
                   type="checkbox"
-                  checked={addToQuickActions}
-                  onChange={(e) => setAddToQuickActions(e.target.checked)}
+                  checked={addToFavourites}
+                  onChange={(e) => setAddToFavourites(e.target.checked)}
                   className="w-4 h-4"
                 />
-                <span className="text-sm text-gray-700">Add this activity to Quick Actions</span>
+                <span className="text-sm text-gray-700">Add this activity to Favourites ❤️</span>
               </label>
             </div>
           )}

@@ -247,14 +247,17 @@ export default function NotificationBell({ navigate }) {
     let socket;
     try {
       const token = localStorage.getItem('token');
-      socket = makeIo(API_BASE, { auth: { token } });
+      // Prefer WebSocket transport to avoid polling GET issues in some dev setups
+      socket = makeIo(API_BASE, { auth: { token }, transports: ['websocket'] });
 
       socket.on('connect', async () => {
+        console.debug('Socket connected', socket.id);
         // Join all households the user belongs to so they receive household-level events
         try {
           const households = await apiFetch('/api/households');
           if (Array.isArray(households)) {
             households.forEach(h => {
+              console.debug('Joining household via socket', h.id);
               try { socket.emit('joinHousehold', h.id); } catch (e) {}
             });
           }
@@ -264,15 +267,24 @@ export default function NotificationBell({ navigate }) {
       });
 
       socket.on('newActivity', (payload) => {
-        try { window.dispatchEvent(new CustomEvent('petSitter:newActivity', { detail: { activity: payload.activity } })); } catch (e) {}
+        console.debug('socket newActivity received', payload);
+        try { window.dispatchEvent(new CustomEvent('petSitter:newActivity', { detail: { activity: payload.activity } })); } catch (e) { console.warn('dispatch newActivity failed', e); }
       });
 
       socket.on('updatedActivity', (payload) => {
-        try { window.dispatchEvent(new CustomEvent('petSitter:updatedActivity', { detail: { activity: payload.activity } })); } catch (e) {}
+        console.debug('socket updatedActivity received', payload);
+        try { window.dispatchEvent(new CustomEvent('petSitter:updatedActivity', { detail: { activity: payload.activity } })); } catch (e) { console.warn('dispatch updatedActivity failed', e); }
       });
 
       socket.on('deletedActivity', (payload) => {
-        try { window.dispatchEvent(new CustomEvent('petSitter:deletedActivity', { detail: { activityId: payload.activityId } })); } catch (e) {}
+        console.debug('socket deletedActivity received', payload);
+        try { window.dispatchEvent(new CustomEvent('petSitter:deletedActivity', { detail: { activityId: payload.activityId } })); } catch (e) { console.warn('dispatch deletedActivity failed', e); }
+      });
+      socket.on('connect_error', (err) => {
+        console.error('socket connect_error', err && err.message ? err.message : err);
+      });
+      socket.on('error', (err) => {
+        console.error('socket error', err);
       });
     } catch (err) {
       console.warn('Socket.IO init failed', err);

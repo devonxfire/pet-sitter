@@ -248,9 +248,16 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut, o
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-accent text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+            className="w-full bg-accent text-white font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center"
           >
-            {loading ? 'Creating...' : 'Create Household'}
+            {loading ? (
+              'Creating...'
+            ) : (
+              <>
+                <span aria-hidden="true" className="mr-2">🏠</span>
+                <span>Create Household</span>
+              </>
+            )}
           </button>
         </form>
       </div>

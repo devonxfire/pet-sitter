@@ -1,28 +1,72 @@
 /* Pet-Sitter - Apple-style clean design */
 
-/* Load Plus Jakarta Sans for a minimal, modern UI */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+/* Load Inter (body) and Poppins (headings) for a modern product UI.
+   NOTE: `Nohemi` is a commercial/display typeface — place the font files
+   (WOFF2/WOFF) in `frontend/public/fonts/` and they will be loaded by the
+   `@font-face` declarations below. If you have a CDN or a license URL for
+   Nohemi, replace the src URLs accordingly. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap');
+
+/* Local @font-face placeholders for Nohemi — add your licensed font files
+   to `frontend/public/fonts/Nohemi-*.woff2` and `Nohemi-*.woff` */
+@font-face {
+  font-family: 'Nohemi';
+  /* Local filenames include build/hash suffixes from your export */
+  src: url('/fonts/Nohemi-Regular-BF6438cc579d934.woff') format('woff'),
+    url('/fonts/Nohemi-Regular-BF6438cc4d0e493.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Nohemi';
+  src: url('/fonts/Nohemi-Medium-BF6438cc57ddecd.woff') format('woff'),
+    url('/fonts/Nohemi-Medium-BF6438cc5883899.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Nohemi';
+  src: url('/fonts/Nohemi-Bold-BF6438cc577b524.woff') format('woff'),
+    url('/fonts/Nohemi-Bold-BF6438cc587b5b5.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Nohemi';
+  src: url('/fonts/Nohemi-ExtraBold-BF6438cc5761ae2.woff') format('woff'),
+    url('/fonts/Nohemi-ExtraBold-BF6438cc5881baf.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
 
 @import "tailwindcss";
 
 :root {
   /* Color palette */
   /* Color palette (new scheme) */
-  --color-accent: #60A5FA; /* Soft Sky (new primary accent) */
-  --color-accent-2: #F59E0B; /* Warm amber accent for highlights */
+  /* Reverse main/hover reds: use the darker red as primary and the previous primary as hover */
+  --color-accent: #c3001f; /* new brand primary (previous hover) */
+  --color-accent-2: #ed0025; /* previous primary used for highlights */
+  --color-accent-hover: #ed0025; /* hover now uses the previous primary */
   --color-bg: #FFFFFF; /* page background */
-  --color-surface: #F8F5F2; /* soft warm surface */
-  --color-muted-surface: #F1F2F4; /* subtle panels */
-  --color-text-primary: #0F172A; /* deep slate for main text */
+  --color-surface: #F5F6F7; /* light neutral surface */
+  --color-muted-surface: #F3F4F6; /* subtle panels */
+  --color-text-primary: #0B1220; /* near-black, warm */
   --color-text-secondary: #6B7280; /* neutral gray for secondary text */
   --color-border: #E6E9EC; /* faint border */
   --color-success: #22C55E;
   --color-warning: #F59E0B;
   --color-error: #EF4444;
   /* Global typography */
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-  --font-heading-weight: 700;
-  --font-body-weight: 400;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --font-heading: 'Nohemi', 'Poppins', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  /* Use thinner defaults: lighter body and lighter headings for an airy UI */
+  --font-heading-weight: 500;
+  --font-body-weight: 300;
   --base-line-height: 1.5;
 }
 
@@ -49,10 +93,21 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-sans);
+  font-family: var(--font-heading);
   font-weight: var(--font-heading-weight);
   letter-spacing: -0.01em;
   line-height: 1.1;
+}
+
+/* Apply lighter weights across typical elements to make the UI feel thinner */
+strong, b {
+  font-weight: 600; /* keep bolds readable */
+}
+p, label, small, input, textarea, select, a, li {
+  font-weight: var(--font-body-weight);
+}
+code, pre {
+  font-weight: 400;
 }
 
 button {
@@ -65,9 +120,177 @@ button {
 }
 
 .bg-accent {
+  /* Premium solid accent background for buttons and accents. */
   background-color: var(--color-accent);
+  color: white;
+}
+
+/* Standard .btn utility for a premium-looking button (components may still use Tailwind) */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--color-accent);
+  color: white;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0; /* square edges */
+  box-shadow: 0 10px 30px rgba(11,18,32,0.10);
+  border: 1px solid rgba(11,18,32,0.04);
+  transition: box-shadow .12s ease, background-color .12s ease;
+}
+.btn:hover {
+  box-shadow: 0 18px 48px rgba(11,18,32,0.12);
+  background-color: var(--color-accent-hover);
+}
+.btn:active {
+  box-shadow: 0 6px 18px rgba(11,18,32,0.06);
+}
+
+/* Secondary (ghost) button style for outlines/ghost links like "Sign in" */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: rgba(255,255,255,0.08);
+  color: white;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0; /* keep square */
+  border: 1px solid rgba(255,255,255,0.28);
+  transition: background-color .14s ease, box-shadow .14s ease, color .14s ease;
+}
+.btn-secondary:hover {
+  background-color: rgba(255,255,255,0.14);
+  color: white;
+  box-shadow: 0 8px 24px rgba(11,18,32,0.06);
+}
+
+/* Make native buttons and common button-like links square across the app.
+   Use a targeted selector so layout elements with rounded corners (cards, etc.)
+   are unaffected. We use !important to override Tailwind `rounded-*` classes.
+*/
+button,
+input[type="button"],
+input[type="submit"],
+.btn,
+a.btn,
+button[class*="inline-flex"],
+.inline-flex[role="button"] {
+  border-radius: 0 !important;
+}
+
+/* Additional targeted overrides: anchors or buttons that include Tailwind
+   `rounded-*` utilities should also display as sharp when they are
+   interactive (links/buttons). This avoids changing non-interactive
+   rounded elements such as cards and panels. */
+a[class*="rounded-"],
+button[class*="rounded-"],
+input[type="button"][class*="rounded-"],
+input[type="submit"][class*="rounded-"],
+.inline-flex[class*="rounded-"] {
+  border-radius: 0 !important;
 }
 
 .border-accent {
   border-color: var(--color-accent);
+}
+
+/* Ensure all primary buttons and button-like elements slightly change shade on hover.
+   This targets `.btn`, `button`, and common button inputs/links while preserving
+   existing hover transforms and shadows. Use a small color shift and smooth transition.
+*/
+button, input[type="button"], input[type="submit"], .btn, a.btn, .bg-accent {
+  transition: background-color .14s ease, box-shadow .14s ease, filter .14s ease;
+}
+
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+.btn:hover,
+a.btn:hover,
+.bg-accent:hover {
+  background-color: var(--color-accent-hover) !important;
+  color: white;
+  /* slightly intensify shadow on hover for non-.btn elements */
+  box-shadow: 0 12px 36px rgba(11,18,32,0.12);
+}
+
+/* Focus state: keep high contrast and a subtle ring for accessibility */
+button:focus, input[type="button"]:focus, input[type="submit"]:focus, .btn:focus, a.btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(178,34,34,0.08), 0 12px 36px rgba(11,18,32,0.10);
+}
+
+/* For the user dropdown toggle: keep the avatar background stable on hover
+   and only show a pointer + small chevron to indicate it's a dropdown. */
+.user-toggle { cursor: pointer; }
+.user-toggle .bg-accent, .user-toggle .bg-accent:hover {
+  background-color: var(--color-accent) !important;
+  box-shadow: none !important;
+}
+.user-toggle:hover .text-gray-900 { text-decoration: none; }
+
+/* Ensure the user-toggle button itself doesn't get the site's primary hover/focus styles */
+.user-toggle:hover,
+.user-toggle:focus,
+.user-toggle:active {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+.user-toggle:focus {
+  outline: none !important;
+}
+/* Provide a subtle non-red focus ring for keyboard users */
+.user-toggle:focus-visible {
+  box-shadow: 0 0 0 4px rgba(11,18,32,0.06) !important;
+}
+
+/* Dropdown items inside the user menu should use a neutral gray hover that
+   overrides the global primary-button hover rules. */
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: #f3f4f6 !important; /* tailwind gray-100 */
+  color: #111827 !important; /* gray-900 */
+  box-shadow: none !important;
+}
+
+/* Hero image: subtle black & white with a touch of contrast */
+.hero-img--bw {
+  filter: grayscale(100%) contrast(1.05) brightness(0.98);
+  transform-origin: center center;
+  will-change: filter, transform;
+}
+
+/* Optional: soften edges for large hero images on mobile */
+@media (max-width: 768px) {
+  .hero-img--bw {
+    background-position: center top;
+    background-size: cover;
+  }
+}
+
+/* CTA equal-width utility: on larger screens both CTAs match min-width; on small screens they stack and go full width */
+.cta-equal {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+.cta-equal > .btn,
+.cta-equal > .btn-secondary {
+  min-width: 220px;
+}
+@media (max-width: 640px) {
+  .cta-equal {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+    padding: 0 1rem;
+  }
+  .cta-equal > .btn,
+  .cta-equal > .btn-secondary {
+    min-width: auto;
+    width: 100%;
+  }
 }

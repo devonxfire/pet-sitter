@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 
 export default function TopNav({ user, household, onSignOut }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
 
   const initials = (name) => {
     if (!name) return '';
@@ -16,23 +17,41 @@ export default function TopNav({ user, household, onSignOut }) {
       .toUpperCase();
   };
 
-  return (
-    <nav className="border-b border-gray-200" style={{ padding: '16px 24px', backgroundColor: 'var(--color-accent)' }}>
-      <div className="flex justify-center">
-        <div className="max-w-6xl w-full px-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <Link to="/" className="text-lg text-white hover:opacity-80 font-medium transition">Home</Link>
-              <Link to="/dashboard" className="text-lg text-white hover:opacity-80 font-medium transition">My Household</Link>
-              <Link to="/plans" className="text-lg text-white hover:opacity-80 font-medium transition">Plans</Link>
-            </div>
+  // Close menu on outside click
+  useEffect(() => {
+    function handleOutsideClick(e) {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [menuRef]);
 
-            <div className="relative flex items-center gap-4">
+  return (
+    <nav className="relative z-20">
+      {/**
+       * When a user is logged in we prefer the dashboard-style top menu that
+       * stretches across the full width. For logged-out users keep the narrower
+       * centered layout.
+       */}
+      <div className={user ? 'max-w-7xl mx-auto px-6 py-6 flex items-center justify-between' : 'max-w-6xl mx-auto px-6 py-6 flex items-center justify-between'}>
+          <Link to="/" className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-md bg-accent flex items-center justify-center text-white font-bold">PS</div>
+          <h1 className="text-xl font-semibold">Pet-Sitter</h1>
+        </Link>
+
+        <div className="flex items-center gap-4">
+          <Link to="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">My Household</Link>
+          <Link to="/plans" className="text-sm text-gray-600 hover:text-gray-900">Plans</Link>
+
+          <div className="relative flex items-center gap-4">
               {user ? (
-                <div className="relative flex items-center gap-3">
+            <div ref={menuRef} className="relative flex items-center gap-3">
                   <button
                     onClick={() => setOpen((s) => !s)}
-                    className="flex items-center gap-3 text-white focus:outline-none"
+                    className="user-toggle cursor-pointer flex items-center gap-3 text-gray-900 focus:outline-none"
                     aria-haspopup="true"
                     aria-expanded={open}
                     type="button"
@@ -40,13 +59,16 @@ export default function TopNav({ user, household, onSignOut }) {
                     {user?.photoUrl ? (
                       <img src={user.photoUrl} alt={user.name || 'User'} className="w-9 h-9 rounded-full object-cover" />
                     ) : (
-                      <div className="w-9 h-9 rounded-full bg-white text-accent flex items-center justify-center font-semibold">{initials(user?.name)}</div>
+                      <div className="w-9 h-9 rounded-full bg-accent text-white flex items-center justify-center font-semibold">{initials(user?.name)}</div>
                     )}
-                    <span className="text-white font-medium">Welcome{user?.name ? ` ${user.name.split(' ')[0]}` : ''}</span>
+                    <span className="text-gray-900 font-medium">Welcome{user?.name ? ` ${user.name.split(' ')[0]}` : ''}</span>
+                    <svg className="w-4 h-4 text-gray-500 ml-1" viewBox="0 0 20 20" fill="none" aria-hidden>
+                      <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </button>
 
                   {open && (
-                    <div className="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg z-50">
+                    <div className="absolute right-0 top-full mt-3 w-44 bg-white rounded-lg shadow-lg z-50">
                       <Link
                         to="/profile"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -56,7 +78,7 @@ export default function TopNav({ user, household, onSignOut }) {
                       </Link>
                       <button
                         onClick={() => { setOpen(false); onSignOut && onSignOut(); }}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dropdown-item"
                       >
                         Sign out
                       </button>
@@ -67,13 +89,12 @@ export default function TopNav({ user, household, onSignOut }) {
                 </div>
               ) : (
                 <div className="flex items-center gap-4">
-                  <Link to="/login" className="text-white hover:opacity-80 font-medium">Log in</Link>
-                  <Link to="/create-household" className="text-sm font-medium text-white bg-white/20 px-3 py-2 rounded-lg">Get started</Link>
+                  <Link to="/login" className="text-sm text-accent hover:underline">Log in</Link>
+                  <Link to="/create-household" className="hidden sm:inline-block bg-accent text-white text-sm px-4 py-2 rounded-md">Get started</Link>
                 </div>
               )}
 
             </div>
-          </div>
         </div>
       </div>
     </nav>

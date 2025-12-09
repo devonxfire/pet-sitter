@@ -10,6 +10,10 @@ import AddPet from './AddPet';
 import PetDetail from './PetDetail';
 import EditPet from './EditPet';
 import HouseholdSettings from './HouseholdSettings';
+import Footer from './Footer';
+import Terms from './Terms';
+import Privacy from './Privacy';
+import Contact from './Contact';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -88,7 +92,9 @@ function App() {
   }
 
   return (
-    <Routes>
+    <div className="min-h-screen flex flex-col">
+      <div className="grow">
+        <Routes>
         <Route
           path="/login"
           element={user ? <Navigate to="/dashboard" /> : <Login onLogin={handleLogin} />}
@@ -166,7 +172,11 @@ function App() {
             )
           }
         />
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<Landing user={user} onSignOut={handleSignOut} />} />
+
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/contact" element={<Contact />} />
 
         <Route
           path="/dashboard"
@@ -188,7 +198,10 @@ function App() {
             )
           }
         />
-      </Routes>
+        </Routes>
+      </div>
+      <Footer user={user} />
+    </div>
   );
 }
 

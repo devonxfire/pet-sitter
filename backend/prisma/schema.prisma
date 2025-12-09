@@ -49,7 +49,7 @@ model Household {
   // Relations
   members      HouseholdMember[]
   pets         Pet[]
-  quickActions QuickAction[]
+  favourites   Favourite[]
 
   @@map("households")
 }
@@ -141,7 +141,7 @@ model Activity {
 }
 
 // Quick actions available to a household (server-backed)
-model QuickAction {
+model Favourite {
   id          Int      @id @default(autoincrement())
   householdId Int      @map("household_id")
   key         String // e.g., 'walk', 'feeding', 'medication'
@@ -154,5 +154,5 @@ model QuickAction {
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
   @@index([householdId, ord])
-  @@map("quick_actions")
+  @@map("favourites")
 }
