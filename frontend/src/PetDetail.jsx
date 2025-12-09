@@ -169,6 +169,23 @@ export default function PetDetail({ household, user, onSignOut }) {
     return '📝';
   };
 
+  // Small helper: generate a short, pet-specific quote using templates.
+  // This is deterministic and offline — no external API calls required.
+  const getPetQuote = (name) => {
+    const n = name || 'Your pet';
+    const templates = [
+      `${n} is the little miracle that makes every day brighter.`,
+      `Home is where ${n} greets you with a wag and a smile.`,
+      `${n} fills ordinary moments with extraordinary love.`,
+      `Life is better with ${n} by your side.`,
+      `${n} teaches the heart how to be gentle again.`
+    ];
+    // pick a pseudo-random template based on name so it feels consistent
+    let sum = 0;
+    for (let i = 0; i < n.length; i++) sum += n.charCodeAt(i);
+    return templates[sum % templates.length];
+  };
+
   useEffect(() => {
     const fetchPetDetails = async () => {
       try {
@@ -558,7 +575,7 @@ export default function PetDetail({ household, user, onSignOut }) {
       <main className="flex flex-col items-stretch py-6">
         {/* Full-bleed header band */}
         <div className="w-full bg-gray-50 border-b border-gray-200">
-          <div className="mx-auto max-w-6xl px-6 w-full">
+          <div className="mx-auto max-w-6xl px-6 w-full relative">
 
             {/* Compact Header + General Section (grid layout) */}
             <div className="mb-6 py-4">
@@ -566,7 +583,7 @@ export default function PetDetail({ household, user, onSignOut }) {
             {/* Avatar */}
             <div className="shrink-0">
                 <div className="relative">
-                <div className="w-52 h-52 md:w-56 md:h-56 rounded-full bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
+                <div className="w-40 h-40 md:w-48 md:h-48 rounded-full bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
                   {pet.photoUrl ? (
                     <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet.name} className="w-full h-full object-cover select-none" draggable={false} />
                   ) : (
@@ -575,7 +592,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 </div>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-3 -right-3 md:-bottom-2 md:-right-2 bg-accent text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center cursor-pointer transition transform hover:scale-105 text-sm avatar-action z-20 ring-2 ring-white shadow"
+                  className="absolute -bottom-2 -right-2 md:-bottom-1 md:-right-1 bg-accent text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center cursor-pointer transition transform hover:scale-105 text-sm avatar-action z-20 ring-2 ring-white shadow"
                   type="button"
                   aria-label="Change photo"
                 >
@@ -621,9 +638,10 @@ export default function PetDetail({ household, user, onSignOut }) {
                     {editingSection !== 'general' && (
                       <button
                         onClick={() => startEditingSection('general')}
-                        className="absolute bottom-0 right-0 text-gray-600 hover:bg-gray-100 px-2 py-1 rounded-lg text-sm font-medium transition"
+                        aria-label="Edit general info"
+                        className="absolute bottom-0 right-0 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 shadow-sm transition"
                       >
-                        Edit
+                        <span className="text-sm">✎</span>
                       </button>
                     )}
 
@@ -638,7 +656,12 @@ export default function PetDetail({ household, user, onSignOut }) {
 
             {/* Actions moved inline with Age value */}
               </div>
-            </div>
+              {/* Right-side pet quote (decorative) - aligned to inner container right edge */}
+              <div className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2">
+                <blockquote className="text-right text-gray-500 italic" style={{ fontFamily: `'Dancing Script', cursive`, fontSize: '1.15rem' }}>
+                  “{getPetQuote(pet.name)}”
+                </blockquote>
+              </div>
           </div>
         </div>
 
@@ -1177,6 +1200,7 @@ export default function PetDetail({ household, user, onSignOut }) {
           </div>
         )}
 
+        </div>
       </main>
 
       {showLogActivity && (
