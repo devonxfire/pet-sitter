@@ -156,7 +156,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
                   {isOwner && member.userId !== user.id && (
                     <button
                       onClick={() => handleRemoveMember(member.id)}
-                      className="ml-4 text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg text-sm font-medium transition"
+                      className="ml-4 text-red-600 hover:bg-gray-50 px-3 py-2 rounded-lg text-sm font-medium transition"
                     >
                       Remove
                     </button>

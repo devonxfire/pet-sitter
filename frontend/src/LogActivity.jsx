@@ -656,7 +656,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="bg-red-100 text-red-600 font-semibold py-3 px-4 rounded-xl hover:bg-red-200 transition disabled:opacity-50"
+                className="bg-gray-100 text-red-600 font-semibold py-3 px-4 rounded-xl hover:bg-gray-200 transition disabled:opacity-50"
               >
                 {deleting ? 'Deleting...' : 'Delete'}
               </button>

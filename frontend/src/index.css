@@ -51,7 +51,8 @@
   /* Reverse main/hover reds: use the darker red as primary and the previous primary as hover */
   --color-accent: #c3001f; /* new brand primary (previous hover) */
   --color-accent-2: #ed0025; /* previous primary used for highlights */
-  --color-accent-hover: #ed0025; /* hover now uses the previous primary */
+  --color-accent-hover: #374151; /* hover now uses a much darker neutral gray (#374151 - tailwind gray-700) */
+  --color-accent-hover-light: #4b5563; /* lighter hover variant (tailwind gray-600) */
   --color-bg: #FFFFFF; /* page background */
   --color-surface: #F5F6F7; /* light neutral surface */
   --color-muted-surface: #F3F4F6; /* subtle panels */
@@ -180,6 +181,13 @@ button[class*="inline-flex"],
   border-radius: 0 !important;
 }
 
+/* Allow specific avatar/action buttons to remain circular despite the
+   global square-button rule. Use a high-specificity override. */
+.avatar-action,
+.avatar-action * {
+  border-radius: 9999px !important;
+}
+
 /* Additional targeted overrides: anchors or buttons that include Tailwind
    `rounded-*` utilities should also display as sharp when they are
    interactive (links/buttons). This avoids changing non-interactive
@@ -204,12 +212,12 @@ button, input[type="button"], input[type="submit"], .btn, a.btn, .bg-accent {
   transition: background-color .14s ease, box-shadow .14s ease, filter .14s ease;
 }
 
-button:hover,
-input[type="button"]:hover,
-input[type="submit"]:hover,
-.btn:hover,
-a.btn:hover,
-.bg-accent:hover {
+button:not(.no-global-accent):hover,
+input[type="button"]:not(.no-global-accent):hover,
+input[type="submit"]:not(.no-global-accent):hover,
+.btn:not(.no-global-accent):hover,
+a.btn:not(.no-global-accent):hover,
+.bg-accent:not(.no-global-accent):hover {
   background-color: var(--color-accent-hover) !important;
   color: white;
   /* slightly intensify shadow on hover for non-.btn elements */
@@ -244,6 +252,34 @@ button:focus, input[type="button"]:focus, input[type="submit"]:focus, .btn:focus
 /* Provide a subtle non-red focus ring for keyboard users */
 .user-toggle:focus-visible {
   box-shadow: 0 0 0 4px rgba(11,18,32,0.06) !important;
+}
+
+/* User initials background (top-right avatar) */
+.bg-user-initials {
+  background-color: var(--color-accent-hover);
+  color: white;
+}
+
+/* Opt-out helper: prevents broad `button:hover` rules from applying a red background
+   to small icon buttons like the notification bell. Use the `no-accent-hover` class
+   on any button that should remain neutral on hover. */
+.no-accent-hover,
+.no-accent-hover:hover,
+.no-accent-hover:focus,
+.no-accent-hover:active {
+  background-color: transparent !important;
+  color: inherit !important;
+  box-shadow: none !important;
+}
+
+/* Utility: background using the darker hover accent (used for footer/backgrounds) */
+.bg-accent-hover {
+  background-color: var(--color-accent-hover);
+}
+
+/* Lighter hover variant used for interactive states (slightly lighter than footer gray) */
+.bg-accent-hover-light {
+  background-color: var(--color-accent-hover-light);
 }
 
 /* Dropdown items inside the user menu should use a neutral gray hover that
@@ -293,4 +329,46 @@ button:focus, input[type="button"]:focus, input[type="submit"]:focus, .btn:focus
     min-width: auto;
     width: 100%;
   }
+}
+
+/* Top-right: force no hover/background for user toggle + notification bell
+   This is intentionally specific and placed at the end so it overrides
+   global hover rules (including ones using !important). */
+.user-toggle:hover,
+.user-toggle:focus,
+.user-toggle:active,
+.user-toggle:focus-visible,
+.no-accent-hover,
+.no-accent-hover * {
+  background-color: transparent !important;
+  color: inherit !important;
+  box-shadow: none !important;
+}
+
+/* Extra-specific override to neutralize any remaining hover background on the
+   top-right user area. This targets the button and its direct children. */
+button.user-toggle:hover,
+button.user-toggle:hover > * {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Final override: ensure avatar-action buttons are circular even if other
+   selectors later in this file try to force square shapes. This sits at the
+   end of the stylesheet so it wins. */
+button.avatar-action,
+button.avatar-action *,
+.avatar-action {
+  border-radius: 9999px !important;
+}
+
+/* Ensure buttons explicitly opted-out of the global accent (no-global-accent)
+   still show a light gray background on hover (inverse of Favourites). */
+.no-global-accent:hover,
+button.no-global-accent:hover,
+.no-global-accent:hover > *,
+button.no-global-accent:hover > * {
+  background-color: #F3F4F6 !important; /* tailwind gray-100 */
+  color: #4B5563 !important; /* tailwind gray-600 (matches Favourites text) */
+  box-shadow: none !important;
 }

@@ -511,8 +511,6 @@ export default function PetDetail({ household, user, onSignOut }) {
         <div className="flex items-center justify-center py-12">
           <p className="text-gray-400">Loading...</p>
         </div>
-
-        
       </div>
     );
   }
@@ -557,12 +555,12 @@ export default function PetDetail({ household, user, onSignOut }) {
     <div className="min-h-screen bg-white">
       <TopNav user={user} household={household} onSignOut={onSignOut} />
 
-      <main className="flex justify-center py-6">
-        <div className="max-w-6xl px-6 w-full">
+      <main className="flex flex-col items-stretch py-6">
+        <div className="mx-auto max-w-6xl px-6 w-full">
 
-        {/* Compact Header + General Section (grid layout) */}
-        <div className="mb-6 border-b border-gray-200 py-6">
-          <div className="grid grid-cols-[auto_1fr_auto] items-start gap-6">
+          {/* Compact Header + General Section (grid layout) */}
+          <div className="mb-6 border-b border-gray-200 py-6 bg-gray-50">
+            <div className="grid grid-cols-[auto_1fr_auto] items-start gap-6">
             {/* Avatar */}
             <div className="shrink-0">
               <div className="relative">
@@ -575,7 +573,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 </div>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-1 -right-3 bg-accent hover:opacity-90 text-white rounded-full w-10 h-10 flex items-center justify-center cursor-pointer transition text-sm"
+                  className="absolute -bottom-1 -right-3 bg-accent hover:opacity-90 text-white rounded-full w-10 h-10 flex items-center justify-center cursor-pointer transition text-sm avatar-action"
                   type="button"
                   aria-label="Change photo"
                 >
@@ -603,7 +601,7 @@ export default function PetDetail({ household, user, onSignOut }) {
               <div className="mt-6 grid grid-cols-2 gap-6 text-sm text-gray-600">
                 <div>
                   <p className="text-xs text-gray-500">Species</p>
-                  <p className="font-semibold text-gray-900">{pet.species ? (pet.species.charAt(0).toUpperCase() + pet.species.slice(1)) : ''}</p>
+                  <p className="font-semibold text-gray-900">{pet.species ? (pet.species.charAt(0).toUpperCase() + pet.species.slice(1)) : '-'}</p>
 
                   <div className="mt-4">
                     <p className="text-xs text-gray-500">Breed</p>
@@ -629,9 +627,10 @@ export default function PetDetail({ household, user, onSignOut }) {
                 <button onClick={() => startEditingSection('general')} className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition">Edit</button>
               )}
             </div>
+            </div>
           </div>
 
-          {/* Editing form (keeps existing behavior) */}
+        {/* Editing form (keeps existing behavior) */}
           {editingSection === 'general' ? (
             <div className="space-y-6 mt-6">
               {/* Species */}
@@ -747,40 +746,60 @@ export default function PetDetail({ household, user, onSignOut }) {
         )}
 
         {/* Activity Timeline */}
-        <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="border-b border-gray-200">
+        <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-gray-900">Activity Timeline</h2>
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => {
-                  setActivityFilter('quick');
-                  setTimeout(() => favouritesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
-                }}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  activityFilter === 'quick'
-                    ? 'bg-accent text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                Favourites
-              </button>
-              {activities.length > 0 && (
-                <button
-                  onClick={() => setShowLogActivity(true)}
-                  className="bg-accent text-white font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
-                >
-                  Create New Activity
-                </button>
-              )}
+              {/* Intentionally left blank - action buttons live below the header */}
             </div>
           </div>
 
           {activities.length > 0 && (
             <>
-            <div className="flex gap-3 mb-8">
+            <div className="flex gap-3 items-center mb-8">
+              {activities.length > 0 && (
+                <>
+                  <button
+                    onClick={() => setShowLogActivity(true)}
+                    aria-label="Create new activity"
+                    className="group no-global-accent inline-flex items-center gap-3 px-6 py-2 rounded-xl font-semibold bg-accent-hover text-white hover:bg-gray-100 hover:text-gray-900 transition"
+                  >
+                    <svg className="w-5 h-5 text-white group-hover:text-gray-900 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span>Create New Activity</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setActivityFilter('quick');
+                      setTimeout(() => favouritesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+                    }}
+                    aria-pressed={activityFilter === 'quick'}
+                    className={activityFilter === 'quick'
+                      ? 'inline-flex items-center gap-3 bg-accent-hover text-white font-semibold px-6 py-2 rounded-xl transition'
+                      : 'inline-flex items-center gap-3 bg-gray-100 text-gray-600 font-semibold px-6 py-2 rounded-xl hover:bg-gray-200 transition'
+                    }
+                  >
+                    <svg
+                      className={activityFilter === 'quick' ? 'w-5 h-5 text-white flex-shrink-0' : 'w-5 h-5 text-accent flex-shrink-0'}
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6.01 4.01 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 17.99 4 20 6.01 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                    <span>Favourites</span>
+                  </button>
+                </>
+              )}
+            </div>
+
+            <div className="flex gap-2 mb-8 items-center">
               <button
                 onClick={() => setActivityFilter('all')}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
+                className={`px-2 py-1 rounded-md text-sm font-medium transition ${
                   activityFilter === 'all'
                     ? 'bg-accent text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -790,7 +809,7 @@ export default function PetDetail({ household, user, onSignOut }) {
               </button>
               <button
                 onClick={() => setActivityFilter('past')}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
+                className={`px-2 py-1 rounded-md text-sm font-medium transition ${
                   activityFilter === 'past'
                     ? 'bg-accent text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -800,7 +819,7 @@ export default function PetDetail({ household, user, onSignOut }) {
               </button>
               <button
                 onClick={() => setActivityFilter('upcoming')}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
+                className={`px-2 py-1 rounded-md text-sm font-medium transition ${
                   activityFilter === 'upcoming'
                     ? 'bg-accent text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -816,13 +835,13 @@ export default function PetDetail({ household, user, onSignOut }) {
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                 placeholder="Search activities..."
-                className="px-3 py-2 rounded-lg border border-gray-200 focus:outline-none w-60"
+                className="px-2 py-1 rounded-md border border-gray-200 focus:outline-none w-48 text-sm"
               />
 
               <select
                 value={memberFilter}
                 onChange={(e) => { setMemberFilter(e.target.value); setPage(1); }}
-                className="px-3 py-2 rounded-lg border border-gray-200 bg-white"
+                className="px-2 py-1 rounded-md border border-gray-200 bg-white text-sm"
               >
                 <option value="all">All members</option>
                 {memberOptions.map(m => (
@@ -833,7 +852,7 @@ export default function PetDetail({ household, user, onSignOut }) {
               <select
                 value={typeFilter}
                 onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
-                className="px-3 py-2 rounded-lg border border-gray-200 bg-white"
+                className="px-2 py-1 rounded-md border border-gray-200 bg-white text-sm"
               >
                 <option value="all">All types</option>
                 {ACTIVITY_TYPES.map(t => (
@@ -844,7 +863,7 @@ export default function PetDetail({ household, user, onSignOut }) {
               <select
                 value={sortOrder}
                 onChange={(e) => { setSortOrder(e.target.value); setPage(1); }}
-                className="px-3 py-2 rounded-lg border border-gray-200 bg-white"
+                className="px-2 py-1 rounded-md border border-gray-200 bg-white text-sm"
               >
                 <option value="newest">Newest first</option>
                 <option value="oldest">Oldest first</option>
@@ -852,7 +871,7 @@ export default function PetDetail({ household, user, onSignOut }) {
 
               <button
                 onClick={() => { setPageSize(prev => prev === 5 ? 10 : 5); setPage(1); }}
-                className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+                className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-accent hover:text-white transition"
               >
                 {pageSize === 5 ? 'Show more (10)' : 'Show less (5)'}
               </button>
@@ -867,9 +886,13 @@ export default function PetDetail({ household, user, onSignOut }) {
                   <p className="text-gray-500">No activities logged yet</p>
                   <button
                     onClick={() => setShowLogActivity(true)}
-                    className="mt-4 bg-accent text-white font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
+                    aria-label="Create first activity"
+                    className="mt-4 group no-global-accent inline-flex items-center gap-3 px-6 py-2 rounded-xl font-semibold bg-accent-hover text-white hover:bg-gray-100 hover:text-gray-900 transition"
                   >
-                    Create First Activity
+                    <svg className="w-5 h-5 text-white group-hover:text-gray-900 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span>Create First Activity</span>
                   </button>
                 </div>
               );
@@ -907,7 +930,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                         </button>
                         <button
                           onClick={() => handleDeleteFavourite(qa)}
-                          className="px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-100 rounded-lg transition"
+                          className="px-3 py-2 text-sm font-medium text-red-600 hover:bg-gray-100 rounded-lg transition"
                         >
                           Delete
                         </button>
@@ -970,7 +993,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                       </button>
                       <button
                         onClick={(ev) => { ev.stopPropagation(); handleDeleteActivity(activity.id); }}
-                        className="px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-100 rounded-lg transition"
+                        className="px-3 py-2 text-sm font-medium text-red-600 hover:bg-gray-100 rounded-lg transition"
                       >
                         Delete
                       </button>
@@ -981,10 +1004,9 @@ export default function PetDetail({ household, user, onSignOut }) {
             );
           })()}
         </div>
-
         {/* Vet Information Section */}
         {(pet.vetName || pet.vetLocation || pet.vetContact) && (
-          <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="border-b border-gray-200">
+          <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-bold text-gray-900">Vet Information</h2>
               {editingSection !== 'vet' && (
@@ -1072,9 +1094,13 @@ export default function PetDetail({ household, user, onSignOut }) {
                     <p className="text-lg text-gray-900">{pet.vetContact}</p>
                     <a
                       href={`tel:${pet.vetContact}`}
-                      className="mt-3 inline-block bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-2 rounded-lg transition"
+                      className="mt-3 inline-flex items-center gap-2 bg-accent text-white font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
+                      aria-label={`Call veterinarian at ${pet.vetContact} (Emergency)`}
                     >
-                      Call Vet Now (Emergency)
+                      <svg className="w-4 h-4 text-white flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M21 16.5v3a1.5 1.5 0 0 1-1.76 1.48c-2.13-.32-4.14-1.18-5.99-2.41a15.08 15.08 0 0 1-5.15-5.15C7.18 10.9 6.32 8.89 6 6.76A1.5 1.5 0 0 1 7.48 5H10.5a1.5 1.5 0 0 1 1.5 1.2c.12.82.39 1.62.8 2.35a1.5 1.5 0 0 1-.33 1.62l-1.2 1.2a11.99 11.99 0 0 0 5.15 5.15l1.2-1.2a1.5 1.5 0 0 1 1.62-.33c.73.41 1.53.68 2.35.8A1.5 1.5 0 0 1 21 16.5z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span>Call Vet Now (Emergency)</span>
                     </a>
                   </div>
                 )}
@@ -1085,7 +1111,7 @@ export default function PetDetail({ household, user, onSignOut }) {
 
         {/* Food Information Section */}
         {pet.primaryFood && (
-          <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="border-b border-gray-200">
+          <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-bold text-gray-900">Food Information</h2>
               {editingSection !== 'food' && (
@@ -1138,8 +1164,6 @@ export default function PetDetail({ household, user, onSignOut }) {
           </div>
         )}
 
-        
-        </div>
       </main>
 
       {showLogActivity && (

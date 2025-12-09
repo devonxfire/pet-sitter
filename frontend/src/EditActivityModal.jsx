@@ -136,7 +136,7 @@ export default function EditActivityModal({ activity, onActivityUpdated, onClose
               type="button"
               onClick={handleDelete}
               disabled={deleting}
-              className="flex-1 bg-red-100 text-red-600 font-semibold py-2 rounded-lg hover:bg-red-200 transition disabled:opacity-50"
+              className="flex-1 bg-gray-100 text-red-600 font-semibold py-2 rounded-lg hover:bg-gray-200 transition disabled:opacity-50"
             >
               {deleting ? 'Deleting...' : 'Delete'}
             </button>
