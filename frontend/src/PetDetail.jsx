@@ -594,7 +594,7 @@ export default function PetDetail({ household, user, onSignOut }) {
             {/* Avatar */}
             <div className="shrink-0 -ml-6 md:ml-0">
                 <div className="relative">
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
                   {pet.photoUrl ? (
                     <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet.name} className="w-full h-full object-cover select-none" draggable={false} />
                   ) : (
@@ -618,8 +618,8 @@ export default function PetDetail({ household, user, onSignOut }) {
             </div>
 
             {/* Main info */}
-              <div className="min-w-0 flex-1">
-              <div className="flex flex-col justify-center pl-4">
+              <div className="min-w-0 flex-1 h-24 md:h-32 flex flex-col justify-between">
+              <div className="flex flex-col justify-between pl-4 h-full">
                 <div className="flex items-center gap-3">
                   <h1 className="text-2xl md:text-4xl font-bold leading-tight text-gray-900">{pet.name}</h1>
                   {/* single edit control is shown in the General Information section below */}
@@ -639,7 +639,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   ) : null}
                 </div>
 
-                <blockquote className="text-gray-600 italic mt-3 max-w-lg" style={{ fontFamily: `'Dancing Script', cursive` }}>
+                <blockquote className="text-gray-700 italic mt-3 max-w-lg text-lg md:text-xl leading-tight" style={{ fontFamily: `'Dancing Script', cursive` }}>
                   “{getPetQuote(pet.name)}”
                 </blockquote>
               </div>
