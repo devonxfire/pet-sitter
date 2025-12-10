@@ -75,10 +75,10 @@ export default function Dashboard({ user, household, onSignOut }) {
                 <div
                   key={pet.id}
                   onClick={() => navigate(`/pet/${pet.id}`)}
-                  className="bg-gray-50 rounded-2xl p-8 border border-gray-200 hover:shadow-lg transition cursor-pointer h-96 flex flex-col items-center justify-center text-center"
+                  className="bg-gray-50 rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition cursor-pointer flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4"
                 >
-                  {/* Circular Photo */}
-                  <div className="w-32 h-32 rounded-full bg-gray-200 border-4 border-gray-300 mb-6 flex items-center justify-center overflow-hidden">
+                  {/* Rounded-square Photo */}
+                  <div className="w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-gray-200 border-4 border-gray-300 flex-shrink-0 flex items-center justify-center overflow-hidden">
                     {pet.photoUrl ? (
                       <img
                         src={resolvePhotoUrl(pet.photoUrl)}
@@ -90,24 +90,28 @@ export default function Dashboard({ user, household, onSignOut }) {
                     )}
                   </div>
 
-                  {/* Pet Name */}
-                  <h2 className="text-5xl font-bold text-gray-900 mb-4">{pet.name}</h2>
+                  {/* Text content next to avatar (match avatar height) */}
+                  <div className="flex-1 h-28 md:h-32 flex flex-col justify-between">
+                    <div>
+                      <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{pet.name}</h2>
+                      <p className="text-sm md:text-base text-gray-600 mt-1">
+                        {(pet.species || '').charAt(0).toUpperCase() + (pet.species || '').slice(1)}{pet.breed ? ` • ${pet.breed}` : ''}
+                      </p>
+                    </div>
 
-                  {/* Pet Details */}
-                  <p className="text-lg text-gray-600 mb-2">
-                    {(pet.species || '').charAt(0).toUpperCase() + (pet.species || '').slice(1)}
-                      {pet.breed && ` • ${pet.breed}`}
-                  </p>
-                  {pet.age && <p className="text-sm text-gray-500">Age: {pet.age} years</p>}
-                  {pet.weight && <p className="text-sm text-gray-500">Weight: {pet.weight} {pet.weightUnit || 'lbs'}</p>}
+                    <div className="text-sm text-gray-500 space-y-1">
+                      {pet.age && <div>Age: {pet.age} years</div>}
+                      {pet.weight && <div>Weight: {pet.weight} {pet.weightUnit || 'lbs'}</div>}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
-            <div className="flex justify-center mt-20 mb-8">
+            <div className="flex justify-start mt-12 mb-8">
               <button
                 onClick={() => navigate('/add-pet', { state: { household } })}
-                className="bg-accent text-white text-2xl font-bold px-12 py-4 hover:opacity-90 transition shadow-lg w-auto min-w-60 h-auto rounded-none"
-                style={{ letterSpacing: '0.03em' }}
+                className="bg-accent text-white text-lg font-semibold px-5 py-2 hover:opacity-90 transition shadow rounded-lg"
+                style={{ letterSpacing: '0.02em' }}
               >
                 + Add Pet
               </button>
