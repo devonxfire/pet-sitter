@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiFetch, API_BASE } from './api';
 import TopNav from './TopNav';
+import { getFallbackFlower, assignHouseholdFlowers, FLOWER_LIST } from './flowerIcon';
+import FlowerIcon from './FlowerIcon.jsx';
 
 export default function Dashboard({ user, household, onSignOut }) {
   const navigate = useNavigate();
@@ -35,6 +37,9 @@ export default function Dashboard({ user, household, onSignOut }) {
     console.log('Dashboard household:', household); // Debug log
     fetchPets();
   }, [household?.id, location.state?.petAdded]);
+
+  // Pre-compute household flower mapping so JSX is simpler and deterministic
+  const mapping = assignHouseholdFlowers(pets || []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -94,7 +99,11 @@ export default function Dashboard({ user, household, onSignOut }) {
                   {/* Text content next to avatar (match avatar height) */}
                   <div className="flex-1 h-28 md:h-32 flex flex-col justify-between">
                     <div>
-                      <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{pet.name}</h2>
+                      <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                        {pet.name} <span className="ml-2 inline-block align-middle" aria-hidden>
+                          <FlowerIcon variant={FLOWER_LIST.indexOf(mapping[String(pet.id)])} seed={String(pet.id || pet.name || '')} size={18} className="inline-block" />
+                        </span>
+                      </h2>
                       <p className="text-sm md:text-base text-gray-600 mt-1">
                         {(pet.species || '').charAt(0).toUpperCase() + (pet.species || '').slice(1)}{pet.breed ? ` • ${pet.breed}` : ''}
                       </p>

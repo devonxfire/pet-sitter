@@ -101,7 +101,7 @@ export default function TopNav({ user, household, onSignOut }) {
                 ) : (
                   <div className="w-9 h-9 rounded-full bg-user-initials text-white flex items-center justify-center font-semibold">{initials(user?.name)}</div>
                 )}
-                <span className="text-gray-900 font-medium">Welcome{user?.name ? ` ${user.name.split(' ')[0]}` : ''}</span>
+                <span className="text-gray-900 font-medium">Welcome{user?.name ? `, ${user.name.split(' ')[0]}!` : '!'}</span>
                 <svg className="w-4 h-4 text-gray-500 ml-1" viewBox="0 0 20 20" fill="none" aria-hidden>
                   <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -109,13 +109,8 @@ export default function TopNav({ user, household, onSignOut }) {
 
               {open && (
                 <div className="absolute right-0 top-full mt-3 w-44 bg-white rounded-lg shadow-lg z-50">
-                  <Link
-                    to="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setOpen(false)}
-                  >
-                    My Profile
-                  </Link>
+                  <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => setOpen(false)}>My Profile</Link>
+                  <Link to="/household-settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => setOpen(false)}>Settings</Link>
                   <button
                     onClick={() => { setOpen(false); onSignOut && onSignOut(); }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dropdown-item"

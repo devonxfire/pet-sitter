@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiFetch, API_BASE, apiUrl } from './api';
 import TopNav from './TopNav';
+import { getFallbackFlower, assignHouseholdFlowers, FLOWER_LIST } from './flowerIcon';
+import FlowerIcon from './FlowerIcon.jsx';
 import LogActivity from './LogActivity';
 import ActivityView from './ActivityView';
 import ACTIVITY_TYPES from './activityTypes';
@@ -35,6 +37,28 @@ export default function PetDetail({ household, user, onSignOut }) {
   const [weightUnit, setWeightUnit] = useState('lbs'); // State for weight unit selection
   // Collapsible section state: controls whether each section is collapsed
   const [collapsedSections, setCollapsedSections] = useState({ general: false, vet: false, food: false });
+
+  // Flower mapping for household pets (so flowers are unique in a household)
+  const [flowerMap, setFlowerMap] = useState({});
+  useEffect(() => {
+    let cancelled = false;
+    const loadHouseholdPets = async () => {
+      try {
+        if (!household?.id) return;
+        // Try to use household.pets if already present
+        if (Array.isArray(household.pets) && household.pets.length > 0) {
+          if (!cancelled) setFlowerMap(assignHouseholdFlowers(household.pets));
+          return;
+        }
+        const data = await apiFetch(`/api/households/${household.id}/pets`);
+        if (!cancelled && Array.isArray(data)) setFlowerMap(assignHouseholdFlowers(data));
+      } catch (err) {
+        // ignore failures — fallback will be used
+      }
+    };
+    loadHouseholdPets();
+    return () => { cancelled = true; };
+  }, [household?.id]);
 
   const toggleSection = (sectionName) => {
     setCollapsedSections(prev => ({ ...prev, [sectionName]: !prev[sectionName] }));
@@ -579,6 +603,8 @@ export default function PetDetail({ household, user, onSignOut }) {
     );
   }
 
+  
+
   return (
     <div className="min-h-screen bg-white">
       <TopNav user={user} household={household} onSignOut={onSignOut} />
@@ -622,7 +648,10 @@ export default function PetDetail({ household, user, onSignOut }) {
               <div className="flex flex-col justify-between pl-2 h-full">
                 <div>
                   <div className="flex items-baseline gap-3">
-                    <h1 className="text-2xl md:text-4xl font-bold leading-tight text-gray-900">{pet ? `${pet.name}'s Profile` : 'Profile'}</h1>
+                    <h1 className="text-2xl md:text-4xl font-bold leading-tight text-gray-900">
+                      {pet ? `${pet.name}'s Profile` : 'Profile'}
+                      {pet && <span className="ml-2 inline-block align-middle" aria-hidden><FlowerIcon variant={FLOWER_LIST.indexOf(flowerMap[String(pet.id)])} seed={String(pet.id || pet.name || '')} size={18} className="inline-block" /></span>}
+                    </h1>
                     {/* single edit control is shown in the General Information section below */}
                   </div>
 

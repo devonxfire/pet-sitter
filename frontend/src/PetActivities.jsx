@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiFetch, apiUrl, API_BASE } from './api';
+import { getFallbackFlower, assignHouseholdFlowers, FLOWER_LIST } from './flowerIcon';
+import FlowerIcon from './FlowerIcon.jsx';
 import TopNav from './TopNav';
 import LogActivity from './LogActivity';
 import ActivityView from './ActivityView';
@@ -92,6 +94,25 @@ export default function PetActivities({ household, user, onSignOut }) {
     if (petId) load();
     return () => { cancelled = true; };
   }, [petId]);
+
+  // Flower mapping for household pets (so flowers are unique in a household)
+  const [flowerMap, setFlowerMap] = useState({});
+  useEffect(() => {
+    let cancelled = false;
+    const loadHouseholdPets = async () => {
+      try {
+        if (!household?.id) return;
+        if (Array.isArray(household.pets) && household.pets.length > 0) {
+          if (!cancelled) setFlowerMap(assignHouseholdFlowers(household.pets));
+          return;
+        }
+        const data = await apiFetch(`/api/households/${household.id}/pets`);
+        if (!cancelled && Array.isArray(data)) setFlowerMap(assignHouseholdFlowers(data));
+      } catch (err) {}
+    };
+    loadHouseholdPets();
+    return () => { cancelled = true; };
+  }, [household?.id]);
 
   const resolvePhotoUrl = (url) => {
     if (!url) return '';
@@ -238,7 +259,10 @@ export default function PetActivities({ household, user, onSignOut }) {
                     <div className="flex flex-col justify-between pl-2 h-full">
                       <div>
                         <div className="flex items-baseline gap-3">
-                          <h1 className="text-2xl md:text-4xl font-bold leading-tight text-gray-900">{pet ? `${pet.name}'s Activities` : 'Activities'}</h1>
+                          <h1 className="text-2xl md:text-4xl font-bold leading-tight text-gray-900">
+                            {pet ? `${pet.name}'s Activities` : 'Activities'}
+                            {pet && <span className="ml-2 inline-block align-middle" aria-hidden><FlowerIcon variant={FLOWER_LIST.indexOf(flowerMap[String(pet.id)])} seed={String(pet.id || pet.name || '')} size={18} className="inline-block" /></span>}
+                          </h1>
                         </div>
                         <div className="mt-1">
                           <p className="text-sm text-gray-500">All logged activities for this pet — <button onClick={() => navigate('/activities')} className="text-sm text-gray-600 underline no-global-accent no-accent-hover">Change pet</button></p>
