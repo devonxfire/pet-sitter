@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { apiFetch, apiUrl } from './api';
+import { apiFetch, apiUrl, API_BASE } from './api';
 import TopNav from './TopNav';
 import LogActivity from './LogActivity';
 import ActivityView from './ActivityView';
@@ -74,6 +74,12 @@ export default function PetActivities({ household, user, onSignOut }) {
     if (petId) load();
     return () => { cancelled = true; };
   }, [petId]);
+
+  const resolvePhotoUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
 
   // Load favourites for household
   const loadFavourites = async () => {
@@ -228,43 +234,61 @@ export default function PetActivities({ household, user, onSignOut }) {
       <div className="mx-auto max-w-6xl px-6 w-full py-8">
         <div className="flex items-start justify-between mb-8">
           <div className="w-full">
-            <h1 className="text-2xl font-bold text-gray-900 mt-2">{pet ? `${pet.name}'s Activities` : 'Activities'}</h1>
-            <p className="text-sm text-gray-500">All logged activities for this pet — <button onClick={() => navigate('/activities')} className="text-sm text-accent underline">Change pet</button></p>
-
-            {/* Action row: Create + Favourites (under the header) */}
-            <div className="mt-4 flex items-center gap-3">
-              <button
-                onClick={() => setShowLogActivity(true)}
-                className="inline-flex items-center gap-3 px-5 py-2 rounded-xl font-semibold bg-accent text-white hover:opacity-90 transition"
-              >
-                <svg className="w-5 h-5 text-white shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <span>Log New Activity</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setActivityFilter('quick');
-                  setTimeout(() => favouritesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
-                }}
-                aria-pressed={activityFilter === 'quick'}
-                className={activityFilter === 'quick'
-                  ? 'inline-flex items-center gap-3 bg-accent text-white font-semibold px-6 py-2 rounded-xl transition'
-                  : 'inline-flex items-center gap-3 bg-gray-100 text-gray-600 font-semibold px-6 py-2 rounded-xl hover:bg-gray-200 transition'
-                }
-              >
-                <svg
-                  className={activityFilter === 'quick' ? 'w-5 h-5 text-white flex-shrink-0' : 'w-5 h-5 text-accent flex-shrink-0'}
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  aria-hidden="true"
+            <div className="flex items-start gap-4 mt-2">
+              <div className="shrink-0">
+                <button
+                  onClick={() => navigate(`/pet/${petId}`)}
+                  aria-label={pet ? `Open ${pet.name} details` : 'Open pet details'}
+                  className="focus:outline-none focus:ring-2 focus:ring-accent"
                 >
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6.01 4.01 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 17.99 4 20 6.01 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                </svg>
-                <span>Repeat Favourite</span>
-              </button>
+                  {pet?.photoUrl ? (
+                    <div className="w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
+                      <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet?.name || 'Pet'} className="w-full h-full object-cover select-none" draggable={false} />
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-gray-200 flex items-center justify-center border-2 border-gray-200 text-gray-400">📷</div>
+                  )}
+                </button>
+              </div>
+              <div className="flex-1 h-20 md:h-28 flex flex-col justify-center">
+                <h1 className="text-2xl font-bold text-gray-900">{pet ? `${pet.name}'s Activities` : 'Activities'}</h1>
+                <p className="text-sm text-gray-500">All logged activities for this pet — <button onClick={() => navigate('/activities')} className="text-sm text-accent underline">Change pet</button></p>
+
+                <div className="mt-3 flex items-center gap-3">
+                  <button
+                    onClick={() => setShowLogActivity(true)}
+                    className="inline-flex items-center gap-3 px-4 py-2 rounded-xl font-semibold bg-accent text-white hover:opacity-90 transition"
+                  >
+                    <svg className="w-5 h-5 text-white shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span>Log New Activity</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setActivityFilter('quick');
+                      setTimeout(() => favouritesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+                    }}
+                    aria-pressed={activityFilter === 'quick'}
+                    className={activityFilter === 'quick'
+                      ? 'inline-flex items-center gap-3 bg-accent text-white font-semibold px-5 py-2 rounded-xl transition'
+                      : 'inline-flex items-center gap-3 bg-gray-100 text-gray-600 font-semibold px-5 py-2 rounded-xl hover:bg-gray-200 transition'
+                    }
+                  >
+                    <svg
+                      className={activityFilter === 'quick' ? 'w-5 h-5 text-white flex-shrink-0' : 'w-5 h-5 text-accent flex-shrink-0'}
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6.01 4.01 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 17.99 4 20 6.01 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                    <span>Repeat Favourite</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

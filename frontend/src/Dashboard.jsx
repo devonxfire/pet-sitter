@@ -75,18 +75,19 @@ export default function Dashboard({ user, household, onSignOut }) {
                 <div
                   key={pet.id}
                   onClick={() => navigate(`/pet/${pet.id}`)}
-                  className="bg-gray-50 rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition cursor-pointer flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4"
+                  className="bg-gray-50 rounded-2xl p-6 border border-gray-200 transition-transform duration-300 ease-in-out transform-gpu hover:scale-105 hover:shadow-xl cursor-pointer flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4"
                 >
                   {/* Rounded-square Photo */}
-                  <div className="w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-gray-200 border-4 border-gray-300 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                  <div className="w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-gray-200 border-2 border-gray-200 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-sm">
                     {pet.photoUrl ? (
                       <img
                         src={resolvePhotoUrl(pet.photoUrl)}
                         alt={pet.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover select-none"
+                        draggable={false}
                       />
                     ) : (
-                      <div className="text-gray-400 text-4xl">📷</div>
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">📷</div>
                     )}
                   </div>
 

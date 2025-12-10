@@ -583,18 +583,18 @@ export default function PetDetail({ household, user, onSignOut }) {
     <div className="min-h-screen bg-white">
       <TopNav user={user} household={household} onSignOut={onSignOut} />
 
-      <main className="flex flex-col items-stretch py-6">
+      <main className="flex flex-col items-stretch pb-6">
         {/* Full-bleed header band */}
         <div className="w-full bg-gray-50 border-b border-gray-200">
           <div className="mx-auto max-w-6xl px-6 w-full relative">
 
             {/* Compact Header + General Section (grid layout) */}
-            <div className="mb-6 py-4">
-              <div className="grid md:grid-flow-col md:auto-cols-max items-start gap-6 md:gap-6">
+            <div className="mb-6 py-12 border-b-2 border-gray-200">
+              <div className="grid md:grid-flow-col md:auto-cols-max items-start gap-4 md:gap-4">
             {/* Avatar */}
-            <div className="shrink-0 -ml-6 md:ml-0">
+            <div className="shrink-0 -ml-3 md:ml-0">
                 <div className="relative">
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
+                <div className="w-28 h-28 md:w-40 md:h-40 rounded-2xl bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
                   {pet.photoUrl ? (
                     <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet.name} className="w-full h-full object-cover select-none" draggable={false} />
                   ) : (
@@ -603,7 +603,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 </div>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-2 -right-2 md:-bottom-1 md:-right-1 bg-accent text-white rounded-full w-8 h-8 md:w-10 md:h-10 flex items-center justify-center cursor-pointer transition transform hover:scale-105 text-sm avatar-action z-20 ring-2 ring-white shadow"
+                  className="absolute -bottom-3 -right-3 md:-bottom-2 md:-right-2 bg-accent text-white rounded-full w-9 h-9 md:w-12 md:h-12 flex items-center justify-center cursor-pointer transition transform hover:scale-105 text-sm avatar-action z-20 ring-2 ring-white shadow"
                   type="button"
                   aria-label="Change photo"
                 >
@@ -618,25 +618,47 @@ export default function PetDetail({ household, user, onSignOut }) {
             </div>
 
             {/* Main info */}
-              <div className="min-w-0 flex-1 h-24 md:h-32 flex flex-col justify-between">
-              <div className="flex flex-col justify-between pl-4 h-full">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-2xl md:text-4xl font-bold leading-tight text-gray-900">{pet.name}</h1>
-                  {/* single edit control is shown in the General Information section below */}
-                </div>
+              <div className="min-w-0 flex-1 h-28 md:h-40 flex flex-col justify-between">
+              <div className="flex flex-col justify-between pl-2 h-full">
+                <div>
+                  <div className="flex items-baseline gap-3">
+                    <h1 className="text-2xl md:text-4xl font-bold leading-tight text-gray-900">{pet.name}</h1>
+                    {/* single edit control is shown in the General Information section below */}
+                  </div>
 
-                <div className="mt-2">
-                  {latestActivity ? (
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-gray-500">Latest Activity:</span>
-                      <span className="inline-flex items-center gap-2 px-2 py-0.5 bg-gray-100 rounded-full text-sm">
-                        <span className="text-base leading-none">{getActivityIcon(latestActivity.activityType?.name)}</span>
-                        <span className="text-sm font-medium text-gray-900">{(latestActivity.activityType?.name
-                          ? `${latestActivity.activityType.name.charAt(0).toUpperCase()}${latestActivity.activityType.name.slice(1)}`
-                          : 'Activity')}</span>
-                      </span>
+                  <div className="mt-1">
+                    <div className="inline-block align-top">
+                      {latestActivity ? (
+                        <div className="flex items-center gap-3 text-sm text-gray-500">
+                          <span className="">Latest Activity:</span>
+                          <span className="inline-flex items-center gap-2 px-2 py-0.5 bg-gray-100 rounded-full text-sm">
+                            <span className="text-base leading-none">{getActivityIcon(latestActivity.activityType?.name)}</span>
+                            <span className="text-sm font-medium text-gray-900">{(latestActivity.activityType?.name
+                              ? `${latestActivity.activityType.name.charAt(0).toUpperCase()}${latestActivity.activityType.name.slice(1)}`
+                              : 'Activity')}</span>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500">{pet.name}</div>
+                      )}
+
+                      <div className="mt-2 w-full">
+                        <button
+                          onClick={() => navigate(`/pet/${petId}/activities`)}
+                          className="w-full inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md bg-accent text-white text-sm font-semibold hover:opacity-90 transition"
+                          aria-label={`View ${pet.name}'s Activities`}
+                          type="button"
+                        >
+                          <span aria-hidden="true" className="inline-block w-5 h-5 text-white" style={{ lineHeight: 0 }}>
+                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                              <path d="M12 5c-5 0-9.27 3.04-10.54 7C2.73 15.96 7 19 12 19s9.27-3.04 10.54-7C21.27 8.04 17 5 12 5zm0 11a4 4 0 110-8 4 4 0 010 8z" />
+                            </svg>
+                          </span>
+                          View {pet.name}'s Activities
+                        </button>
+                      </div>
                     </div>
-                  ) : null}
+                  </div>
                 </div>
 
                 <blockquote className="text-gray-700 italic mt-3 max-w-lg text-lg md:text-xl leading-tight" style={{ fontFamily: `'Dancing Script', cursive` }}>

@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { apiFetch } from './api';
 import { useMemo } from 'react';
 
 export default function TopNav({ user, household, onSignOut }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
   const [firstPetId, setFirstPetId] = useState(null);
@@ -49,13 +50,13 @@ export default function TopNav({ user, household, onSignOut }) {
   }, [menuRef]);
 
   return (
-    <nav className="relative z-20">
+    <nav className={`relative z-20 h-20 md:h-20 ${location?.pathname !== '/' ? 'border-b border-gray-100' : ''}`}>
       {/**
        * When a user is logged in we prefer the dashboard-style top menu that
        * stretches across the full width. For logged-out users keep the narrower
        * centered layout.
        */}
-      <div className={user ? 'max-w-7xl mx-auto px-6 py-6 flex items-center' : 'max-w-6xl mx-auto px-6 py-6 flex items-center'}>
+      <div className={user ? 'max-w-7xl mx-auto px-6 h-20 flex items-center' : 'max-w-6xl mx-auto px-6 h-20 flex items-center'}>
         {/* Left: logo */}
         <div className="flex items-center mr-4">
           <Link to="/" className="flex items-center gap-3">
