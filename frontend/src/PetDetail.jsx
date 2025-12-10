@@ -622,7 +622,7 @@ export default function PetDetail({ household, user, onSignOut }) {
               <div className="flex flex-col justify-between pl-2 h-full">
                 <div>
                   <div className="flex items-baseline gap-3">
-                    <h1 className="text-2xl md:text-4xl font-bold leading-tight text-gray-900">{pet.name}</h1>
+                    <h1 className="text-2xl md:text-4xl font-bold leading-tight text-gray-900">{pet ? `${pet.name}'s Profile` : 'Profile'}</h1>
                     {/* single edit control is shown in the General Information section below */}
                   </div>
 
@@ -792,19 +792,19 @@ export default function PetDetail({ household, user, onSignOut }) {
                 onClick={() => toggleSection('general')}
                 aria-expanded={!collapsedSections.general}
                 aria-label={collapsedSections.general ? 'Expand general section' : 'Collapse general section'}
-                className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition focus:outline-none focus:ring-0"
+                className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition focus:outline-none focus:ring-0 no-global-accent no-accent-hover"
               >
                 <span className="text-sm">{collapsedSections.general ? '+' : '−'}</span>
               </button>
               <h2 className="text-2xl font-bold text-gray-900">General Information</h2>
             </div>
             {editingSection !== 'general' && (
-              <button
-                onClick={() => startEditingSection('general')}
-                className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition"
-              >
-                Edit
-              </button>
+                <button
+                  onClick={() => startEditingSection('general')}
+                  className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover"
+                >
+                  Edit
+                </button>
             )}
           </div>
 
@@ -855,7 +855,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   onClick={() => toggleSection('vet')}
                   aria-expanded={!collapsedSections.vet}
                   aria-label={collapsedSections.vet ? 'Expand vet section' : 'Collapse vet section'}
-                  className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition focus:outline-none focus:ring-0"
+                  className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition focus:outline-none focus:ring-0 no-global-accent no-accent-hover"
                 >
                   <span className="text-sm">{collapsedSections.vet ? '+' : '−'}</span>
                 </button>
@@ -864,7 +864,7 @@ export default function PetDetail({ household, user, onSignOut }) {
               {editingSection !== 'vet' && (
                 <button
                   onClick={() => startEditingSection('vet')}
-                  className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition"
+                  className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover"
                 >
                   Edit
                 </button>
@@ -970,7 +970,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   onClick={() => toggleSection('food')}
                   aria-expanded={!collapsedSections.food}
                   aria-label={collapsedSections.food ? 'Expand food section' : 'Collapse food section'}
-                  className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition focus:outline-none focus:ring-0"
+                  className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition focus:outline-none focus:ring-0 no-global-accent no-accent-hover"
                 >
                   <span className="text-sm">{collapsedSections.food ? '+' : '−'}</span>
                 </button>
@@ -979,7 +979,7 @@ export default function PetDetail({ household, user, onSignOut }) {
               {editingSection !== 'food' && (
                 <button
                   onClick={() => startEditingSection('food')}
-                  className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition"
+                  className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover"
                 >
                   Edit
                 </button>

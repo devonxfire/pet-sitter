@@ -7,6 +7,17 @@ import { useMemo } from 'react';
 export default function TopNav({ user, household, onSignOut }) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Toggle a body class so CSS can target non-landing pages.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (location?.pathname && location.pathname !== '/') {
+      document.body.classList.add('page-non-landing');
+    } else {
+      document.body.classList.remove('page-non-landing');
+    }
+    return () => { /* keep body class in sync on unmount */ };
+  }, [location?.pathname]);
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
   const [firstPetId, setFirstPetId] = useState(null);
@@ -80,7 +91,7 @@ export default function TopNav({ user, household, onSignOut }) {
             <div ref={menuRef} className="relative flex items-center gap-3">
               <button
                 onClick={() => setOpen((s) => !s)}
-                className="user-toggle cursor-pointer flex items-center gap-3 text-gray-900 focus:outline-none"
+                className="user-toggle no-global-accent cursor-pointer flex items-center gap-3 text-gray-900 focus:outline-none"
                 aria-haspopup="true"
                 aria-expanded={open}
                 type="button"

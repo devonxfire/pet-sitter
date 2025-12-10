@@ -50,11 +50,15 @@
   /* Color palette (new scheme) */
   /* Reverse main/hover reds: use the darker red as primary and the previous primary as hover */
   /* Use the darker, less-saturated red as the brand primary for better contrast */
-  --color-accent: #C3001F; /* primary (used broadly for CTAs) */
-  --color-accent-2: #ED1C24; /* lighter red (used for accents/highlights) */
-  --color-accent-hover: #9B0019; /* hover/active (slightly darker) */
-  --color-accent-hover-light: #FF4D56; /* lighter accent variant */
+  /* Accent: blended red + gray (softer, desaturated red that ties into footer grays) */
+  /* Mix: old bright red + footer gray → softer/desaturated red for CTAs */
+  /* Match landing page brand red from Tailwind theme */
+  --color-accent: #C3001F; /* primary brand red (darker) */
+  --color-accent-2: #ED1C24; /* lighter/secondary variant (previous primary) */
+  --color-accent-hover: #C3001F; /* hover/active shade (kept same as primary) */
+  --color-accent-hover-light: #FF4D56; /* lighter accent for highlights */
   --color-footer: #374151; /* dark gray used for footer/backgrounds */
+  --color-footer-light: #555E6B; /* lighter variant for interior CTAs (15% lighter than --color-footer) */
   --color-bg: #FFFFFF; /* page background */
   --color-surface: #F5F6F7; /* light neutral surface */
   --color-muted-surface: #F3F4F6; /* subtle panels */
@@ -124,7 +128,7 @@ button {
 
 .bg-accent {
   /* Premium solid accent background for buttons and accents. */
-  background-color: var(--color-accent);
+  background-color: var(--color-accent-hover);
   color: white;
 }
 
@@ -134,7 +138,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background-color: var(--color-accent);
+  background-color: var(--color-accent-hover);
   color: white;
   padding: 0.5rem 0.9rem;
   border-radius: 0; /* square edges */
@@ -144,7 +148,7 @@ button {
 }
 .btn:hover {
   box-shadow: 0 18px 48px rgba(11,18,32,0.12);
-  background-color: var(--color-accent-hover);
+  background-color: var(--color-accent-2);
 }
 .btn:active {
   box-shadow: 0 6px 18px rgba(11,18,32,0.06);
@@ -389,6 +393,71 @@ button.user-toggle:focus > .bg-user-initials {
   box-shadow: none !important;
 }
 
+/*
+  On all non-landing pages prefer the user-initials background color as
+  the primary button/CTA color. This allows the app to use a calmer,
+  neutral CTA on interior pages while keeping the landing page’s accent
+  color for marketing-focused CTAs.
+*/
+.page-non-landing .bg-accent,
+.page-non-landing .btn,
+.page-non-landing button:not(.no-global-accent) {
+  /* revert to the original accent (red) on interior pages */
+  background-color: var(--color-accent) !important;
+  color: white !important;
+  border-color: var(--color-accent) !important;
+}
+.page-non-landing .bg-accent:hover,
+.page-non-landing .btn:hover,
+.page-non-landing button:not(.no-global-accent):hover {
+  background-color: var(--color-accent-hover) !important;
+  color: white !important;
+  box-shadow: 0 12px 36px rgba(11,18,32,0.12) !important;
+}
+
+/* Selected filter helper: ensure selected small filter buttons show a distinct,
+   darker neutral appearance even when other button rules exist. Use !important
+   to avoid unintended overrides from global CTA rules. */
+.selected-filter {
+  /* Use a slightly darker gray for selected state and add a thin underline
+     so selection is clear even if other CSS interferes. */
+  background-color: #E5E7EB !important; /* Tailwind gray-200 (lighter) */
+  color: #0B1220 !important; /* near-black */
+  border-color: #D1D5DB !important;
+}
+.selected-filter:hover {
+  background-color: #D1D5DB !important;
+}
+
+/* Page-scoped override to ensure interior-page rules cannot hide the selected state */
+.page-non-landing button.selected-filter,
+.page-non-landing .selected-filter {
+  background-color: #E5E7EB !important;
+  color: #0B1220 !important;
+  /* selection shown via lighter background only */
+}
+
+/* Explicitly opt the top-right user toggle and notification controls out of the
+   interior-page CTA override. These are small icon/inline controls and must
+   remain neutral (no red backgrounds). Placed after the page-non-landing rules
+   so it wins via equal specificity and !important. */
+.page-non-landing .user-toggle,
+.page-non-landing button.user-toggle,
+.page-non-landing .user-toggle *,
+.page-non-landing .no-accent-hover,
+.page-non-landing .no-accent-hover * {
+  background-color: transparent !important;
+  color: inherit !important;
+  box-shadow: none !important;
+}
+
+/* Do not force uppercase on buttons globally; allow components and Tailwind utilities
+   to control capitalization. We reset any previously applied global rule. */
+button, input[type="button"], input[type="submit"], .btn, a.btn, button[class*="inline-flex"], .inline-flex[role="button"] {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
 /* Ensure buttons explicitly opted-out of the global accent (no-global-accent)
    still show a light gray background on hover (inverse of Favourites). */
 .no-global-accent:hover,
@@ -398,4 +467,29 @@ button.no-global-accent:hover > * {
   background-color: #F3F4F6 !important; /* tailwind gray-100 */
   color: #4B5563 !important; /* tailwind gray-600 (matches Favourites text) */
   box-shadow: none !important;
+}
+
+/* Notification badge: always render as white-on-brand-red even when parent
+   controls opt out of the global accent. This is intentionally specific and
+   uses !important so it overrides the `.no-accent-hover *` rule above. */
+.notif-badge,
+.user-toggle .notif-badge,
+.no-accent-hover .notif-badge,
+.no-global-accent .notif-badge,
+.page-non-landing .notif-badge {
+  background-color: var(--color-accent) !important;
+  color: #ffffff !important;
+  padding-left: 0.375rem !important; /* keep px-1.5 look */
+  padding-right: 0.375rem !important;
+  padding-top: 0.125rem !important;
+  padding-bottom: 0.125rem !important;
+  min-width: 1.25rem !important;
+  height: 1.25rem !important;
+  line-height: 1rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 700 !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 1px 2px rgba(11,18,32,0.12) !important;
 }

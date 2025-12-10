@@ -60,7 +60,15 @@ export default function ActivityView({ activity, onClose, onEdit, onDelete }) {
           <button onClick={onClose} className="flex-1 bg-gray-100 text-gray-900 py-2 rounded-lg">Close</button>
           <button onClick={() => onEdit && onEdit(activity)} className="bg-accent text-gray-900 py-2 px-4 rounded-lg">Edit</button>
           {onDelete && (
-            <button onClick={() => onDelete(activity.id)} className="bg-red-100 text-red-600 py-2 px-4 rounded-lg">Delete</button>
+            <button
+              ref={(el) => {
+                if (el) el.style.setProperty('color', 'var(--color-accent)', 'important');
+              }}
+              onClick={() => onDelete(activity.id)}
+              className="py-2 px-4 rounded-lg text-accent bg-red-50 delete-btn"
+            >
+              Delete
+            </button>
           )}
         </div>
       </div>
