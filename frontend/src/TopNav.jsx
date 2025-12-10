@@ -1,11 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
+import { apiFetch } from './api';
+import { useMemo } from 'react';
 
 export default function TopNav({ user, household, onSignOut }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
+  const [firstPetId, setFirstPetId] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      if (!household?.id) return;
+      try {
+        const data = await apiFetch(`/api/households/${household.id}/pets`);
+        if (!mounted) return;
+        if (Array.isArray(data) && data.length > 0) setFirstPetId(data[0].id);
+      } catch (err) {
+        // ignore
+      }
+    };
+    load();
+    return () => { mounted = false; };
+  }, [household?.id]);
 
   const initials = (name) => {
     if (!name) return '';
@@ -48,7 +67,8 @@ export default function TopNav({ user, household, onSignOut }) {
         {/* Center: primary nav (centered) */}
         <div className="flex-1 flex justify-center">
           <div className="flex items-center gap-6">
-            <Link to="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">My Household</Link>
+            <Link to="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">My Pets</Link>
+            <Link to={firstPetId ? `/pet/${firstPetId}/activities` : '/activities'} className="text-sm text-gray-600 hover:text-gray-900">Activities</Link>
             <Link to="/plans" className="text-sm text-gray-600 hover:text-gray-900">Plans</Link>
           </div>
         </div>

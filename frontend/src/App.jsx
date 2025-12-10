@@ -9,6 +9,7 @@ import Landing from './Landing';
 import AddPet from './AddPet';
 import PetDetail from './PetDetail';
 import PetActivities from './PetActivities';
+import ActivitiesLanding from './ActivitiesLanding';
 import EditPet from './EditPet';
 import HouseholdSettings from './HouseholdSettings';
 import Footer from './Footer';
@@ -148,6 +149,16 @@ function App() {
           element={
             user ? (
               <PetActivities household={household} user={user} onSignOut={handleSignOut} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/activities"
+          element={
+            user ? (
+              <ActivitiesLanding household={household} user={user} onSignOut={handleSignOut} />
             ) : (
               <Navigate to="/login" />
             )

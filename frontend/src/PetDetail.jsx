@@ -33,6 +33,12 @@ export default function PetDetail({ household, user, onSignOut }) {
   const [savingSection, setSavingSection] = useState(false);
   const photoContainerRef = useRef(null);
   const [weightUnit, setWeightUnit] = useState('lbs'); // State for weight unit selection
+  // Collapsible section state: controls whether each section is collapsed
+  const [collapsedSections, setCollapsedSections] = useState({ general: false, vet: false, food: false });
+
+  const toggleSection = (sectionName) => {
+    setCollapsedSections(prev => ({ ...prev, [sectionName]: !prev[sectionName] }));
+  };
 
   const resolvePhotoUrl = (url) => {
     if (!url) return '';
@@ -606,29 +612,9 @@ export default function PetDetail({ household, user, onSignOut }) {
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => handlePhotoUpload(e)} className="hidden" />
               </div>
 
-              {/* View Activities button under avatar */}
-              <div className="mt-2 flex justify-start md:justify-start">
-                <button title="View activities"
-                  onClick={() => navigate(`/pet/${petId}/activities`)}
-                  className="inline-flex items-center gap-2 px-2 py-1 bg-gray-800 hover:bg-gray-700 text-white rounded-full text-sm transition-shadow shadow-sm hover:shadow-md focus:outline-none"
-                  aria-label="View activities"
-                >
-                  <svg className="w-5 h-5 text-white flex-shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="6.5" cy="5" r="1.25" fill="currentColor" />
-                    <path d="M8 6.5c1 0.5 2 0.8 3 1 1 .2 2 .8 2.5 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M10.5 9.5l-1 3 2 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M12.5 11.5l2 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span className="sr-only md:not-sr-only md:inline">View Activities</span>
-                </button>
-              </div>
+              {/* View Activities button removed; use top-nav Activities link */}
 
-              {/* Desktop-only absolute quote to ensure visibility on wide screens */}
-              <div className="hidden md:block absolute right-6 top-6 z-30 pointer-events-none">
-                <blockquote className="text-gray-600 italic text-3xl leading-tight max-w-xs text-right" style={{ fontFamily: `'Dancing Script', cursive` }}>
-                  “{getPetQuote(pet.name)}”
-                </blockquote>
-              </div>
+              {/* Desktop-only absolute quote removed (duplicate) */}
             </div>
 
             {/* Main info */}
@@ -641,12 +627,15 @@ export default function PetDetail({ household, user, onSignOut }) {
 
                 <div className="mt-2">
                   {latestActivity ? (
-                    <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-sm">
-                      <span className="text-lg">{getActivityIcon(latestActivity.activityType?.name)}</span>
-                      <span className="font-semibold text-gray-900">{(latestActivity.activityType?.name
-                        ? `${latestActivity.activityType.name.charAt(0).toUpperCase()}${latestActivity.activityType.name.slice(1)}`
-                        : 'Activity')}</span>
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-gray-500">Latest Activity:</span>
+                      <span className="inline-flex items-center gap-2 px-2 py-0.5 bg-gray-100 rounded-full text-sm">
+                        <span className="text-base leading-none">{getActivityIcon(latestActivity.activityType?.name)}</span>
+                        <span className="text-sm font-medium text-gray-900">{(latestActivity.activityType?.name
+                          ? `${latestActivity.activityType.name.charAt(0).toUpperCase()}${latestActivity.activityType.name.slice(1)}`
+                          : 'Activity')}</span>
+                      </span>
+                    </div>
                   ) : null}
                 </div>
 
@@ -776,7 +765,17 @@ export default function PetDetail({ household, user, onSignOut }) {
         {/* General Information Section */}
         <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">General Information</h2>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => toggleSection('general')}
+                aria-expanded={!collapsedSections.general}
+                aria-label={collapsedSections.general ? 'Expand general section' : 'Collapse general section'}
+                className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition focus:outline-none focus:ring-0"
+              >
+                <span className="text-sm">{collapsedSections.general ? '+' : '−'}</span>
+              </button>
+              <h2 className="text-2xl font-bold text-gray-900">General Information</h2>
+            </div>
             {editingSection !== 'general' && (
               <button
                 onClick={() => startEditingSection('general')}
@@ -789,7 +788,7 @@ export default function PetDetail({ household, user, onSignOut }) {
 
           {editingSection === 'general' ? (
             <div />
-          ) : (
+          ) : (!collapsedSections.general && (
             <div className="space-y-6">
               <div>
                 <p className="text-sm text-gray-500">Species</p>
@@ -822,14 +821,24 @@ export default function PetDetail({ household, user, onSignOut }) {
                 <p className="text-lg text-gray-900 whitespace-pre-wrap break-words">{pet?.notes || '-'}</p>
               </div>
             </div>
-          )}
+          ))}
         </div>
 
         {/* Vet Information Section */}
         {(pet.vetName || pet.vetLocation || pet.vetContact) && (
           <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-gray-900">Vet Information</h2>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => toggleSection('vet')}
+                  aria-expanded={!collapsedSections.vet}
+                  aria-label={collapsedSections.vet ? 'Expand vet section' : 'Collapse vet section'}
+                  className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition focus:outline-none focus:ring-0"
+                >
+                  <span className="text-sm">{collapsedSections.vet ? '+' : '−'}</span>
+                </button>
+                <h2 className="text-2xl font-bold text-gray-900">Vet Information</h2>
+              </div>
               {editingSection !== 'vet' && (
                 <button
                   onClick={() => startEditingSection('vet')}
@@ -895,7 +904,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   </button>
                 </div>
               </div>
-            ) : (
+            ) : ( !collapsedSections.vet && (
               <div className="space-y-6">
                 {pet.vetName && (
                   <div>
@@ -926,7 +935,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   </div>
                 )}
               </div>
-            )}
+            ))}
           </div>
         )}
 
@@ -934,7 +943,17 @@ export default function PetDetail({ household, user, onSignOut }) {
         {pet.primaryFood && (
           <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-gray-900">Food Information</h2>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => toggleSection('food')}
+                  aria-expanded={!collapsedSections.food}
+                  aria-label={collapsedSections.food ? 'Expand food section' : 'Collapse food section'}
+                  className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition focus:outline-none focus:ring-0"
+                >
+                  <span className="text-sm">{collapsedSections.food ? '+' : '−'}</span>
+                </button>
+                <h2 className="text-2xl font-bold text-gray-900">Food Information</h2>
+              </div>
               {editingSection !== 'food' && (
                 <button
                   onClick={() => startEditingSection('food')}
@@ -976,12 +995,12 @@ export default function PetDetail({ household, user, onSignOut }) {
                   </button>
                 </div>
               </div>
-            ) : (
+            ) : ( !collapsedSections.food && (
               <div>
                 <p className="text-sm text-gray-500">Primary Food</p>
                 <p className="text-lg text-gray-900">{pet.primaryFood}</p>
               </div>
-            )}
+            ))}
           </div>
         )}
 

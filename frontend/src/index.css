@@ -49,10 +49,12 @@
   /* Color palette */
   /* Color palette (new scheme) */
   /* Reverse main/hover reds: use the darker red as primary and the previous primary as hover */
-  --color-accent: #c3001f; /* new brand primary (previous hover) */
-  --color-accent-2: #ed0025; /* previous primary used for highlights */
-  --color-accent-hover: #374151; /* hover now uses a much darker neutral gray (#374151 - tailwind gray-700) */
-  --color-accent-hover-light: #4b5563; /* lighter hover variant (tailwind gray-600) */
+  /* Use the darker, less-saturated red as the brand primary for better contrast */
+  --color-accent: #C3001F; /* primary (used broadly for CTAs) */
+  --color-accent-2: #ED1C24; /* lighter red (used for accents/highlights) */
+  --color-accent-hover: #9B0019; /* hover/active (slightly darker) */
+  --color-accent-hover-light: #FF4D56; /* lighter accent variant */
+  --color-footer: #374151; /* dark gray used for footer/backgrounds */
   --color-bg: #FFFFFF; /* page background */
   --color-surface: #F5F6F7; /* light neutral surface */
   --color-muted-surface: #F3F4F6; /* subtle panels */
@@ -254,9 +256,20 @@ button:focus, input[type="button"]:focus, input[type="submit"]:focus, .btn:focus
   box-shadow: 0 0 0 4px rgba(11,18,32,0.06) !important;
 }
 
+/* Utility to remove focus ring for icon-like controls where a visible focus
+   ring would be visually distracting. Prefer using `focus-visible` styles for
+   keyboard users; this helper is used sparingly in the pet detail toggles. */
+.no-focus-ring:focus,
+.no-focus-ring:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* User initials background (top-right avatar) */
 .bg-user-initials {
-  background-color: var(--color-accent-hover);
+  /* Use footer dark gray for user initials background for contrast and
+     keep the initials readable */
+  background-color: var(--color-footer);
   color: white;
 }
 
@@ -274,7 +287,8 @@ button:focus, input[type="button"]:focus, input[type="submit"]:focus, .btn:focus
 
 /* Utility: background using the darker hover accent (used for footer/backgrounds) */
 .bg-accent-hover {
-  background-color: var(--color-accent-hover);
+  /* historically used for footer / deep background — map to footer color */
+  background-color: var(--color-footer);
 }
 
 /* Lighter hover variant used for interactive states (slightly lighter than footer gray) */
@@ -360,6 +374,19 @@ button.avatar-action,
 button.avatar-action *,
 .avatar-action {
   border-radius: 9999px !important;
+}
+
+/* Ensure the top-right user initials keep the footer background and do not
+   change color on hover. These selectors are intentionally specific and use
+   !important to override global hover/transparency rules applied to the
+   user-toggle container. */
+.user-toggle .bg-user-initials,
+.user-toggle .bg-user-initials:hover,
+button.user-toggle:hover > .bg-user-initials,
+button.user-toggle:focus > .bg-user-initials {
+  background-color: var(--color-footer) !important;
+  color: white !important;
+  box-shadow: none !important;
 }
 
 /* Ensure buttons explicitly opted-out of the global accent (no-global-accent)

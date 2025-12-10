@@ -11,13 +11,39 @@ export default {
         display: ['Nohemi', 'Poppins', 'Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif'],
       },
       colors: {
-        primary: '#c3001f', // Brand primary is now the darker hover red
-        accent: '#c3001f',
-        'accent-2': '#ed0025', // previous primary becomes accent-2 (used for highlights/hover)
+        // Primary brand red palette (used for CTAs and highlights)
+        primary: {
+          // Use the darker hover-red as the main brand color for better contrast
+          DEFAULT: '#C3001F', // main brand red (used as `bg-primary`)
+          600: '#ED1C24',     // lighter / hover alternative
+          700: '#9B0019',     // active / pressed
+          400: '#FF4D56',     // lighter variant
+        },
+
+        // Accent kept aligned with primary for legacy `bg-accent` usage
+        accent: {
+          DEFAULT: '#ED1C24',
+          600: '#C3001F'
+        },
+
+        // Neutral grays (light and dark) — used for backgrounds, surfaces, and footers
+        gray: {
+          50: '#FAFAFB',
+          100: '#F3F4F6',
+          200: '#E6E9EC',
+          300: '#D1D5DB',
+          400: '#9CA3AF',
+          600: '#4B5563',
+          700: '#374151',
+          800: '#1F2937',
+          900: '#0B1220'
+        },
+
+        // Semantic helpers
         bg: '#FFFFFF',
-        surface: '#F5F6F7', // light neutral surface
+        surface: '#F5F6F7',
         'muted-surface': '#F3F4F6',
-        'text-primary': '#0B1220', // near-black, warm
+        'text-primary': '#0B1220',
         'text-secondary': '#6B7280',
         border: '#E6E9EC',
         success: '#16A34A',
