@@ -31,6 +31,34 @@ export default function AddPet({ user, household, onSignOut }) {
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
 
+	// Pre-populate vet info and food if household has pets
+	useEffect(() => {
+		if (!activeHousehold || !activeHousehold.pets || !Array.isArray(activeHousehold.pets) || activeHousehold.pets.length === 0) return;
+		// Use first pet's vet info as default
+		const firstPet = activeHousehold.pets[0];
+		if (firstPet) {
+			if (!vetName && firstPet.vetName) setVetName(firstPet.vetName);
+			if (!vetLocation && firstPet.vetLocation) setVetLocation(firstPet.vetLocation);
+			if (!vetContact && firstPet.vetContact) setVetContact(firstPet.vetContact);
+		}
+	}, [activeHousehold]);
+
+	// Always update food field to match selected species
+	useEffect(() => {
+		if (!activeHousehold || !activeHousehold.pets || !Array.isArray(activeHousehold.pets) || activeHousehold.pets.length === 0) return;
+		let match = null;
+		if (species === 'dog') {
+			match = activeHousehold.pets.find(p => (p.species || '').toLowerCase() === 'dog' && p.primaryFood);
+		} else if (species === 'cat') {
+			match = activeHousehold.pets.find(p => (p.species || '').toLowerCase() === 'cat' && p.primaryFood);
+		}
+		if (match) {
+			setPrimaryFood(match.primaryFood);
+		} else {
+			setPrimaryFood('');
+		}
+	}, [activeHousehold, species]);
+
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setError('');
