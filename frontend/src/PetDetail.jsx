@@ -584,11 +584,11 @@ export default function PetDetail({ household, user, onSignOut }) {
 
             {/* Compact Header + General Section (grid layout) */}
             <div className="mb-6 py-4">
-              <div className="grid md:grid-flow-col md:auto-cols-max items-center gap-6 md:gap-6">
+              <div className="grid md:grid-flow-col md:auto-cols-max items-start gap-6 md:gap-6">
             {/* Avatar */}
-            <div className="shrink-0">
+            <div className="shrink-0 -ml-6 md:ml-0">
                 <div className="relative">
-                <div className="w-40 h-40 md:w-48 md:h-48 rounded-full bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
                   {pet.photoUrl ? (
                     <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet.name} className="w-full h-full object-cover select-none" draggable={false} />
                   ) : (
@@ -597,7 +597,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 </div>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-2 -right-2 md:-bottom-1 md:-right-1 bg-accent text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center cursor-pointer transition transform hover:scale-105 text-sm avatar-action z-20 ring-2 ring-white shadow"
+                  className="absolute -bottom-2 -right-2 md:-bottom-1 md:-right-1 bg-accent text-white rounded-full w-8 h-8 md:w-10 md:h-10 flex items-center justify-center cursor-pointer transition transform hover:scale-105 text-sm avatar-action z-20 ring-2 ring-white shadow"
                   type="button"
                   aria-label="Change photo"
                 >
@@ -605,6 +605,24 @@ export default function PetDetail({ household, user, onSignOut }) {
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => handlePhotoUpload(e)} className="hidden" />
               </div>
+
+              {/* View Activities button under avatar */}
+              <div className="mt-2 flex justify-start md:justify-start">
+                <button title="View activities"
+                  onClick={() => navigate(`/pet/${petId}/activities`)}
+                  className="inline-flex items-center gap-2 px-2 py-1 bg-gray-800 hover:bg-gray-700 text-white rounded-full text-sm transition-shadow shadow-sm hover:shadow-md focus:outline-none"
+                  aria-label="View activities"
+                >
+                  <svg className="w-5 h-5 text-white flex-shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="6.5" cy="5" r="1.25" fill="currentColor" />
+                    <path d="M8 6.5c1 0.5 2 0.8 3 1 1 .2 2 .8 2.5 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M10.5 9.5l-1 3 2 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M12.5 11.5l2 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span className="sr-only md:not-sr-only md:inline">View Activities</span>
+                </button>
+              </div>
+
               {/* Desktop-only absolute quote to ensure visibility on wide screens */}
               <div className="hidden md:block absolute right-6 top-6 z-30 pointer-events-none">
                 <blockquote className="text-gray-600 italic text-3xl leading-tight max-w-xs text-right" style={{ fontFamily: `'Dancing Script', cursive` }}>
@@ -614,61 +632,27 @@ export default function PetDetail({ household, user, onSignOut }) {
             </div>
 
             {/* Main info */}
-              <div className="min-w-0">
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <h1 className="text-4xl md:text-5xl font-bold leading-tight text-gray-900">{pet.name}</h1>
-
-                  <div className="flex items-center gap-3">
-                    {latestActivity ? (
-                      <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-sm">
-                        <span className="text-lg">{getActivityIcon(latestActivity.activityType?.name)}</span>
-                        <span className="font-semibold text-gray-900">{(latestActivity.activityType?.name
-                          ? `${latestActivity.activityType.name.charAt(0).toUpperCase()}${latestActivity.activityType.name.slice(1)}`
-                          : 'Activity')}</span>
-                      </span>
-                    ) : null}
-                    <button
-                      onClick={() => navigate(`/pet/${petId}/activities`)}
-                      className="ml-2 inline-flex items-center gap-2 px-3 py-1 bg-accent text-white rounded-full text-sm hover:opacity-90 transition"
-                      aria-label="View activities"
-                    >
-                      View Activities
-                    </button>
-                  </div>
+              <div className="min-w-0 flex-1">
+              <div className="flex flex-col justify-center pl-4">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl md:text-4xl font-bold leading-tight text-gray-900">{pet.name}</h1>
+                  {/* single edit control is shown in the General Information section below */}
                 </div>
 
-                <div className="mt-4 md:mt-0 flex items-start gap-6 text-sm text-gray-600">
-                  {/* Vertical divider between name and info on md+ */}
-                  <div className="hidden md:block w-px bg-gray-200 h-20" />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 w-full items-center">
-                    <div className="flex items-center justify-center md:justify-end md:pr-6">
-                      <blockquote className="text-gray-600 italic text-lg md:text-3xl leading-tight max-w-full text-center md:text-right z-10" style={{ fontFamily: `'Dancing Script', cursive` }}>
-                        “{getPetQuote(pet.name)}”
-                      </blockquote>
-                    </div>
-
-                    <div className="relative">
-                      <p className="text-xs text-gray-500">Siblings</p>
-                      <p className="font-semibold text-gray-900">{siblingNames || '-'}</p>
-
-                      <div className="mt-4">
-                        <p className="text-xs text-gray-500">Notes</p>
-                        <p className="font-semibold text-gray-900">{pet.notes || '-'}</p>
-                      </div>
-                      {editingSection !== 'general' && (
-                        <button
-                          onClick={() => startEditingSection('general')}
-                          aria-label="Edit general info"
-                          className="absolute top-0 right-0 w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 shadow-sm transition"
-                        >
-                          <span className="text-sm">✎</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                <div className="mt-2">
+                  {latestActivity ? (
+                    <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-sm">
+                      <span className="text-lg">{getActivityIcon(latestActivity.activityType?.name)}</span>
+                      <span className="font-semibold text-gray-900">{(latestActivity.activityType?.name
+                        ? `${latestActivity.activityType.name.charAt(0).toUpperCase()}${latestActivity.activityType.name.slice(1)}`
+                        : 'Activity')}</span>
+                    </span>
+                  ) : null}
                 </div>
+
+                <blockquote className="text-gray-600 italic mt-3 max-w-lg" style={{ fontFamily: `'Dancing Script', cursive` }}>
+                  “{getPetQuote(pet.name)}”
+                </blockquote>
               </div>
             </div>
 
