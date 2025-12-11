@@ -1,3 +1,18 @@
+/* Ensure user initials avatar never changes color or shade on hover/focus/active, matching bell/welcome btn logic */
+.user-toggle .bg-user-initials,
+.user-toggle .bg-user-initials:hover,
+.user-toggle .bg-user-initials:focus,
+.user-toggle .bg-user-initials:active,
+button.user-toggle:hover > .bg-user-initials,
+button.user-toggle:focus > .bg-user-initials,
+button.user-toggle:active > .bg-user-initials {
+  background-color: #374151 !important;
+  color: white !important;
+  box-shadow: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+  transition: none !important;
+}
 /* Pet-Sitter - Apple-style clean design */
 
 /* Load Inter (body) and Poppins (headings) for a modern product UI.
@@ -467,14 +482,14 @@ button, input[type="button"], input[type="submit"], .btn, a.btn, button[class*="
   letter-spacing: normal !important;
 }
 
-/* Ensure buttons explicitly opted-out of the global accent (no-global-accent)
-   still show a light gray background on hover (inverse of Favourites). */
-.no-global-accent:hover,
-button.no-global-accent:hover,
-.no-global-accent:hover > *,
-button.no-global-accent:hover > * {
-  background-color: #F3F4F6 !important; /* tailwind gray-100 */
-  color: #4B5563 !important; /* tailwind gray-600 (matches Favourites text) */
+
+/* Only apply the light gray hover to .no-global-accent if NOT inside .user-toggle or .no-accent-hover */
+.no-global-accent:hover:not(.user-toggle):not(.no-accent-hover),
+button.no-global-accent:hover:not(.user-toggle):not(.no-accent-hover),
+.no-global-accent:hover:not(.user-toggle):not(.no-accent-hover) > *,
+button.no-global-accent:hover:not(.user-toggle):not(.no-accent-hover) > * {
+  background-color: #F3F4F6 !important;
+  color: #4B5563 !important;
   box-shadow: none !important;
 }
 

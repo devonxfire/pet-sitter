@@ -39,4 +39,3 @@ export default function Landing({ user, onSignOut }) {
     </div>
   )
 }
-

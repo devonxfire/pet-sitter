@@ -1,0 +1,7 @@
+.no-hover-effect:hover, .no-hover-effect:focus, .no-hover-effect:active {
+  color: inherit !important;
+  background: none !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}

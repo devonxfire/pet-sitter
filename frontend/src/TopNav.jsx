@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
+import './no-hover-effect.css';
 import { apiFetch } from './api';
 import { useMemo } from 'react';
 
@@ -79,9 +80,18 @@ export default function TopNav({ user, household, onSignOut }) {
         {/* Center: primary nav (centered) */}
         <div className="flex-1 flex justify-center">
           <div className="flex items-center gap-6">
-            <Link to="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">My Pets</Link>
-            <Link to={firstPetId ? `/pet/${firstPetId}/activities` : '/activities'} className="text-sm text-gray-600 hover:text-gray-900">Activities</Link>
-            <Link to="/plans" className="text-sm text-gray-600 hover:text-gray-900">Plans</Link>
+            <Link
+              to="/dashboard"
+              className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${location.pathname === '/dashboard' ? 'border-accent' : 'border-transparent'}`}
+            >My Pets</Link>
+            <Link
+              to={firstPetId ? `/pet/${firstPetId}/activities` : '/activities'}
+              className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${location.pathname.startsWith('/pet') || location.pathname === '/activities' ? 'border-accent' : 'border-transparent'}`}
+            >Activities</Link>
+            <Link
+              to="/plans"
+              className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${location.pathname === '/plans' ? 'border-accent' : 'border-transparent'}`}
+            >Plans</Link>
           </div>
         </div>
 
@@ -95,6 +105,11 @@ export default function TopNav({ user, household, onSignOut }) {
                 aria-haspopup="true"
                 aria-expanded={open}
                 type="button"
+                style={{ background: '#f5f6f8', color: '#384150', boxShadow: 'none', transition: 'none' }}
+                onMouseOver={e => { e.currentTarget.style.background = '#f5f6f8'; e.currentTarget.style.color = '#384150'; }}
+                onMouseOut={e => { e.currentTarget.style.background = '#f5f6f8'; e.currentTarget.style.color = '#384150'; }}
+                onFocus={e => { e.currentTarget.style.background = '#f5f6f8'; e.currentTarget.style.color = '#384150'; }}
+                onBlur={e => { e.currentTarget.style.background = '#f5f6f8'; e.currentTarget.style.color = '#384150'; }}
               >
                 {user?.photoUrl ? (
                   <img src={user.photoUrl} alt={user.name || 'User'} className="w-9 h-9 rounded-full object-cover" />

@@ -399,28 +399,61 @@ export default function PetActivities({ household, user, onSignOut }) {
           {visibleActivities.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-xl"><p className="text-gray-500">No activities logged yet</p></div>
           ) : (
-            visibleActivities.map(activity => (
-              <div key={activity.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900">
-                      {(activity.activityType?.name ? `${activity.activityType.name.charAt(0).toUpperCase()}${activity.activityType.name.slice(1)}` : (activity._clientActionLabel || 'Activity'))}
-                      {parseTimestamp(activity.timestamp) > new Date() && (
-                        <span className="ml-2 font-semibold text-gray-500" style={{ fontSize: '1rem' }}>(Upcoming Activity)</span>
-                      )}
-                    </p>
-                    {activity.notes && <p className="text-gray-700 text-sm mt-1">{activity.notes}</p>}
-                    {activity.user && <p className="text-xs text-gray-500 mt-2">by {activity.user.name}</p>}
-                  </div>
-                  <div className="flex items-center gap-2 ml-4 shrink-0">
-                    <time className="text-sm text-gray-500 whitespace-nowrap">{parseTimestamp(activity.timestamp).toLocaleString()}</time>
-                    <button onClick={() => setViewingActivity(activity)} className="px-2 py-1 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-md transition no-global-accent no-accent-hover">View</button>
-                    <button onClick={() => setEditingActivity(activity)} className="px-2 py-1 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-md transition no-global-accent no-accent-hover">Edit</button>
-                    <button onClick={() => handleDeleteActivity(activity.id)} className="px-2 py-1 text-sm font-medium text-accent hover:bg-red-50 rounded-md transition no-global-accent no-accent-hover delete-btn" style={{ color: 'var(--color-accent)' }}>Delete</button>
+            visibleActivities.map(activity => {
+              // Conversational phrasing logic (mirrors NotificationBell VERB_TEMPLATES)
+              const VERB_TEMPLATES = {
+                feeding: { past: 'was fed', future: 'is scheduled for feeding' },
+                walk: { past: 'had a walk', future: 'has a walk scheduled' },
+                play: { past: 'played', future: 'has playtime scheduled' },
+                medication: { past: 'was given medication', future: 'has medication scheduled' },
+                water: { past: 'was given water', future: 'has water scheduled' },
+                grooming: { past: 'was groomed', future: 'has grooming scheduled' },
+                photo: { past: 'had a photo taken', future: 'has a photo scheduled' },
+                other: { past: 'had an activity', future: 'has an activity scheduled' }
+              };
+              const now = new Date();
+              const when = parseTimestamp(activity.timestamp);
+              const isFuture = when > now;
+              const petName = pet?.name || activity.pet?.name || '';
+              const rawLabel = (activity._clientActionLabel || activity.activityType?.name || activity.activityType?.label || activity.type || 'Activity');
+              const actionKey = String(rawLabel).toLowerCase().trim();
+              const tmpl = VERB_TEMPLATES[actionKey] || VERB_TEMPLATES[Object.keys(VERB_TEMPLATES).find(k => actionKey.includes(k))] || null;
+              let heading = rawLabel;
+              if (petName) {
+                if (tmpl) {
+                  heading = isFuture
+                    ? `Future ${rawLabel.toLowerCase()} organised for ${petName}`
+                    : `${petName} ${tmpl.past}`;
+                } else {
+                  const lowerAct = rawLabel.toLowerCase();
+                  if (isFuture) {
+                    heading = `Future ${lowerAct} organised for ${petName}`;
+                  } else {
+                    const article = /^[aeiou]/.test(lowerAct) ? 'an' : 'a';
+                    heading = `${petName} — Had ${article} ${lowerAct}`;
+                  }
+                }
+              }
+              return (
+                <div key={activity.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900">
+                        {heading}
+                      </p>
+                      {activity.notes && <p className="text-gray-700 text-sm mt-1">{activity.notes}</p>}
+                      {activity.user && <p className="text-xs text-gray-500 mt-2">by {activity.user.name}</p>}
+                    </div>
+                    <div className="flex items-center gap-2 ml-4 shrink-0">
+                      <time className="text-sm text-gray-500 whitespace-nowrap">{when.toLocaleString()}</time>
+                      <button onClick={() => setViewingActivity(activity)} className="px-2 py-1 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-md transition no-global-accent no-accent-hover">View</button>
+                      <button onClick={() => setEditingActivity(activity)} className="px-2 py-1 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-md transition no-global-accent no-accent-hover">Edit</button>
+                      <button onClick={() => handleDeleteActivity(activity.id)} className="px-2 py-1 text-sm font-medium text-accent hover:bg-red-50 rounded-md transition no-global-accent no-accent-hover delete-btn" style={{ color: 'var(--color-accent)' }}>Delete</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 

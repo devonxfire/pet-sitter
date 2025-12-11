@@ -22,16 +22,42 @@ function formatTimeOfDay(dateStr) {
 // Props: activities = [{ timestamp, activityType: { name } }]
 function PetActivityGraph({ activities }) {
   // Last 5 activities, sorted by timestamp
+  // Conversational label logic
+  const VERB_LABELS = {
+    feeding: { past: 'FED', future: 'FUTURE FEEDING' },
+    walk: { past: 'WALKED', future: 'FUTURE WALK' },
+    play: { past: 'PLAYED', future: 'FUTURE PLAY' },
+    medication: { past: 'MEDICATED', future: 'FUTURE MEDICATION' },
+    water: { past: 'WATERED', future: 'FUTURE WATER' },
+    grooming: { past: 'GROOMED', future: 'FUTURE GROOMING' },
+    photo: { past: 'PHOTO TAKEN', future: 'FUTURE PHOTO' },
+    other: { past: 'ACTIVITY', future: 'FUTURE ACTIVITY' }
+  };
+  const now = new Date();
   const data = [...(activities || [])]
     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
     .slice(-5)
-    .map((a, i) => ({
-      x: new Date(a.timestamp).toLocaleDateString(),
-      y: new Date(a.timestamp).getHours() + new Date(a.timestamp).getMinutes() / 60,
-      label: a.activityType?.name ? a.activityType.name.toUpperCase() : '',
-      time: formatTimeOfDay(a.timestamp),
-      id: a.id || i,
-    }));
+    .map((a, i) => {
+      const when = new Date(a.timestamp);
+      const isFuture = when > now;
+      const raw = a.activityType?.name ? a.activityType.name.toLowerCase() : '';
+      let label = '';
+      if (raw) {
+        const verb = VERB_LABELS[raw] || VERB_LABELS[Object.keys(VERB_LABELS).find(k => raw.includes(k))] || null;
+        if (verb) {
+          label = isFuture ? verb.future : verb.past;
+        } else {
+          label = isFuture ? `FUTURE ${raw.toUpperCase()}` : `${raw.toUpperCase()}ED`;
+        }
+      }
+      return {
+        x: when.toLocaleDateString(),
+        y: when.getHours() + when.getMinutes() / 60,
+        label,
+        time: formatTimeOfDay(a.timestamp),
+        id: a.id || i,
+      };
+    });
 
   // Animation state: how many points/segments to show
   // Show all data statically

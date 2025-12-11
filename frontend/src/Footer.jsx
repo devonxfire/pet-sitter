@@ -9,7 +9,7 @@ export default function Footer({ user }) {
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="shrink-0">
             <h3 className="text-lg font-semibold flex items-center gap-2">🐶 Pet Sitter</h3>
-            <p className="text-sm text-gray-200 mt-1">Simple household pet care and activity tracker.</p>
+            <p className="text-sm text-gray-200 mt-1">Household pet care and activity tracker.</p>
             <p className="text-sm text-gray-300 mt-3">© {year} Pet Sitter. All rights reserved.</p>
           </div>
 
