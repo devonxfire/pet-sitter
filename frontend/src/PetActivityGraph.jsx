@@ -65,7 +65,7 @@ function PetActivityGraph({ activities }) {
   return (
     <div>
       <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 mb-8">
-        <h3 className="text-xl font-bold mb-4 text-gray-900">Recent Activity Times</h3>
+        <h3 className="text-xl font-bold mb-4 text-gray-900">Activity Timeline</h3>
         <ResponsiveContainer width="100%" height={320}>
           <ScatterChart
             margin={{ top: 30, right: 30, bottom: 30, left: 30 }}

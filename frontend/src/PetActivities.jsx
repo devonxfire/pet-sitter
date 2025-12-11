@@ -419,18 +419,29 @@ export default function PetActivities({ household, user, onSignOut }) {
               const actionKey = String(rawLabel).toLowerCase().trim();
               const tmpl = VERB_TEMPLATES[actionKey] || VERB_TEMPLATES[Object.keys(VERB_TEMPLATES).find(k => actionKey.includes(k))] || null;
               let heading = rawLabel;
+              const isUpdated = activity._updatedActivity === true;
               if (petName) {
                 if (tmpl) {
-                  heading = isFuture
-                    ? `Future ${rawLabel.toLowerCase()} organised for ${petName}`
-                    : `${petName} ${tmpl.past}`;
+                  if (isUpdated) {
+                    heading = isFuture
+                      ? `Future ${rawLabel.toLowerCase()} updated for ${petName}`
+                      : `${petName} ${tmpl.past} (updated)`;
+                  } else {
+                    heading = isFuture
+                      ? `Future ${rawLabel.toLowerCase()} organised for ${petName}`
+                      : `${petName} ${tmpl.past}`;
+                  }
                 } else {
                   const lowerAct = rawLabel.toLowerCase();
                   if (isFuture) {
-                    heading = `Future ${lowerAct} organised for ${petName}`;
+                    heading = isUpdated
+                      ? `Future ${lowerAct} updated for ${petName}`
+                      : `Future ${lowerAct} organised for ${petName}`;
                   } else {
                     const article = /^[aeiou]/.test(lowerAct) ? 'an' : 'a';
-                    heading = `${petName} — Had ${article} ${lowerAct}`;
+                    heading = isUpdated
+                      ? `${petName} had ${article} ${lowerAct} (updated)`
+                      : `${petName} — Had ${article} ${lowerAct}`;
                   }
                 }
               }

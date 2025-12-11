@@ -221,6 +221,40 @@ export default function NotificationBell({ navigate }) {
       setTimeout(() => setJustReceived(false), 3000);
     };
     window.addEventListener('petSitter:newActivity', handler);
+    window.addEventListener('petSitter:updatedActivity', (e) => {
+      const activity = e?.detail?.activity;
+      if (!activity) return;
+      // Compose a notification for updated activity
+      const label = activity._clientActionLabel || activity.activityType?.label || activity.activityType?.name || activity.type || 'Activity';
+      const petName = activity.pet?.name || activity.petName || '';
+      const userName = activity.user?.name || activity.createdBy || null;
+      // If future, use 'updated' phrasing
+      const when = new Date(activity.timestamp);
+      const now = new Date();
+      const isFuture = when > now;
+      let body = `Updated for ${petName}`;
+      if (isFuture) {
+        body = `Future ${label.toLowerCase()} updated for ${petName}`;
+      }
+      const n = {
+        id: `updated-${activity.id || Date.now()}`,
+        title: label,
+        actionLabel: label,
+        body,
+        petId: activity.petId || activity.pet?.id || null,
+        petName,
+        userName,
+        timestamp: activity.timestamp || new Date().toISOString(),
+        read: false
+      };
+      setNotifications(prev => {
+        // Remove any previous notification with the same id
+        const filtered = prev.filter(item => item.id !== n.id);
+        return [n, ...filtered].slice(0, 50);
+      });
+      setJustReceived(true);
+      setTimeout(() => setJustReceived(false), 3000);
+    });
     // Also listen for storage events so other tabs/windows receive notifications
     const storageHandler = (ev) => {
       try {
@@ -315,7 +349,10 @@ export default function NotificationBell({ navigate }) {
     }
   };
 
-  const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const markAllRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setOpen(false);
+  };
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -356,18 +393,21 @@ export default function NotificationBell({ navigate }) {
                 // Compose human friendly description using templates when possible
                 let heading = titleText;
                 let subline = `at ${formatTime(n.timestamp)}`;
-                if (n.petName) {
+                const isUpdated = n.id && String(n.id).startsWith('updated-');
+                if (isUpdated) {
+                  heading = n.body;
+                  // Only show time/user for updated notifications
+                  subline = `at ${formatTime(n.timestamp)}`;
+                  if (n.userName) subline += `, by ${n.userName}`;
+                } else if (n.petName) {
                   const tmpl = VERB_TEMPLATES[actionKey];
                   if (tmpl) {
                     if (isFuture) {
-                      // e.g. "Future walk organised for Lilly"
                       heading = `Future ${actionLabel.toLowerCase()} organised for ${n.petName}`;
                     } else {
-                      // e.g. "Lilly — was fed"
                       heading = `${n.petName} — ${tmpl.past}`;
                     }
                   } else {
-                    // Fallback phrasing — pick the correct indefinite article (a/an)
                     const lowerAct = actionLabel.toLowerCase();
                     if (isFuture) {
                       heading = `Future ${lowerAct} organised for ${n.petName}`;

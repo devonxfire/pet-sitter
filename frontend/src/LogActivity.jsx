@@ -78,7 +78,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           })
         });
         // attach client-side label if available
-        const augmented = { ...data, _clientActionLabel: (data.activityType?.label || data.activityType?.name || typeDef.label || selectedType) };
+        const augmented = { ...data, _clientActionLabel: (data.activityType?.label || data.activityType?.name || typeDef.label || selectedType), _updatedActivity: true };
         if (typeof onActivityLogged === 'function') onActivityLogged(augmented);
         try { window.dispatchEvent(new CustomEvent('petSitter:updatedActivity', { detail: { activity: augmented } })); } catch (e) {}
         try {
