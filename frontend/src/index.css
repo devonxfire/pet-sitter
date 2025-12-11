@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap');
+
 /* Ensure user initials avatar never changes color or shade on hover/focus/active, matching bell/welcome btn logic */
 .user-toggle .bg-user-initials,
 .user-toggle .bg-user-initials:hover,
@@ -20,7 +22,6 @@ button.user-toggle:active > .bg-user-initials {
    (WOFF2/WOFF) in `frontend/public/fonts/` and they will be loaded by the
    `@font-face` declarations below. If you have a CDN or a license URL for
    Nohemi, replace the src URLs accordingly. */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap');
 
 /* Local @font-face placeholders for Nohemi — add your licensed font files
    to `frontend/public/fonts/Nohemi-*.woff2` and `Nohemi-*.woff` */

@@ -278,7 +278,7 @@ export default function PetActivities({ household, user, onSignOut }) {
       <TopNav user={user} household={household} onSignOut={onSignOut} />
 
       {/* Header band: match PetDetail header spacing so transitions are seamless */}
-      <div className="w-full bg-gray-50 border-b border-gray-200">
+      <div className="w-full bg-gray-50 border-b border-gray-200" style={{ backgroundColor: 'var(--color-footer)' }}>
         <div className="mx-auto max-w-6xl px-6 w-full relative">
           <div className="mb-6 py-12">
             <div className="flex items-start justify-between mb-8">
@@ -312,13 +312,13 @@ export default function PetActivities({ household, user, onSignOut }) {
                     <div className="flex flex-col justify-between pl-2 h-full">
                       <div>
                         <div className="flex items-baseline gap-3">
-                          <h1 className="text-2xl md:text-4xl font-bold leading-tight text-gray-900">
+                          <h1 className="text-2xl md:text-4xl font-bold leading-tight text-white">
                             {pet ? `${pet.name}'s Activities` : 'Activities'}
 
                           </h1>
                         </div>
                         <div className="mt-1">
-                          <p className="text-sm text-gray-500">All logged activities for this pet — <button onClick={() => navigate('/activities')} className="text-sm text-gray-600 underline no-global-accent no-accent-hover">Change pet</button></p>
+                          <p className="text-sm text-gray-200">All logged activities for this pet — <button onClick={() => navigate('/activities')} className="text-sm text-gray-200 underline no-global-accent no-accent-hover">Change pet</button></p>
                         </div>
                       </div>
 
@@ -337,10 +337,9 @@ export default function PetActivities({ household, user, onSignOut }) {
                           onClick={() => setShowFavouritesModal(true)}
                           aria-pressed={activityFilter === 'quick'}
                           ref={favBtnRef}
-                          className="inline-flex items-center gap-3 text-gray-900 font-semibold px-5 py-2 rounded-xl transition no-global-accent no-accent-hover"
+                          className="inline-flex items-center gap-3 text-gray-200 font-semibold px-5 py-2 rounded-xl transition no-global-accent no-accent-hover"
                           onMouseEnter={() => setFavHover(true)}
                           onMouseLeave={() => setFavHover(false)}
-                          style={{ color: '#0B1220' }}
                         >
                           <svg className="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#C3001F" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6.01 4.01 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 17.99 4 20 6.01 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
                           <span>Repeat Favourite</span>

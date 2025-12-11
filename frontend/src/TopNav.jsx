@@ -105,11 +105,6 @@ export default function TopNav({ user, household, onSignOut }) {
                 aria-haspopup="true"
                 aria-expanded={open}
                 type="button"
-                style={{ background: '#f5f6f8', color: '#384150', boxShadow: 'none', transition: 'none' }}
-                onMouseOver={e => { e.currentTarget.style.background = '#f5f6f8'; e.currentTarget.style.color = '#384150'; }}
-                onMouseOut={e => { e.currentTarget.style.background = '#f5f6f8'; e.currentTarget.style.color = '#384150'; }}
-                onFocus={e => { e.currentTarget.style.background = '#f5f6f8'; e.currentTarget.style.color = '#384150'; }}
-                onBlur={e => { e.currentTarget.style.background = '#f5f6f8'; e.currentTarget.style.color = '#384150'; }}
               >
                 {user?.photoUrl ? (
                   <img src={user.photoUrl} alt={user.name || 'User'} className="w-9 h-9 rounded-full object-cover" />

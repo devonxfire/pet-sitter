@@ -49,8 +49,8 @@ export default function Dashboard({ user, household, onSignOut }) {
         <div className="max-w-6xl px-6 w-full">
         {/* Welcome Message */}
         {household?.name && (
-          <div className="mb-8">
-            <h1 className="text-5xl font-bold text-gray-900">
+          <div className="mb-8 bg-transparent">
+            <h1 className="text-5xl font-bold" style={{ color: 'var(--color-footer)' }}>
               Welcome, {household.name}!
             </h1>
           </div>

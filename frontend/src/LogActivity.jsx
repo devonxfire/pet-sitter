@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { apiFetch } from './api';
 import ACTIVITY_TYPES from './activityTypes';
+import { theme } from './theme';
 
 export default function LogActivity({ petId, household, activity, onActivityLogged, onActivityDeleted, onClose, onFavouritesUpdated }) {
   const [step, setStep] = useState(activity ? 'edit' : 'selectType'); // selectType -> timing -> happened/schedule -> details -> reminder (if upcoming)
@@ -227,9 +228,10 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
               <button
                 key={type.id}
                 onClick={() => handleTypeSelect(type.id)}
-                className="py-6 px-4 rounded-xl flex flex-col items-center gap-3 transition border-2 border-gray-200 hover:border-accent hover:bg-accent/10"
+                className="py-6 px-4 rounded-xl flex flex-col items-center gap-3 transition border-2 border-gray-200 hover:border-gray-300"
+                style={{ background: theme.colors.lightGray }}
               >
-                <span className="text-4xl">{type.icon}</span>
+                <span className="text-4xl" style={{ color: theme.colors.textSecondary }}>{type.icon}</span>
                 <span className="text-sm font-medium text-gray-700 text-center">
                   {type.label}
                 </span>
@@ -250,7 +252,8 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
             <h2 className="text-3xl font-bold text-gray-900">When?</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl"
+              className="text-2xl bg-transparent border-none p-0"
+              style={{ color: theme.colors.textSecondary, background: 'none' }}
             >
               ✕
             </button>
