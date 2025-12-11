@@ -321,7 +321,7 @@ export default function NotificationBell({ navigate }) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => { setOpen(s => !s); if (!open) { /* opening */ } }}
-        className="relative p-2 rounded-full text-gray-600 hover:text-gray-800 hover:opacity-90 focus:outline-none no-accent-hover no-global-accent"
+        className="relative p-2 rounded-full text-gray-600 cursor-pointer focus:outline-none no-accent-hover no-global-accent"
         aria-label="Notifications"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

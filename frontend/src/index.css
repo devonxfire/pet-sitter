@@ -352,12 +352,21 @@ button:focus, input[type="button"]:focus, input[type="submit"]:focus, .btn:focus
 /* Top-right: force no hover/background for user toggle + notification bell
    This is intentionally specific and placed at the end so it overrides
    global hover rules (including ones using !important). */
+
 .user-toggle:hover,
 .user-toggle:focus,
 .user-toggle:active,
 .user-toggle:focus-visible,
 .no-accent-hover,
-.no-accent-hover * {
+.no-accent-hover *,
+button.user-toggle:hover,
+button.user-toggle:focus,
+button.user-toggle:active,
+button.user-toggle:focus-visible,
+button.no-accent-hover:hover,
+button.no-accent-hover:focus,
+button.no-accent-hover:active,
+button.no-accent-hover:focus-visible {
   background-color: transparent !important;
   color: inherit !important;
   box-shadow: none !important;

@@ -7,6 +7,7 @@ import FlowerIcon from './FlowerIcon.jsx';
 import LogActivity from './LogActivity';
 import ActivityView from './ActivityView';
 import ACTIVITY_TYPES from './activityTypes';
+import { Link } from 'react-router-dom';
 
 export default function PetDetail({ household, user, onSignOut }) {
   const navigate = useNavigate();
@@ -70,10 +71,20 @@ export default function PetDetail({ household, user, onSignOut }) {
     return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
-  // Helper: join sibling names for compact display in header
-  const siblingNames = (pet && Array.isArray(pet.siblings) && pet.siblings.length)
-    ? pet.siblings.map(s => (s && s.name) ? s.name : String(s)).filter(Boolean).join(', ')
-    : '';
+  // Show all other pets in the same household as siblings, as clickable links
+  const siblingLinks = (pet && household && Array.isArray(household.pets))
+    ? household.pets.filter(p => String(p.id) !== String(pet.id)).map(s =>
+        s && s.name ? (
+          <Link
+            key={s.id}
+            to={`/pet/${s.id}`}
+            className="text-accent hover:underline cursor-pointer mr-2"
+          >
+            {s.name}
+          </Link>
+        ) : null
+      ).filter(Boolean)
+    : [];
 
   // Parse timestamp strings reliably. If the string lacks timezone info, assume UTC
   // so displayed local time matches the moment intended by the server/client.
@@ -674,7 +685,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                       <div className="mt-2 w-full">
                         <button
                           onClick={() => navigate(`/pet/${petId}/activities`)}
-                          className="w-full inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md bg-accent text-white text-sm font-semibold hover:opacity-90 transition"
+                          className="w-full inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md bg-accent text-white text-sm font-semibold hover:opacity-90 transition cursor-pointer"
                           aria-label={`View ${pet.name}'s Activities`}
                           type="button"
                         >
@@ -864,7 +875,7 @@ export default function PetDetail({ household, user, onSignOut }) {
 
               <div>
                 <p className="text-sm text-gray-500">Siblings</p>
-                <p className="text-lg text-gray-900">{siblingNames || '-'}</p>
+                <p className="text-lg text-gray-900 flex flex-wrap gap-1">{siblingLinks.length > 0 ? siblingLinks : '-'}</p>
               </div>
 
               <div>

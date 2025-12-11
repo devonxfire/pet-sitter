@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 export default function Footer({ user }) {
   const year = new Date().getFullYear();
   return (
-    <footer className="bg-accent-hover text-white mt-12">
+    <footer className="bg-accent-hover text-white">
       <div className="max-w-6xl mx-auto px-4 py-8 md:py-10">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="shrink-0">

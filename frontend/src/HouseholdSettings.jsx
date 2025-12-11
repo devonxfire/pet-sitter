@@ -92,12 +92,6 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
 
       <main className="flex justify-center py-16">
         <div className="max-w-6xl px-6 w-full">
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="text-gray-600 hover:text-gray-900 mb-4"
-        >
-          ← Back to Dashboard
-        </button>
 
         <h1 className="text-4xl font-bold text-gray-900 mb-8">Household Settings</h1>
 

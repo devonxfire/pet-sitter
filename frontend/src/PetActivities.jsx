@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { apiFetch, apiUrl, API_BASE } from './api';
 import { getFallbackFlower, assignHouseholdFlowers, FLOWER_LIST } from './flowerIcon';
 import FlowerIcon from './FlowerIcon.jsx';
+import PetActivityGraph from './PetActivityGraph.jsx';
 import TopNav from './TopNav';
 import LogActivity from './LogActivity';
 import ActivityView from './ActivityView';
@@ -306,10 +307,21 @@ export default function PetActivities({ household, user, onSignOut }) {
       </div>
 
       <div className="mx-auto max-w-6xl px-6 w-full py-8">
+        {/* Activity scatter plot graph */}
+        {activities && activities.length > 0 && (
+          <PetActivityGraph activities={activities} />
+        )}
         <div className="flex gap-2 mb-8 mt-6 items-center">
           <button onClick={() => setActivityFilter('all')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'all' ? 'bg-gray-200 text-gray-900 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>All</button>
           <button onClick={() => setActivityFilter('past')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'past' ? 'bg-gray-200 text-gray-900 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>✓ Past</button>
           <button onClick={() => setActivityFilter('upcoming')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'upcoming' ? 'bg-gray-200 text-gray-900 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>📅 Upcoming</button>
+          <button
+            onClick={() => setShowLogActivity(true)}
+            className="px-2 py-1 rounded-md text-sm font-medium transition bg-accent text-white hover:opacity-90 shadow"
+            style={{ minWidth: '110px' }}
+          >
+            Log New Activity
+          </button>
         </div>
 
         {activityFilter === 'quick' && (

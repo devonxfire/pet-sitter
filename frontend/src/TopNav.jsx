@@ -91,7 +91,7 @@ export default function TopNav({ user, household, onSignOut }) {
             <div ref={menuRef} className="relative flex items-center gap-3">
               <button
                 onClick={() => setOpen((s) => !s)}
-                className="user-toggle no-global-accent cursor-pointer flex items-center gap-3 text-gray-900 focus:outline-none"
+                className="user-toggle no-global-accent cursor-pointer flex items-center gap-3 text-gray-900 focus:outline-none px-2 py-1"
                 aria-haspopup="true"
                 aria-expanded={open}
                 type="button"
