@@ -107,7 +107,7 @@ function PetActivityGraph({ activities }) {
             </Scatter>
           </ScatterChart>
         </ResponsiveContainer>
-        <div className="text-sm text-gray-500 mt-2">Shows last 5 activities by time of day. Labels indicate activity type.</div>
+        <div className="text-sm text-gray-500 mt-2">Last 5 activities by date and time of day.</div>
       </div>
     </div>
   );

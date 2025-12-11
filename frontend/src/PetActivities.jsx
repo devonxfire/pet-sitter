@@ -1,13 +1,46 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiFetch, apiUrl, API_BASE } from './api';
-import { getFallbackFlower, assignHouseholdFlowers, FLOWER_LIST } from './flowerIcon';
-import FlowerIcon from './FlowerIcon.jsx';
 import PetActivityGraph from './PetActivityGraph.jsx';
 import TopNav from './TopNav';
 import LogActivity from './LogActivity';
 import ActivityView from './ActivityView';
 import ACTIVITY_TYPES from './activityTypes';
+
+function FavouritesModal({ favourites, onLog, onDelete, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 relative">
+        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold">×</button>
+        <h2 className="text-2xl font-bold mb-4 text-gray-900">Repeat Favourite</h2>
+        {(!favourites || favourites.length === 0) ? (
+          <div className="text-center py-8"><p className="text-gray-500">No current Favourites</p></div>
+        ) : (
+          <div className="space-y-4">
+            {favourites.map((qa) => (
+              <div key={`qa-${qa.id}`} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-start justify-between mb-2">
+                    <p className="font-semibold text-gray-900">{qa.label}</p>
+                    <span className="text-sm text-gray-500">{new Date().toLocaleString()}</span>
+                  </div>
+                  {qa.data?.notes && (<p className="text-gray-700 text-sm">{qa.data.notes}</p>)}
+                  <p className="text-xs text-gray-500 mt-2">Favourite</p>
+                </div>
+                <div className="ml-4 flex flex-col items-end gap-2">
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => onLog(qa)} className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition">Log</button>
+                  </div>
+                  <button onClick={() => onDelete(qa)} className="px-3 py-2 text-sm font-medium text-accent hover:bg-gray-100 rounded-lg transition no-global-accent no-accent-hover delete-btn" style={{ color: 'var(--color-accent)' }}>Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function PetActivities({ household, user, onSignOut }) {
   const navigate = useNavigate();
@@ -18,7 +51,7 @@ export default function PetActivities({ household, user, onSignOut }) {
   const [showLogActivity, setShowLogActivity] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
   const [viewingActivity, setViewingActivity] = useState(null);
-  const [activityFilter, setActivityFilter] = useState('all');
+  const [activityFilter, setActivityFilter] = useState('past');
   const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(1);
   const [sortOrder, setSortOrder] = useState('newest');
@@ -29,6 +62,7 @@ export default function PetActivities({ household, user, onSignOut }) {
   const favouritesRef = useRef(null);
   const favBtnRef = useRef(null);
   const [favHover, setFavHover] = useState(false);
+  const [showFavouritesModal, setShowFavouritesModal] = useState(false);
 
   useEffect(() => {
     const el = favBtnRef.current;
@@ -140,7 +174,15 @@ export default function PetActivities({ household, user, onSignOut }) {
       if (action.id && household?.id) {
         const token = localStorage.getItem('token');
         const replayUrl = apiUrl(`/api/households/${household.id}/favourites/${action.id}/replay`);
-        const resp = await fetch(replayUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ petId: petId ? parseInt(petId) : undefined, timestamp: new Date().toISOString() }) });
+        // Always use current timestamp when repeating a favourite
+        const resp = await fetch(replayUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          body: JSON.stringify({
+            petId: petId ? parseInt(petId) : undefined,
+            timestamp: new Date().toISOString() // always now
+          })
+        });
         let body = null; try { body = await resp.json(); } catch (e) { body = null; }
         if (!resp.ok) { const msg = body?.error || (body?.message) || `HTTP ${resp.status}`; alert(`Failed to apply Favourite: ${msg}`); return; }
         const created = body;
@@ -153,6 +195,7 @@ export default function PetActivities({ household, user, onSignOut }) {
           });
         }
         try { await loadFavourites(); } catch (e) {}
+        setShowFavouritesModal(false);
         return;
       }
       alert('This Favourite is not available. Favourites are server-backed only.');
@@ -237,7 +280,7 @@ export default function PetActivities({ household, user, onSignOut }) {
       {/* Header band: match PetDetail header spacing so transitions are seamless */}
       <div className="w-full bg-gray-50 border-b border-gray-200">
         <div className="mx-auto max-w-6xl px-6 w-full relative">
-          <div className="mb-6 py-12 border-b-2">
+          <div className="mb-6 py-12">
             <div className="flex items-start justify-between mb-8">
               <div className="w-full">
                 <div className="grid md:grid-flow-col md:auto-cols-max items-start gap-4 md:gap-4">
@@ -247,13 +290,22 @@ export default function PetActivities({ household, user, onSignOut }) {
                       aria-label={pet ? `Open ${pet.name} details` : 'Open pet details'}
                       className="focus:outline-none focus:ring-0 no-global-accent no-accent-hover cursor-pointer hover:opacity-95"
                     >
-                      {pet?.photoUrl ? (
-                        <div className="w-28 h-28 md:w-40 md:h-40 rounded-2xl bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
-                          <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet?.name || 'Pet'} className="w-full h-full object-cover select-none" draggable={false} />
-                        </div>
-                      ) : (
-                        <div className="w-28 h-28 md:w-40 md:h-40 rounded-2xl bg-gray-200 flex items-center justify-center border-2 border-gray-200 text-gray-400">📷</div>
-                      )}
+            {pet?.photoUrl ? (
+              <div className="w-28 h-28 md:w-40 md:h-40 rounded-2xl bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
+                <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet?.name || 'Pet'} className="w-full h-full object-cover select-none" draggable={false} />
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => setShowFavouritesModal(true)}
+                  className="px-2 py-1 rounded-md text-sm font-medium transition bg-gray-100 text-gray-900 hover:bg-gray-200 shadow"
+                  style={{ minWidth: '110px' }}
+                >
+                  Repeat Favourite
+                </button>
+                <div className="w-28 h-28 md:w-40 md:h-40 rounded-2xl bg-gray-200 flex items-center justify-center border-2 border-gray-200 text-gray-400">📷</div>
+              </>
+            )}
                     </button>
                   </div>
                   <div className="min-w-0 flex-1 h-28 md:h-40 flex flex-col justify-between">
@@ -262,7 +314,7 @@ export default function PetActivities({ household, user, onSignOut }) {
                         <div className="flex items-baseline gap-3">
                           <h1 className="text-2xl md:text-4xl font-bold leading-tight text-gray-900">
                             {pet ? `${pet.name}'s Activities` : 'Activities'}
-                            {pet && <span className="ml-2 inline-block align-middle" aria-hidden><FlowerIcon variant={FLOWER_LIST.indexOf(flowerMap[String(pet.id)])} seed={String(pet.id || pet.name || '')} size={18} className="inline-block" /></span>}
+
                           </h1>
                         </div>
                         <div className="mt-1">
@@ -282,10 +334,7 @@ export default function PetActivities({ household, user, onSignOut }) {
                         </button>
 
                         <button
-                          onClick={() => {
-                            setActivityFilter('quick');
-                            setTimeout(() => favouritesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
-                          }}
+                          onClick={() => setShowFavouritesModal(true)}
                           aria-pressed={activityFilter === 'quick'}
                           ref={favBtnRef}
                           className="inline-flex items-center gap-3 text-gray-900 font-semibold px-5 py-2 rounded-xl transition no-global-accent no-accent-hover"
@@ -312,8 +361,8 @@ export default function PetActivities({ household, user, onSignOut }) {
           <PetActivityGraph activities={activities} />
         )}
         <div className="flex gap-2 mb-8 mt-6 items-center">
-          <button onClick={() => setActivityFilter('all')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'all' ? 'bg-gray-200 text-gray-900 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>All</button>
           <button onClick={() => setActivityFilter('past')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'past' ? 'bg-gray-200 text-gray-900 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>✓ Past</button>
+          <button onClick={() => setActivityFilter('all')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'all' ? 'bg-gray-200 text-gray-900 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>All</button>
           <button onClick={() => setActivityFilter('upcoming')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'upcoming' ? 'bg-gray-200 text-gray-900 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>📅 Upcoming</button>
           <button
             onClick={() => setShowLogActivity(true)}
@@ -354,7 +403,12 @@ export default function PetActivities({ household, user, onSignOut }) {
               <div key={activity.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
-                    <p className="font-semibold text-gray-900">{(activity.activityType?.name ? `${activity.activityType.name.charAt(0).toUpperCase()}${activity.activityType.name.slice(1)}` : (activity._clientActionLabel || 'Activity'))}</p>
+                    <p className="font-semibold text-gray-900">
+                      {(activity.activityType?.name ? `${activity.activityType.name.charAt(0).toUpperCase()}${activity.activityType.name.slice(1)}` : (activity._clientActionLabel || 'Activity'))}
+                      {parseTimestamp(activity.timestamp) > new Date() && (
+                        <span className="ml-2 font-semibold text-gray-500" style={{ fontSize: '1rem' }}>(Upcoming Activity)</span>
+                      )}
+                    </p>
                     {activity.notes && <p className="text-gray-700 text-sm mt-1">{activity.notes}</p>}
                     {activity.user && <p className="text-xs text-gray-500 mt-2">by {activity.user.name}</p>}
                   </div>
@@ -391,6 +445,15 @@ export default function PetActivities({ household, user, onSignOut }) {
       {viewingActivity && (
         <ActivityView activity={viewingActivity} onClose={() => setViewingActivity(null)} onEdit={(act) => { setViewingActivity(null); setEditingActivity(act); }} onDelete={(id) => { setViewingActivity(null); setActivities(prev => prev.filter(a => String(a.id) !== String(id))); }} />
       )}
+
+        {showFavouritesModal && (
+          <FavouritesModal
+            favourites={favourites}
+            onLog={createFavourite}
+            onDelete={handleDeleteFavourite}
+            onClose={() => setShowFavouritesModal(false)}
+          />
+        )}
 
     </div>
   );

@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiFetch, API_BASE, apiUrl } from './api';
 import TopNav from './TopNav';
-import { getFallbackFlower, assignHouseholdFlowers, FLOWER_LIST } from './flowerIcon';
-import FlowerIcon from './FlowerIcon.jsx';
+
+
 import LogActivity from './LogActivity';
 import ActivityView from './ActivityView';
 import ACTIVITY_TYPES from './activityTypes';
@@ -661,7 +661,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   <div className="flex items-baseline gap-3">
                     <h1 className="text-2xl md:text-4xl font-bold leading-tight text-gray-900">
                       {pet ? `${pet.name}'s Profile` : 'Profile'}
-                      {pet && <span className="ml-2 inline-block align-middle" aria-hidden><FlowerIcon variant={FLOWER_LIST.indexOf(flowerMap[String(pet.id)])} seed={String(pet.id || pet.name || '')} size={18} className="inline-block" /></span>}
+              
                     </h1>
                     {/* single edit control is shown in the General Information section below */}
                   </div>
