@@ -97,8 +97,6 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut, o
 
   return (
     <div className="min-h-screen bg-white">
-      <TopNav user={user} household={null} onSignOut={onSignOut} />
-
       <main className="flex justify-center py-16">
         <div className="max-w-6xl px-6 w-full">
         <div className="mb-6">
@@ -108,7 +106,18 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut, o
         <form onSubmit={handleSubmit} className="space-y-6">
           {!user && (
             <div className="space-y-4 border-b border-gray-100 pb-4 mb-4">
-              <p className="text-sm text-gray-600">Create an account to manage your household</p>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-sm text-gray-600 mb-0">Create an account to manage your household</p>
+                <span className="info-icon-inline text-accent group" tabIndex="0" aria-label="More info" style={{ marginLeft: '0.5rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, background: 'none', border: 'none', borderRadius: 0, padding: 0, cursor: 'pointer', position: 'relative', verticalAlign: 'middle' }}>
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', verticalAlign: 'middle' }}>
+                    <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                    <path d="M10 7.5c.28 0 .5-.22.5-.5s-.22-.5-.5-.5-.5.22-.5.5.22.5.5.5zm.75 2.25c0-.41-.34-.75-.75-.75s-.75.34-.75.75v3c0 .41.34.75.75.75s.75-.34.75-.75v-3z" fill="currentColor"/>
+                  </svg>
+                  <div className="absolute left-1/2 z-50 -translate-x-1/2 mt-2 w-80 p-4 rounded-xl shadow-lg bg-white text-gray-400 text-sm border border-gray-200 opacity-0 group-hover:opacity-100 group-focus:opacity-100 pointer-events-none group-hover:pointer-events-auto group-focus:pointer-events-auto transition-opacity duration-200" style={{ minWidth: '260px', fontWeight: 400, textTransform: 'none' }}>
+                    You will be the main member of the household you create. You can invite more members to your household at any time. These may be other family members, pet sitters, dog walkers, work colleagues, etc. You can set different privileges to each member depending on their role.
+                  </div>
+                </span>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">Full name *</label>
                 <input value={signupName} onChange={(e) => setSignupName(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none" placeholder="Your full name" />

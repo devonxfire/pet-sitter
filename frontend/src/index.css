@@ -1,4 +1,29 @@
+/* Keep this import at the top */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap');
+/* Remove forced hover/focus bright red for .btn-red on non-landing pages */
+.page-non-landing .btn.btn-red:hover,
+.page-non-landing a.btn.btn-red:hover,
+.page-non-landing button.btn.btn-red:hover,
+.page-non-landing .btn.btn-red:focus,
+.page-non-landing a.btn.btn-red:focus,
+.page-non-landing button.btn.btn-red:focus {
+  background-color: #C3001F !important;
+  color: #fff !important;
+  border: 1px solid #C3001F !important;
+  box-shadow: none !important;
+}
+/* Utility: perfectly inline info icon for subheadings */
+.info-icon-inline {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
 /* HERO SECTION: Force main heading to white, overriding default heading color */
 .hero-heading, .hero-heading h1, h1.hero-heading {
   color: #fff !important;
@@ -444,16 +469,22 @@ button:focus, input[type="button"]:focus, input[type="submit"]:focus, .btn:focus
 .user-toggle { cursor: pointer; }
 
 .user-toggle:hover .text-gray-900 { text-decoration: none; }
-/* FINAL, MAX-SPECIFICITY OVERRIDE: Always force .bg-accent to brand red, even inside .user-toggle, .page-non-landing, or any parent */
+
+/* FINAL, MAX-SPECIFICITY OVERRIDE: Always force .bg-accent and .btn-red to brand red, even inside .user-toggle, .page-non-landing, or any parent, but do NOT force .btn-red to use the bright hover color on non-landing pages */
 .user-toggle .bg-accent,
 .user-toggle .bg-accent:hover,
 .page-non-landing .bg-accent,
 .page-non-landing .user-toggle .bg-accent,
-.bg-accent {
+.bg-accent,
+.btn.btn-red,
+a.btn.btn-red,
+button.btn.btn-red {
   background-color: #C3001F !important;
   color: #fff !important;
   box-shadow: none !important;
+  border: 1px solid #C3001F !important;
 }
+
 
 /* Ensure the user-toggle button itself doesn't get the site's primary hover/focus styles */
 .user-toggle:hover,
