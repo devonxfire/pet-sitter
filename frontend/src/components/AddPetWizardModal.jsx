@@ -22,9 +22,9 @@ export default function AddPetWizardModal({ open, onClose, onNext }) {
           className="absolute top-3 right-3 text-2xl font-bold focus:outline-none"
           onClick={onClose}
           aria-label="Close"
-          style={{ background: 'none', backgroundColor: 'transparent', border: 'none', padding: 0, boxShadow: 'none', lineHeight: 1, color: '#e11d48', outline: 'none', cursor: 'pointer', WebkitTextStroke: '0', textShadow: 'none', filter: 'none', zIndex: 10, fontWeight: 700, fontSize: '2rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
+          style={{ background: 'none', backgroundColor: 'transparent', border: 'none', padding: 0, boxShadow: 'none', lineHeight: 1, color: '#d1d5db', outline: 'none', cursor: 'pointer', WebkitTextStroke: '0', textShadow: 'none', filter: 'none', zIndex: 10, fontWeight: 400, fontSize: '1.8rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
         >
-          <span style={{ color: '#e11d48', background: 'none', border: 'none', boxShadow: 'none', textShadow: 'none', WebkitTextStroke: 0, filter: 'none' }}>×</span>
+          <span style={{ color: '#d1d5db', background: 'none', border: 'none', boxShadow: 'none', textShadow: 'none', WebkitTextStroke: 0, filter: 'none', fontWeight: 300 }}>×</span>
         </button>
         <div className="flex flex-col items-center p-4 pt-2 w-full">
           <div className="flex items-center justify-center mb-2 w-full">
@@ -40,16 +40,16 @@ export default function AddPetWizardModal({ open, onClose, onNext }) {
                 objectFit: 'cover',
                 objectPosition: 'center',
                 display: 'block',
-                margin: '-50px 0 0 70px', // shift even further up and right
+                margin: '-20px 0 0 70px', // less negative to move image further from heading
                 borderRadius: 0,
                 boxShadow: 'none'
               }}
             />
-          <p className="text-gray-500 text-sm mt-0 mb-0">
-            Please answer the prompts as accurately as you can.<br />
-            You can always change or update your information at any time.
-          </p>
-          <div className="flex items-center justify-between w-full mt-1" style={{ minHeight: 44 }}>
+            <p className="text-gray-500 text-sm mt-1 mb-0" style={{ marginTop: '0.25rem' }}>
+              Please answer the prompts as accurately as you can.<br />
+              You can always change or update your information at any time.
+            </p>
+          <div className="flex items-center justify-between w-full mt-8" style={{ minHeight: 44 }}>
             <button
               className="btn px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded shadow-none hover:bg-gray-200 transition disabled:opacity-50"
               style={{ minWidth: 44 }}
