@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AddPetWizardModal from './components/AddPetWizardModal';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiFetch, API_BASE } from './api';
 import { getFallbackFlower, assignHouseholdFlowers, FLOWER_LIST } from './flowerIcon';
@@ -9,6 +10,8 @@ export default function Dashboard({ user, household, onSignOut }) {
   const location = useLocation();
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showWizard, setShowWizard] = useState(false);
+  const [wizardData, setWizardData] = useState(null);
 
   const resolvePhotoUrl = (url) => {
     if (!url) return '';
@@ -40,9 +43,20 @@ export default function Dashboard({ user, household, onSignOut }) {
   // Pre-compute household flower mapping so JSX is simpler and deterministic
   const mapping = assignHouseholdFlowers(pets || []);
 
+  const handleWizardNext = (data) => {
+    setShowWizard(false);
+    setWizardData(data);
+    navigate('/add-pet', { state: { household, wizardData: data } });
+  };
+
+  const handleWizardOpen = () => setShowWizard(true);
+  const handleWizardClose = () => setShowWizard(false);
+
   return (
     <div className="min-h-screen bg-white">
-
+      {showWizard && (
+        <AddPetWizardModal open={true} onNext={handleWizardNext} onClose={handleWizardClose} />
+      )}
       <main className="flex justify-center py-12">
         <div className="max-w-6xl px-6 w-full">
         {/* Welcome Message */}
@@ -62,7 +76,7 @@ export default function Dashboard({ user, household, onSignOut }) {
           <div className="text-center py-12">
             <p className="text-gray-500 mb-2">Welcome! Let's set up your first pet.</p>
             <button
-              onClick={() => navigate('/add-pet', { state: { household } })}
+              onClick={handleWizardOpen}
               className="btn font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition"
             >
               Add Your First Pet
@@ -115,7 +129,7 @@ export default function Dashboard({ user, household, onSignOut }) {
             </div>
             <div className="flex justify-start mt-12 mb-8">
               <button
-                onClick={() => navigate('/add-pet', { state: { household } })}
+                onClick={handleWizardOpen}
                 className="btn text-lg font-semibold px-5 py-2 hover:opacity-90 transition shadow rounded-lg"
                 style={{ letterSpacing: '0.02em' }}
               >

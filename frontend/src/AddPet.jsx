@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiFetch } from './api';
-import AddPetWizardModal from './components/AddPetWizardModal';
 import './components/AddPetWizardModal.css';
 // PlacesSearch removed — address entered manually now
 
@@ -12,28 +11,27 @@ export default function AddPet({ user, household, onSignOut }) {
 	const activeHousehold = household || householdFromState;
 
 	// Add Pet Wizard modal state
-	const [showWizard, setShowWizard] = useState(true);
-	const handleWizardClose = () => setShowWizard(false);
-	const handleWizardNext = () => setShowWizard(false);
 
-	const [petName, setPetName] = useState('');
-	const [species, setSpecies] = useState('dog');
-	const [breed, setBreed] = useState('');
+
+	const wizardData = location.state?.wizardData;
+	const [petName, setPetName] = useState(wizardData?.petName || '');
+	const [species, setSpecies] = useState(wizardData?.species || 'dog');
+	const [breed, setBreed] = useState(wizardData?.breed || '');
 	const [breedsList, setBreedsList] = useState([]);
 	const [breedSuggestions, setBreedSuggestions] = useState([]);
 	const [showBreedSuggestions, setShowBreedSuggestions] = useState(false);
 	const [focusedSuggestion, setFocusedSuggestion] = useState(-1);
 	const breedInputRef = useRef(null);
 	const suggestionsRef = useRef(null);
-	const [age, setAge] = useState('');
-	const [weight, setWeight] = useState('');
-	const [weightUnit, setWeightUnit] = useState('kg');
-	const [notes, setNotes] = useState('');
-	const [vetName, setVetName] = useState('');
-	const [vetLocation, setVetLocation] = useState('');
-	const [vetContact, setVetContact] = useState('');
+	const [age, setAge] = useState(wizardData?.age || '');
+	const [weight, setWeight] = useState(wizardData?.weight || '');
+	const [weightUnit, setWeightUnit] = useState(wizardData?.weightUnit || 'kg');
+	const [notes, setNotes] = useState(wizardData?.notes || '');
+	const [vetName, setVetName] = useState(wizardData?.vetName || '');
+	const [vetLocation, setVetLocation] = useState(wizardData?.vetLocation || '');
+	const [vetContact, setVetContact] = useState(wizardData?.vetContact || '');
 	// Places/Mapbox removed — users enter address text manually
-	const [primaryFood, setPrimaryFood] = useState('');
+	const [primaryFood, setPrimaryFood] = useState(wizardData?.primaryFood || '');
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
 
@@ -274,30 +272,24 @@ export default function AddPet({ user, household, onSignOut }) {
 	   );
 	}
 
-	// Show wizard modal exclusively until Next is clicked
-	if (showWizard) {
-		return <AddPetWizardModal open={true} onNext={handleWizardNext} onClose={handleWizardClose} />;
-	}
+	       return (
+		       <div className="min-h-screen bg-white">
+			       <main className="flex justify-center py-8">
+				       <div className="max-w-6xl px-6 mt-4 w-full">
+					       <div className="mb-6">
+						       <h1 className="text-3xl font-bold text-gray-900">Add a Pet</h1>
+					       </div>
 
-	return (
-		<div className="min-h-screen bg-white">
+					       <form onSubmit={handleSubmit} className="space-y-6">
+						       {/* General section */}
+						       <div style={{ marginBottom: '12px', paddingBottom: '12px' }} className="border-b border-gray-200 pb-6">
+							       <h2 className="text-2xl font-bold text-gray-900 mb-4">General</h2>
 
-			<main className="flex justify-center py-8">
-				<div className="max-w-6xl px-6 mt-4 w-full">
-					<div className="mb-6">
-						<h1 className="text-3xl font-bold text-gray-900">Add a Pet</h1>
-					</div>
-
-					<form onSubmit={handleSubmit} className="space-y-6">
-						{/* General section */}
-						<div style={{ marginBottom: '12px', paddingBottom: '12px' }} className="border-b border-gray-200 pb-6">
-							<h2 className="text-2xl font-bold text-gray-900 mb-4">General</h2>
-
-							<div>
-								<label className="block text-sm font-medium text-gray-900 mb-2">Pet Name *</label>
-								<input
-									type="text"
-									value={petName}
+							       <div>
+								       <label className="block text-sm font-medium text-gray-900 mb-2">Pet Name *</label>
+								       <input
+									       type="text"
+									       value={petName}
 									onChange={(e) => setPetName(e.target.value)}
 									placeholder="e.g., Milo, Luna, Buddy"
 									className="w-full px-4 py-2 rounded-none border border-gray-200 focus:border-accent focus:outline-none"
