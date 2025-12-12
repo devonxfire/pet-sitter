@@ -85,15 +85,15 @@ export default function TopNav({ user, household, onSignOut }) {
           <div className="flex items-center gap-6">
             <Link
               to="/dashboard"
-              className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${location.pathname === '/dashboard' ? 'border-accent' : 'border-transparent'}`}
+              className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${location.pathname === '/dashboard' ? 'border-accent nav-link-active' : 'border-transparent'}`}
             >My Pets</Link>
             <Link
               to={firstPetId ? `/pet/${firstPetId}/activities` : '/activities'}
-              className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${location.pathname.startsWith('/pet') || location.pathname === '/activities' ? 'border-accent' : 'border-transparent'}`}
+              className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${(location.pathname.startsWith('/pet') || location.pathname === '/activities') ? 'border-accent nav-link-active' : 'border-transparent'}`}
             >Activities</Link>
             <Link
               to="/plans"
-              className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${location.pathname === '/plans' ? 'border-accent' : 'border-transparent'}`}
+              className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${location.pathname === '/plans' ? 'border-accent nav-link-active' : 'border-transparent'}`}
             >Plans</Link>
           </div>
         </div>
@@ -142,8 +142,8 @@ export default function TopNav({ user, household, onSignOut }) {
             </div>
           ) : (
             <div className="flex items-center gap-4">
-              <Link to="/login" className="text-sm text-accent hover:underline">Log in</Link>
-              <Link to="/create-household" className="hidden sm:inline-block btn-red text-white text-sm px-4 py-2 rounded-md">Get started</Link>
+              <Link to="/create-household" className="hidden sm:inline-block btn btn-red topnav-cta">Get started</Link>
+              <Link to="/login" className="text-sm text-accent hover:underline">Sign in</Link>
             </div>
           )}
         </div>

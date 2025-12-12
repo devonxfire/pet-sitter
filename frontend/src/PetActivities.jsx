@@ -274,75 +274,75 @@ export default function PetActivities({ household, user, onSignOut }) {
   return (
     <div className="min-h-screen bg-white">
 
-      {/* Header band: match PetDetail header spacing so transitions are seamless */}
-      <div className="w-full bg-gray-50 border-b border-gray-200" style={{ backgroundColor: 'var(--color-footer)' }}>
+      {/* Header band: match PetDetail header UI for consistency */}
+      <div className="w-full bg-gray-50 border-b border-gray-200">
         <div className="mx-auto max-w-6xl px-6 w-full relative">
-          <div className="mb-6 py-12">
-            <div className="flex items-start justify-between mb-8">
-              <div className="w-full">
-                <div className="grid md:grid-flow-col md:auto-cols-max items-start gap-4 md:gap-4">
-                  <div className="shrink-0 -ml-3 md:ml-0">
-                    <button
-                      onClick={() => navigate(`/pet/${petId}`)}
-                      aria-label={pet ? `Open ${pet.name} details` : 'Open pet details'}
-                      className="focus:outline-none focus:ring-0 no-global-accent no-accent-hover cursor-pointer hover:opacity-95"
-                    >
-            {pet?.photoUrl ? (
-              <div className="w-28 h-28 md:w-40 md:h-40 rounded-2xl bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
-                <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet?.name || 'Pet'} className="w-full h-full object-cover select-none" draggable={false} />
-              </div>
-            ) : (
-              <>
+          <div className="mb-6 py-12 border-b-2 border-gray-200">
+            <div className="grid md:grid-flow-col md:auto-cols-max items-start gap-4 md:gap-4">
+              {/* Avatar */}
+              <div className="shrink-0 -ml-3 md:ml-0">
                 <button
-                  onClick={() => setShowFavouritesModal(true)}
-                  className="px-2 py-1 rounded-md text-sm font-medium transition bg-gray-100 text-gray-900 hover:bg-gray-200 shadow"
-                  style={{ minWidth: '110px' }}
+                  onClick={() => navigate(`/pet/${petId}`)}
+                  aria-label={pet ? `Open ${pet.name} details` : 'Open pet details'}
+                  className="focus:outline-none focus:ring-0 no-global-accent no-accent-hover cursor-pointer hover:opacity-95"
+                  style={{ background: 'none', border: 'none', padding: 0 }}
+                  type="button"
                 >
-                  Repeat Favourite
-                </button>
-                <div className="w-28 h-28 md:w-40 md:h-40 rounded-2xl bg-gray-200 flex items-center justify-center border-2 border-gray-200 text-gray-400">📷</div>
-              </>
-            )}
-                    </button>
+                  <div className="relative">
+                    <div className="w-28 h-28 md:w-40 md:h-40 rounded-2xl bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
+                      {pet?.photoUrl ? (
+                        <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet?.name || 'Pet'} className="w-full h-full object-cover select-none" draggable={false} />
+                      ) : (
+                        <div className="text-gray-400 text-4xl">📷</div>
+                      )}
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1 h-28 md:h-40 flex flex-col justify-between">
-                    <div className="flex flex-col justify-between pl-2 h-full">
-                      <div>
-                        <div className="flex items-baseline gap-3">
-                          <h1 className="text-2xl md:text-4xl font-bold leading-tight text-white">
-                            {pet ? `${pet.name}'s Activities` : 'Activities'}
-
-                          </h1>
-                        </div>
-                        <div className="mt-1">
-                          <p className="text-sm text-gray-200">All logged activities for this pet — <button onClick={() => navigate('/activities')} className="text-sm text-gray-200 underline no-global-accent no-accent-hover">Change pet</button></p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => setShowLogActivity(true)}
-                          className="inline-flex items-center gap-3 px-4 py-2 rounded-xl font-semibold btn hover:opacity-90 transition"
-                        >
-                          <svg className="w-5 h-5 text-white shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          <span>Log New Activity</span>
-                        </button>
-
-                        <button
-                          onClick={() => setShowFavouritesModal(true)}
-                          aria-pressed={activityFilter === 'quick'}
-                          ref={favBtnRef}
-                          className="inline-flex items-center gap-3 text-gray-200 font-semibold px-5 py-2 rounded-xl transition no-global-accent no-accent-hover"
-                          onMouseEnter={() => setFavHover(true)}
-                          onMouseLeave={() => setFavHover(false)}
-                        >
-                          <svg className="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#C3001F" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6.01 4.01 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 17.99 4 20 6.01 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
-                          <span>Repeat Favourite</span>
-                        </button>
+                </button>
+              </div>
+              {/* Main info */}
+              <div className="min-w-0 flex-1 h-28 md:h-40 flex flex-col justify-between">
+                <div className="flex flex-col justify-between pl-2 h-full">
+                  <div>
+                    <div className="flex items-baseline gap-3">
+                      <h1 className="text-2xl md:text-4xl leading-tight text-gray-900">
+                        {pet ? (
+                          <>
+                            <span className="font-bold">{pet.name}'s </span>
+                            <span className="heading-light" data-heading="Activities">Activities</span>
+                          </>
+                        ) : (
+                          <span className="heading-light" data-heading="Activities">Activities</span>
+                        )}
+                      </h1>
+                    </div>
+                    <div className="mt-1">
+                      <div className="inline-block align-top">
+                        <span className="text-sm text-gray-500">All logged activities for this pet — </span>
+                        <button onClick={() => navigate('/activities')} className="text-sm text-gray-500 underline no-global-accent no-accent-hover">Change pet</button>
                       </div>
                     </div>
+                  </div>
+                  <div className="flex items-center gap-3 mt-2">
+                    <button
+                      onClick={() => setShowLogActivity(true)}
+                      className="inline-flex items-center gap-3 px-4 py-2 rounded-xl font-semibold btn hover:opacity-90 transition"
+                    >
+                      <svg className="w-5 h-5 text-white shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span>Log New Activity</span>
+                    </button>
+                    <button
+                      onClick={() => setShowFavouritesModal(true)}
+                      aria-pressed={activityFilter === 'quick'}
+                      ref={favBtnRef}
+                      className="inline-flex items-center gap-3 text-gray-900 font-semibold px-5 py-2 rounded-xl transition no-global-accent no-accent-hover"
+                      onMouseEnter={() => setFavHover(true)}
+                      onMouseLeave={() => setFavHover(false)}
+                    >
+                      <svg className="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#C3001F" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6.01 4.01 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 17.99 4 20 6.01 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+                      <span>Repeat Favourite</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -357,9 +357,9 @@ export default function PetActivities({ household, user, onSignOut }) {
           <PetActivityGraph activities={activities} />
         )}
         <div className="flex gap-2 mb-8 mt-6 items-center">
-          <button onClick={() => setActivityFilter('past')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'past' ? 'bg-gray-200 text-gray-900 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>✓ Past</button>
-          <button onClick={() => setActivityFilter('all')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'all' ? 'bg-gray-200 text-gray-900 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>All</button>
-          <button onClick={() => setActivityFilter('upcoming')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'upcoming' ? 'bg-gray-200 text-gray-900 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>📅 Upcoming</button>
+          <button onClick={() => setActivityFilter('past')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'past' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>✓ Past</button>
+          <button onClick={() => setActivityFilter('all')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'all' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>All</button>
+          <button onClick={() => setActivityFilter('upcoming')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'upcoming' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>📅 Upcoming</button>
           <button
             onClick={() => setShowLogActivity(true)}
             className="px-2 py-1 rounded-md text-sm font-medium transition btn hover:opacity-90 shadow"

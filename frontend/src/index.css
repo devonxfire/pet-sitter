@@ -1,4 +1,61 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap');
+/* HERO SECTION: Force main heading to white, overriding default heading color */
+.hero-heading, .hero-heading h1, h1.hero-heading {
+  color: #fff !important;
+}
+/* NAVIGATION: Force active nav link underline to brand red, override Tailwind border-accent/border-transparent */
+.nav-link-active,
+.nav-link-active:active,
+.nav-link-active:focus,
+.nav-link-active[aria-current],
+nav .nav-link-active,
+nav .nav-link-active:active,
+nav .nav-link-active:focus,
+nav .nav-link-active[aria-current] {
+  border-bottom: 2px solid #C3001F !important;
+  border-bottom-color: #C3001F !important;
+}
+
+/* If using border-accent or border-transparent, override with nav-link-active for current page */
+.nav-link-active.border-accent,
+.nav-link-active.border-transparent {
+  border-bottom: 2px solid #C3001F !important;
+  border-bottom-color: #C3001F !important;
+}
+@font-face {
+  font-family: 'Nohemi';
+  src: url('/fonts/Nohemi-Thin.woff2') format('woff2'),
+       url('/fonts/Nohemi-Thin.woff') format('woff'),
+       url('/fonts/Nohemi-Thin.ttf') format('truetype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Nohemi';
+  src: url('/fonts/Nohemi-Light.woff2') format('woff2'),
+       url('/fonts/Nohemi-Light.woff') format('woff'),
+       url('/fonts/Nohemi-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Nohemi';
+  src: url('/fonts/Nohemi-ExtraLight.woff2') format('woff2'),
+       url('/fonts/Nohemi-ExtraLight.woff') format('woff'),
+       url('/fonts/Nohemi-ExtraLight.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+/* Top nav 'Get started' button: smaller and less bold than hero CTA */
+.topnav-cta {
+  font-size: 0.88rem !important;
+  font-weight: 400 !important;
+  padding: 0.38rem 0.92rem !important;
+  min-width: 0 !important;
+}
 /* Ensure login page 'Create account' toggle button never has a background */
 .login-toggle-btn, .login-toggle-btn:hover, .login-toggle-btn:focus {
   background: transparent !important;
@@ -200,11 +257,60 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Headings: use brand dark gray color */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: var(--font-heading-weight);
   letter-spacing: -0.01em;
   line-height: 1.1;
+  color: var(--color-accent);
+}
+
+/* Make headings with data-heading='Profile' or 'Activities' ultra-light (Nohemi-Thin, 100) */
+h1[data-heading="Profile"],
+h1[data-heading="Activities"],
+h2[data-heading="Profile"],
+h2[data-heading="Activities"],
+.heading-light[data-heading="Profile"],
+.heading-light[data-heading="Activities"] {
+  font-weight: 100 !important;
+  font-family: var(--font-heading) !important;
+}
+
+/* Fallback: use a utility class for lighter headings */
+.heading-light, h1.heading-light, h2.heading-light, h3.heading-light, h4.heading-light, h5.heading-light, h6.heading-light {
+  font-weight: 300 !important;
+  font-family: var(--font-heading) !important;
+}
+
+/* Unset any Tailwind or utility font-weight classes on heading-light */
+h1.heading-light.font-bold,
+h2.heading-light.font-bold,
+h3.heading-light.font-bold,
+h4.heading-light.font-bold,
+h5.heading-light.font-bold,
+h6.heading-light.font-bold,
+h1.heading-light.font-semibold,
+h2.heading-light.font-semibold,
+h3.heading-light.font-semibold,
+h4.heading-light.font-semibold,
+h5.heading-light.font-semibold,
+h6.heading-light.font-semibold {
+  font-weight: 300 !important;
+}
+
+/* Make 'Profile' and 'Activities' headings much lighter */
+h1:has(>span.profile-heading),
+h1:has(>span.activities-heading),
+h2:has(>span.profile-heading),
+h2:has(>span.activities-heading) {
+  font-weight: 300 !important;
+}
+
+/* Fallback for text content if :has is not supported */
+h1.profile-heading, h2.profile-heading,
+h1.activities-heading, h2.activities-heading {
+  font-weight: 300 !important;
 }
 
 /* Apply lighter weights across typical elements to make the UI feel thinner */
@@ -535,12 +641,27 @@ button.user-toggle:focus > .bg-user-initials {
 /* Selected filter helper: ensure selected small filter buttons show a distinct,
    darker neutral appearance even when other button rules exist. Use !important
    to avoid unintended overrides from global CTA rules. */
+/* Use a brand red underline for selected menu item (current page) */
 .selected-filter {
-  /* Use a slightly darker gray for selected state and add a thin underline
-     so selection is clear even if other CSS interferes. */
   background-color: #E5E7EB !important; /* Tailwind gray-200 (lighter) */
   color: #0B1220 !important; /* near-black */
-  border-color: #D1D5DB !important;
+  border: none !important;
+  border-bottom: 2px solid #C3001F !important;
+  border-bottom-color: #C3001F !important;
+  box-shadow: none !important;
+}
+
+/* MAX-SPECIFICITY: Always force selected menu underline to brand red */
+.selected-filter,
+.selected-filter:active,
+.selected-filter:focus,
+.selected-filter[aria-current],
+nav .selected-filter,
+nav .selected-filter:active,
+nav .selected-filter:focus,
+nav .selected-filter[aria-current] {
+  border-bottom: 2px solid #C3001F !important;
+  border-bottom-color: #C3001F !important;
 }
 .selected-filter:hover {
   background-color: #D1D5DB !important;

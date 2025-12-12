@@ -657,9 +657,15 @@ export default function PetDetail({ household, user, onSignOut }) {
               <div className="flex flex-col justify-between pl-2 h-full">
                 <div>
                   <div className="flex items-baseline gap-3">
-                    <h1 className="text-2xl md:text-4xl font-bold leading-tight text-gray-900">
-                      {pet ? `${pet.name}'s Profile` : 'Profile'}
-              
+                      <h1 className="text-2xl md:text-4xl leading-tight text-gray-900">
+                        {pet ? (
+                          <>
+                            <span className="font-bold">{pet.name}'s </span>
+                            <span className="heading-light" data-heading="Profile">Profile</span>
+                          </>
+                        ) : (
+                          <span className="heading-light" data-heading="Profile">Profile</span>
+                        )}
                     </h1>
                     {/* single edit control is shown in the General Information section below */}
                   </div>

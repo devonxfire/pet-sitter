@@ -34,30 +34,51 @@ function PetActivityGraph({ activities }) {
     other: { past: 'ACTIVITY', future: 'FUTURE ACTIVITY' }
   };
   const now = new Date();
-  const data = [...(activities || [])]
-    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-    .slice(-5)
-    .map((a, i) => {
-      const when = new Date(a.timestamp);
-      const isFuture = when > now;
-      const raw = a.activityType?.name ? a.activityType.name.toLowerCase() : '';
-      let label = '';
-      if (raw) {
-        const verb = VERB_LABELS[raw] || VERB_LABELS[Object.keys(VERB_LABELS).find(k => raw.includes(k))] || null;
-        if (verb) {
-          label = isFuture ? verb.future : verb.past;
-        } else {
-          label = isFuture ? `FUTURE ${raw.toUpperCase()}` : `${raw.toUpperCase()}ED`;
-        }
+  // Add horizontal jitter for same-day activities
+  const sortedActs = [...(activities || [])].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).slice(-5);
+  // Group by date string
+  const dateGroups = {};
+  sortedActs.forEach((a, i) => {
+    const d = new Date(a.timestamp).toLocaleDateString();
+    if (!dateGroups[d]) dateGroups[d] = [];
+    dateGroups[d].push(i);
+  });
+  const data = sortedActs.map((a, i) => {
+    const when = new Date(a.timestamp);
+    const isFuture = when > now;
+    const raw = a.activityType?.name ? a.activityType.name.toLowerCase() : '';
+    let label = '';
+    if (raw) {
+      const verb = VERB_LABELS[raw] || VERB_LABELS[Object.keys(VERB_LABELS).find(k => raw.includes(k))] || null;
+      if (verb) {
+        label = isFuture ? verb.future : verb.past;
+      } else {
+        label = isFuture ? `FUTURE ${raw.toUpperCase()}` : `${raw.toUpperCase()}ED`;
       }
-      return {
-        x: when.toLocaleDateString(),
-        y: when.getHours() + when.getMinutes() / 60,
-        label,
-        time: formatTimeOfDay(a.timestamp),
-        id: a.id || i,
-      };
-    });
+    }
+    // Jitter: if multiple on same day, offset x by a small amount
+    const dateStr = when.toLocaleDateString();
+    const group = dateGroups[dateStr];
+    let jitter = 0;
+    if (group && group.length > 1) {
+      const idx = group.indexOf(i);
+      // Spread jitter in [-0.18, 0.18] range for up to 3 points, less for 2
+      const spread = 0.18;
+      if (group.length === 2) {
+        jitter = idx === 0 ? -spread : spread;
+      } else {
+        jitter = spread * (idx - (group.length - 1) / 2);
+      }
+    }
+    return {
+      x: when.toLocaleDateString(),
+      xJitter: jitter,
+      y: when.getHours() + when.getMinutes() / 60,
+      label,
+      time: formatTimeOfDay(a.timestamp),
+      id: a.id || i,
+    };
+  });
 
   // Animation state: how many points/segments to show
   // Show all data statically
@@ -110,18 +131,24 @@ function PetActivityGraph({ activities }) {
               fill={theme.red}
               line={{ stroke: theme.grayText, strokeWidth: 2 }}
               isAnimationActive={false}
-              shape={props => (
-                <g style={{ transform: 'translate(0,0)' }}>
-                  <circle
-                    cx={props.cx}
-                    cy={props.cy}
-                    r={5}
-                    className="activity-dot-pulse"
-                    fill={theme.red}
-                    style={{ transformOrigin: `${props.cx}px ${props.cy}px` }}
-                  />
-                </g>
-              )}
+              shape={props => {
+                // Apply jitter to cx and cy if present
+                const xJitter = props.payload?.xJitter || 0;
+                const cx = props.cx + (props.width ? props.width * xJitter : 0);
+                // For vertical jitter, y is already adjusted in data.y
+                return (
+                  <g style={{ transform: 'translate(0,0)' }}>
+                    <circle
+                      cx={cx}
+                      cy={props.cy}
+                      r={5}
+                      className="activity-dot-pulse"
+                      fill={theme.red}
+                      style={{ transformOrigin: `${cx}px ${props.cy}px` }}
+                    />
+                  </g>
+                );
+              }}
             >
               <LabelList
                 dataKey="label"
