@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import TopNav from './TopNav';
 import { apiFetch } from './api';
 
 export default function Profile({ user, household, onSignOut }) {
@@ -105,7 +104,6 @@ export default function Profile({ user, household, onSignOut }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        <TopNav user={user} household={household} onSignOut={onSignOut} />
         <div className="flex items-center justify-center py-24">
           <p className="text-gray-400">Loading profile...</p>
         </div>
@@ -115,7 +113,6 @@ export default function Profile({ user, household, onSignOut }) {
 
   return (
     <div className="min-h-screen bg-white">
-      <TopNav user={user} household={household} onSignOut={onSignOut} />
       <main className="flex justify-center py-12">
         <div className="max-w-3xl w-full px-6">
           <h1 className="text-3xl font-bold mb-6">My Profile</h1>
@@ -139,7 +136,7 @@ export default function Profile({ user, household, onSignOut }) {
               </div>
             </div>
             <div className="mt-4 flex gap-3">
-              <button onClick={handleSave} disabled={saving} className="bg-accent text-white px-4 py-2 rounded-lg">{saving ? 'Saving...' : 'Save'}</button>
+              <button onClick={handleSave} disabled={saving} className="btn">{saving ? 'Saving...' : 'Save'}</button>
             </div>
           </section>
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch, apiUrl } from './api';
-import TopNav from './TopNav';
 
 export default function HouseholdSettings({ household, user, onSignOut }) {
   const navigate = useNavigate();
@@ -78,7 +77,6 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        <TopNav household={household} user={user} onSignOut={onSignOut} />
         <div className="flex items-center justify-center py-12">
           <p className="text-gray-400">Loading...</p>
         </div>
@@ -88,7 +86,6 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
 
   return (
     <div className="min-h-screen bg-white">
-      <TopNav household={household} user={user} onSignOut={onSignOut} />
 
       <main className="flex justify-center py-16">
         <div className="max-w-6xl px-6 w-full">

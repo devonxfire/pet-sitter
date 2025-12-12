@@ -293,7 +293,7 @@ export default function EditPet({ user, onSignOut }) {
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-accent text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+            className="w-full btn font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>

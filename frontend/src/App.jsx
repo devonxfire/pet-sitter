@@ -1,3 +1,4 @@
+import TopNav from './TopNav';
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { apiFetch } from './api';
@@ -95,6 +96,7 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <TopNav user={user} household={household} onSignOut={handleSignOut} />
       <div className="grow">
         <Routes>
         <Route

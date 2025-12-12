@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiFetch } from './api';
-import TopNav from './TopNav';
 // PlacesSearch removed — address entered manually now
 
 export default function AddPet({ user, household, onSignOut }) {
@@ -259,7 +258,7 @@ export default function AddPet({ user, household, onSignOut }) {
 					<button
 						type="button"
 						onClick={() => navigate('/dashboard')}
-						className="bg-accent text-white font-semibold px-6 py-2 rounded-xl"
+						className="btn"
 					>
 						Go back
 					</button>
@@ -270,7 +269,6 @@ export default function AddPet({ user, household, onSignOut }) {
 
 	return (
 		<div className="min-h-screen bg-white">
-			<TopNav user={user} household={activeHousehold} onSignOut={onSignOut} />
 
 			<main className="flex justify-center py-8">
 				<div className="max-w-6xl px-6 mt-4 w-full">
@@ -350,7 +348,7 @@ export default function AddPet({ user, household, onSignOut }) {
 													key={b}
 													role="option"
 													aria-selected={isFocused}
-													className={`px-3 py-2 cursor-pointer text-sm ${isFocused ? 'bg-accent text-white' : 'hover:bg-gray-100'}`}
+													className={`px-3 py-2 cursor-pointer text-sm ${isFocused ? 'btn' : 'hover:bg-gray-100'}`}
 													onMouseDown={(ev) => {
 													// use onMouseDown to avoid losing focus before click
 													ev.preventDefault();
@@ -466,7 +464,7 @@ export default function AddPet({ user, household, onSignOut }) {
 							<button
 								type="submit"
 								disabled={loading}
-								className="w-full bg-accent text-white font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 mt-4"
+								className="w-full btn mt-4"
 							>
 								{loading ? 'Creating...' : 'Add Pet'}
 							</button>

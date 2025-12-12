@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import TopNav from './TopNav';
 import { apiFetch } from './api';
 
 export default function ActivitiesLanding({ household, user, onSignOut }) {
@@ -32,7 +31,6 @@ export default function ActivitiesLanding({ household, user, onSignOut }) {
 
   return (
     <div className="min-h-screen bg-white">
-      <TopNav user={user} household={household} onSignOut={onSignOut} />
 
       <main className="mx-auto max-w-6xl px-6 py-10">
         <div className="flex items-center justify-between mb-6">

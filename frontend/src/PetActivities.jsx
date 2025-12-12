@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiFetch, apiUrl, API_BASE } from './api';
 import PetActivityGraph from './PetActivityGraph.jsx';
-import TopNav from './TopNav';
 import LogActivity from './LogActivity';
 import ActivityView from './ActivityView';
 import ACTIVITY_TYPES from './activityTypes';
@@ -266,7 +265,6 @@ export default function PetActivities({ household, user, onSignOut }) {
 
   if (loading) return (
     <div className="min-h-screen bg-white">
-      <TopNav user={user} household={household} onSignOut={onSignOut} />
       <div className="mx-auto max-w-6xl px-6 py-12">
         <p className="text-gray-500">Loading activities...</p>
       </div>
@@ -275,7 +273,6 @@ export default function PetActivities({ household, user, onSignOut }) {
 
   return (
     <div className="min-h-screen bg-white">
-      <TopNav user={user} household={household} onSignOut={onSignOut} />
 
       {/* Header band: match PetDetail header spacing so transitions are seamless */}
       <div className="w-full bg-gray-50 border-b border-gray-200" style={{ backgroundColor: 'var(--color-footer)' }}>
@@ -325,7 +322,7 @@ export default function PetActivities({ household, user, onSignOut }) {
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => setShowLogActivity(true)}
-                          className="inline-flex items-center gap-3 px-4 py-2 rounded-xl font-semibold bg-accent text-white hover:opacity-90 transition"
+                          className="inline-flex items-center gap-3 px-4 py-2 rounded-xl font-semibold btn hover:opacity-90 transition"
                         >
                           <svg className="w-5 h-5 text-white shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -365,7 +362,7 @@ export default function PetActivities({ household, user, onSignOut }) {
           <button onClick={() => setActivityFilter('upcoming')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'upcoming' ? 'bg-gray-200 text-gray-900 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>📅 Upcoming</button>
           <button
             onClick={() => setShowLogActivity(true)}
-            className="px-2 py-1 rounded-md text-sm font-medium transition bg-accent text-white hover:opacity-90 shadow"
+            className="px-2 py-1 rounded-md text-sm font-medium transition btn hover:opacity-90 shadow"
             style={{ minWidth: '110px' }}
           >
             Log New Activity

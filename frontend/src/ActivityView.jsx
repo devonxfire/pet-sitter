@@ -58,7 +58,7 @@ export default function ActivityView({ activity, onClose, onEdit, onDelete }) {
 
         <div className="flex gap-3 mt-6">
           <button onClick={onClose} className="flex-1 bg-gray-100 text-gray-900 py-2 rounded-lg">Close</button>
-          <button onClick={() => onEdit && onEdit(activity)} className="bg-accent text-gray-900 py-2 px-4 rounded-lg">Edit</button>
+          <button onClick={() => onEdit && onEdit(activity)} className="btn">Edit</button>
           {onDelete && (
             <button
               ref={(el) => {

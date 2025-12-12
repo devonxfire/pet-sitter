@@ -149,19 +149,23 @@ export default function Login({ onLogin }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-accent text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 cursor-pointer"
+            className="w-full btn font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 cursor-pointer"
           >
             {loading ? 'Please wait...' : isSignup ? 'Create Account' : 'Sign In'}
           </button>
         </form>
 
         <div className="text-center mt-6">
-          <button
+          <span
+            role="button"
+            tabIndex={0}
             onClick={() => setIsSignup(!isSignup)}
-            className="text-sm text-gray-500 hover:text-gray-700"
+            onKeyPress={e => { if (e.key === 'Enter' || e.key === ' ') setIsSignup(!isSignup); }}
+            className="text-accent hover:underline cursor-pointer text-sm"
+            aria-label={isSignup ? 'Already have an account? Sign in' : 'Create account'}
           >
             {isSignup ? 'Already have an account? Sign in' : 'Create account →'}
-          </button>
+          </span>
         </div>
       </div>
     </div>

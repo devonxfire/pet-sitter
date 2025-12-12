@@ -1,20 +1,105 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap');
+/* Ensure login page 'Create account' toggle button never has a background */
+.login-toggle-btn, .login-toggle-btn:hover, .login-toggle-btn:focus {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+/* MAX-SPECIFICITY: Ensure hero .btn-red never gets gray hover from global .btn:hover */
+.cta-equal > .btn.btn-red:hover,
+.cta-equal > .btn.btn-red:focus,
+.cta-equal > a.btn.btn-red:hover,
+.cta-equal > a.btn.btn-red:focus,
+.cta-equal > button.btn.btn-red:hover,
+.cta-equal > button.btn.btn-red:focus {
+  background-color: #ED1C24 !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 8px 32px rgba(237,28,36,0.18) !important;
+}
+/* MAX-SPECIFICITY: Ensure hero .btn-secondary never gets gray hover from global .btn:hover */
+.cta-equal > .btn.btn-secondary:hover,
+.cta-equal > .btn.btn-secondary:focus,
+.cta-equal > a.btn.btn-secondary:hover,
+.cta-equal > a.btn.btn-secondary:focus,
+.cta-equal > button.btn.btn-secondary:hover,
+.cta-equal > button.btn.btn-secondary:focus {
+  background-color: rgba(255,255,255,0.22) !important;
+  color: #fff !important;
+  border-color: #fff !important;
+  box-shadow: 0 8px 32px rgba(255,255,255,0.10) !important;
+}
+/* Hero CTA buttons: force same size, font, and padding for both */
+.hero-cta-red, .hero-cta-outline {
+  min-width: 220px;
+  font-size: 1.5rem;
+  font-weight: 400;
+  padding: 1.25rem 2rem;
+  border-radius: 0;
+  display: inline-block;
+  text-align: center;
+  transition: background 0.14s, color 0.14s, box-shadow 0.14s;
+}
+.hero-cta-red {
+  background: #C3001F !important;
+  color: #fff !important;
+  border: 1px solid #C3001F !important; /* Add 1px solid red border for visual match with .hero-cta-outline */
+  box-shadow: 0 4px 24px rgba(11,18,32,0.10);
+}
+.hero-cta-red:hover, .hero-cta-red:focus {
+  background: #ED1C24 !important;
+  color: #fff !important;
+  border: 1px solid #ED1C24 !important; /* Keep border on hover/focus for .hero-cta-red */
+}
+.hero-cta-outline {
+  background: transparent !important;
+  color: #C3001F !important;
+  border: 2px solid #C3001F !important;
+}
+.hero-cta-outline:hover, .hero-cta-outline:focus {
+  background: rgba(195,0,31,0.08) !important;
+  color: #C3001F !important;
+  border-color: #C3001F !important;
+}
+/* Always show pointer cursor for dropdown menu items */
+.dropdown-item,
+.dropdown-item:hover,
+.dropdown-item:focus,
+.dropdown-item:active,
+.dropdown-menu a,
+.dropdown-menu button {
+  cursor: pointer !important;
+}
+
+/* Ensure nav background is always white for consistency across all pages */
+nav, .page-non-landing nav {
+  background: #fff !important;
+}
+/* FINAL OVERRIDE: Always use brand red for .bg-accent (Pet Sitter logo) on all pages */
+.bg-accent {
+  background-color: #C3001F !important;
+  color: #fff !important;
+}
+
+
+/* Utility: Red button for primary CTAs */
+
+/* Red CTA button: solid red background, white text (force override) */
+.btn.btn-red, a.btn.btn-red, button.btn.btn-red {
+  background-color: #C3001F !important;
+  color: #fff !important;
+  border: 1px solid #C3001F !important; /* Add 1px solid red border for visual match with .btn-secondary */
+  box-shadow: 0 4px 24px rgba(11,18,32,0.10) !important;
+}
+/* Red CTA button: custom hover/focus background (bright red) */
+.btn.btn-red:hover, .btn.btn-red:focus, a.btn.btn-red:hover, a.btn.btn-red:focus, button.btn.btn-red:hover, button.btn.btn-red:focus {
+  background-color: #ED1C24 !important;
+  color: #fff !important;
+  border: 1px solid #ED1C24 !important; /* Keep border on hover/focus for .btn-red */
+  box-shadow: 0 8px 32px rgba(237,28,36,0.18) !important;
+}
 
 /* Ensure user initials avatar never changes color or shade on hover/focus/active, matching bell/welcome btn logic */
-.user-toggle .bg-user-initials,
-.user-toggle .bg-user-initials:hover,
-.user-toggle .bg-user-initials:focus,
-.user-toggle .bg-user-initials:active,
-button.user-toggle:hover > .bg-user-initials,
-button.user-toggle:focus > .bg-user-initials,
-button.user-toggle:active > .bg-user-initials {
-  background-color: #374151 !important;
-  color: white !important;
-  box-shadow: none !important;
-  filter: none !important;
-  opacity: 1 !important;
-  transition: none !important;
-}
 /* Pet-Sitter - Apple-style clean design */
 
 /* Load Inter (body) and Poppins (headings) for a modern product UI.
@@ -69,10 +154,10 @@ button.user-toggle:active > .bg-user-initials {
   /* Accent: blended red + gray (softer, desaturated red that ties into footer grays) */
   /* Mix: old bright red + footer gray → softer/desaturated red for CTAs */
   /* Match landing page brand red from Tailwind theme */
-  --color-accent: #C3001F; /* primary brand red (darker) */
-  --color-accent-2: #ED1C24; /* lighter/secondary variant (previous primary) */
-  --color-accent-hover: #C3001F; /* hover/active shade (kept same as primary) */
-  --color-accent-hover-light: #FF4D56; /* lighter accent for highlights */
+  --color-accent: #374151; /* neutral gray (Tailwind gray-700) */
+  --color-accent-2: #555E6B; /* lighter gray for hover */
+  --color-accent-hover: #374151; /* keep same as primary for now */
+  --color-accent-hover-light: #E5E7EB; /* light gray for highlights */
   --color-footer: #374151; /* dark gray used for footer/backgrounds */
   --color-footer-light: #555E6B; /* lighter variant for interior CTAs (15% lighter than --color-footer) */
   --color-bg: #FFFFFF; /* page background */
@@ -144,8 +229,8 @@ button {
 
 .bg-accent {
   /* Premium solid accent background for buttons and accents. */
-  background-color: var(--color-accent-hover);
-  color: white;
+  background-color: #C3001F !important;
+  color: white !important;
 }
 
 /* Standard .btn utility for a premium-looking button (components may still use Tailwind) */
@@ -154,8 +239,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background-color: var(--color-accent-hover);
-  color: white;
+  /* No default background or color, let .btn-red/.btn-secondary control it */
   padding: 0.5rem 0.9rem;
   border-radius: 0; /* square edges */
   box-shadow: 0 10px 30px rgba(11,18,32,0.10);
@@ -164,29 +248,26 @@ button {
 }
 .btn:hover {
   box-shadow: 0 18px 48px rgba(11,18,32,0.12);
-  background-color: var(--color-accent-2);
 }
 .btn:active {
   box-shadow: 0 6px 18px rgba(11,18,32,0.06);
 }
 
 /* Secondary (ghost) button style for outlines/ghost links like "Sign in" */
-.btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  background-color: rgba(255,255,255,0.08);
-  color: white;
-  padding: 0.5rem 0.9rem;
-  border-radius: 0; /* keep square */
-  border: 1px solid rgba(255,255,255,0.28);
-  transition: background-color .14s ease, box-shadow .14s ease, color .14s ease;
+
+/* Transparent CTA button: transparent bg, white border (1px), white text (force override) */
+.btn.btn-secondary, a.btn.btn-secondary, button.btn.btn-secondary {
+  background-color: transparent !important;
+  color: #fff !important;
+  border: 1px solid #fff !important;
+  box-shadow: 0 4px 24px rgba(11,18,32,0.10) !important;
 }
-.btn-secondary:hover {
-  background-color: rgba(255,255,255,0.14);
-  color: white;
-  box-shadow: 0 8px 24px rgba(11,18,32,0.06);
+/* Transparent CTA button: custom hover/focus background (subtle white overlay, force override) */
+.btn.btn-secondary:hover, .btn.btn-secondary:focus, a.btn.btn-secondary:hover, a.btn.btn-secondary:focus, button.btn.btn-secondary:hover, button.btn.btn-secondary:focus {
+  background-color: rgba(255,255,255,0.22) !important;
+  color: #fff !important;
+  border-color: #fff !important;
+  box-shadow: 0 8px 32px rgba(255,255,255,0.10) !important;
 }
 
 /* Make native buttons and common button-like links square across the app.
@@ -255,11 +336,18 @@ button:focus, input[type="button"]:focus, input[type="submit"]:focus, .btn:focus
 /* For the user dropdown toggle: keep the avatar background stable on hover
    and only show a pointer + small chevron to indicate it's a dropdown. */
 .user-toggle { cursor: pointer; }
-.user-toggle .bg-accent, .user-toggle .bg-accent:hover {
-  background-color: var(--color-accent) !important;
+
+.user-toggle:hover .text-gray-900 { text-decoration: none; }
+/* FINAL, MAX-SPECIFICITY OVERRIDE: Always force .bg-accent to brand red, even inside .user-toggle, .page-non-landing, or any parent */
+.user-toggle .bg-accent,
+.user-toggle .bg-accent:hover,
+.page-non-landing .bg-accent,
+.page-non-landing .user-toggle .bg-accent,
+.bg-accent {
+  background-color: #C3001F !important;
+  color: #fff !important;
   box-shadow: none !important;
 }
-.user-toggle:hover .text-gray-900 { text-decoration: none; }
 
 /* Ensure the user-toggle button itself doesn't get the site's primary hover/focus styles */
 .user-toggle:hover,
@@ -285,12 +373,16 @@ button:focus, input[type="button"]:focus, input[type="submit"]:focus, .btn:focus
   box-shadow: none !important;
 }
 
-/* User initials background (top-right avatar) */
-.bg-user-initials {
-  /* Use footer dark gray for user initials background for contrast and
-     keep the initials readable */
-  background-color: var(--color-footer);
-  color: white;
+/* User initials background (top-right avatar) - always brand red */
+.bg-user-initials, .page-non-landing .bg-user-initials {
+  background-color: #C3001F !important;
+  color: #fff !important;
+}
+
+/* Logo background - always brand red */
+.bg-accent, .page-non-landing .bg-accent {
+  background-color: #C3001F !important;
+  color: #fff !important;
 }
 
 /* Opt-out helper: prevents broad `button:hover` rules from applying a red background

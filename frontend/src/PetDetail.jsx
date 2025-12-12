@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiFetch, API_BASE, apiUrl } from './api';
-import TopNav from './TopNav';
 
 
 import LogActivity from './LogActivity';
@@ -618,7 +617,6 @@ export default function PetDetail({ household, user, onSignOut }) {
 
   return (
     <div className="min-h-screen bg-white">
-      <TopNav user={user} household={household} onSignOut={onSignOut} />
 
       <main className="flex flex-col items-stretch pb-6">
         {/* Full-bleed header band */}
@@ -640,7 +638,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 </div>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-3 -right-3 md:-bottom-2 md:-right-2 bg-accent text-white rounded-full w-9 h-9 md:w-12 md:h-12 flex items-center justify-center cursor-pointer transition transform hover:scale-105 text-sm avatar-action z-20 ring-2 ring-white shadow"
+                  className="absolute -bottom-3 -right-3 md:-bottom-2 md:-right-2 btn rounded-full w-9 h-9 md:w-12 md:h-12 flex items-center justify-center cursor-pointer transition transform hover:scale-105 text-sm avatar-action z-20 ring-2 ring-white shadow"
                   type="button"
                   aria-label="Change photo"
                 >
@@ -685,7 +683,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                       <div className="mt-2 w-full">
                         <button
                           onClick={() => navigate(`/pet/${petId}/activities`)}
-                          className="w-full inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md bg-accent text-white text-sm font-semibold hover:opacity-90 transition cursor-pointer"
+                          className="w-full inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md btn text-sm font-semibold hover:opacity-90 transition cursor-pointer"
                           aria-label={`View ${pet.name}'s Activities`}
                           type="button"
                         >
@@ -810,7 +808,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 <button
                   onClick={saveSection}
                   disabled={savingSection}
-                  className="flex-1 bg-accent text-white font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                  className="flex-1 btn font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
                 >
                   {savingSection ? 'Saving...' : 'Save'}
                 </button>
@@ -960,7 +958,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   <button
                     onClick={saveSection}
                     disabled={savingSection}
-                    className="flex-1 bg-accent text-white font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                    className="flex-1 btn font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
                   >
                     {savingSection ? 'Saving...' : 'Save'}
                   </button>
@@ -986,7 +984,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                     <p className="text-lg text-gray-900">{pet.vetContact}</p>
                     <a
                       href={`tel:${pet.vetContact}`}
-                      className="mt-3 inline-flex items-center gap-2 bg-accent text-white font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
+                      className="mt-3 inline-flex items-center gap-2 btn btn-red font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
                       aria-label={`Call veterinarian at ${pet.vetContact} (Emergency)`}
                     >
                       <svg className="w-4 h-4 text-white flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1051,7 +1049,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   <button
                     onClick={saveSection}
                     disabled={savingSection}
-                    className="flex-1 bg-accent text-white font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                    className="flex-1 btn font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
                   >
                     {savingSection ? 'Saving...' : 'Save'}
                   </button>

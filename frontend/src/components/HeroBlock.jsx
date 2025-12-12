@@ -25,8 +25,8 @@ export default function HeroBlock() {
 
         {/* Centered CTA buttons across the hero width */}
         <div className="mt-8 cta-equal">
-          <Link to="/create-household" className="inline-flex items-center bg-accent text-white px-6 py-4 font-semibold shadow-lg text-lg btn">Get started — it's free</Link>
-          <Link to="/login" className="inline-flex items-center px-6 py-4 text-white text-lg btn-secondary">Sign in</Link>
+          <Link to="/create-household" className="btn btn-red text-lg font-normal px-8 py-5 min-w-[220px]">Get started — it's free</Link>
+          <Link to="/login" className="btn btn-secondary text-lg font-normal px-8 py-5 min-w-[220px]">Sign in</Link>
         </div>
       </div>
     </section>

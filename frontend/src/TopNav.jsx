@@ -9,15 +9,18 @@ export default function TopNav({ user, household, onSignOut }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Toggle a body class so CSS can target non-landing pages.
+  // Close dropdown on route change
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
+
+  // Always apply .page-non-landing for consistent nav style, even on landing
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    if (location?.pathname && location.pathname !== '/') {
-      document.body.classList.add('page-non-landing');
-    } else {
+    document.body.classList.add('page-non-landing');
+    return () => {
       document.body.classList.remove('page-non-landing');
-    }
-    return () => { /* keep body class in sync on unmount */ };
+    };
   }, [location?.pathname]);
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
@@ -62,7 +65,7 @@ export default function TopNav({ user, household, onSignOut }) {
   }, [menuRef]);
 
   return (
-    <nav className={`relative z-20 h-20 md:h-20 ${location?.pathname !== '/' ? 'border-b border-gray-100' : ''}`}>
+    <nav className={`relative z-9999 h-20 md:h-20 ${location?.pathname !== '/' ? 'border-b border-gray-100' : ''}`} style={{ pointerEvents: 'auto' }}>
       {/**
        * When a user is logged in we prefer the dashboard-style top menu that
        * stretches across the full width. For logged-out users keep the narrower
@@ -118,9 +121,13 @@ export default function TopNav({ user, household, onSignOut }) {
               </button>
 
               {open && (
-                <div className="absolute right-0 top-full mt-3 w-44 bg-white rounded-lg shadow-lg z-50">
-                  <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => setOpen(false)}>My Profile</Link>
-                  <Link to="/household-settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={() => setOpen(false)}>Settings</Link>
+                <div
+                  className="absolute right-0 top-full mt-3 w-44 bg-white rounded-lg shadow-lg z-99999"
+                  style={{ pointerEvents: 'auto' }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dropdown-item" onClick={() => setOpen(false)}>My Profile</Link>
+                  <Link to="/household-settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dropdown-item" onClick={() => setOpen(false)}>Settings</Link>
                   <button
                     onClick={() => { setOpen(false); onSignOut && onSignOut(); }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dropdown-item"
@@ -136,7 +143,7 @@ export default function TopNav({ user, household, onSignOut }) {
           ) : (
             <div className="flex items-center gap-4">
               <Link to="/login" className="text-sm text-accent hover:underline">Log in</Link>
-              <Link to="/create-household" className="hidden sm:inline-block bg-accent text-white text-sm px-4 py-2 rounded-md">Get started</Link>
+              <Link to="/create-household" className="hidden sm:inline-block btn-red text-white text-sm px-4 py-2 rounded-md">Get started</Link>
             </div>
           )}
         </div>

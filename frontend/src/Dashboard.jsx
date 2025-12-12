@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiFetch, API_BASE } from './api';
-import TopNav from './TopNav';
 import { getFallbackFlower, assignHouseholdFlowers, FLOWER_LIST } from './flowerIcon';
 // ...existing code...
 
@@ -43,7 +42,6 @@ export default function Dashboard({ user, household, onSignOut }) {
 
   return (
     <div className="min-h-screen bg-white">
-      <TopNav user={user} household={household} onSignOut={onSignOut} />
 
       <main className="flex justify-center py-12">
         <div className="max-w-6xl px-6 w-full">
@@ -65,7 +63,7 @@ export default function Dashboard({ user, household, onSignOut }) {
             <p className="text-gray-500 mb-2">Welcome! Let's set up your first pet.</p>
             <button
               onClick={() => navigate('/add-pet', { state: { household } })}
-              className="bg-accent text-white font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition"
+              className="btn font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition"
             >
               Add Your First Pet
             </button>
@@ -118,7 +116,7 @@ export default function Dashboard({ user, household, onSignOut }) {
             <div className="flex justify-start mt-12 mb-8">
               <button
                 onClick={() => navigate('/add-pet', { state: { household } })}
-                className="bg-accent text-white text-lg font-semibold px-5 py-2 hover:opacity-90 transition shadow rounded-lg"
+                className="btn text-lg font-semibold px-5 py-2 hover:opacity-90 transition shadow rounded-lg"
                 style={{ letterSpacing: '0.02em' }}
               >
                 + Add Pet

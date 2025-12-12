@@ -150,7 +150,7 @@ export default function EditActivityModal({ activity, onActivityUpdated, onClose
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-accent text-gray-900 font-semibold py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50"
+              className="flex-1 btn font-semibold py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50"
             >
               {loading ? 'Saving...' : 'Save'}
             </button>

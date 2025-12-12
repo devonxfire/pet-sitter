@@ -1,6 +1,5 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import TopNav from './TopNav'
 import HeroBlock from './components/HeroBlock'
 import FeaturesBlock from './components/FeaturesBlock'
 import TimelineBlock from './components/TimelineBlock'
@@ -8,7 +7,6 @@ import TimelineBlock from './components/TimelineBlock'
 export default function Landing({ user, onSignOut }) {
   return (
     <div className="min-h-screen bg-white text-gray-900">
-      <TopNav user={user} onSignOut={onSignOut} />
 
       <main>
         <HeroBlock />
