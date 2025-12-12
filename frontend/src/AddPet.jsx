@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiFetch } from './api';
+import AddPetWizardModal from './components/AddPetWizardModal';
+import './components/AddPetWizardModal.css';
 // PlacesSearch removed — address entered manually now
 
 export default function AddPet({ user, household, onSignOut }) {
@@ -8,6 +10,11 @@ export default function AddPet({ user, household, onSignOut }) {
 	const location = useLocation();
 	const householdFromState = location.state?.household;
 	const activeHousehold = household || householdFromState;
+
+	// Add Pet Wizard modal state
+	const [showWizard, setShowWizard] = useState(true);
+	const handleWizardClose = () => setShowWizard(false);
+	const handleWizardNext = () => setShowWizard(false);
 
 	const [petName, setPetName] = useState('');
 	const [species, setSpecies] = useState('dog');
@@ -251,20 +258,25 @@ export default function AddPet({ user, household, onSignOut }) {
 	// Places/mapbox functionality removed. Users enter address manually.
 
 	if (!activeHousehold) {
-		return (
-			<div className="min-h-screen bg-white flex items-center justify-center">
-				<div className="text-center">
-					<p className="text-red-500 mb-4">No household found</p>
-					<button
-						type="button"
-						onClick={() => navigate('/dashboard')}
-						className="btn"
-					>
-						Go back
-					</button>
-				</div>
-			</div>
-		);
+	   return (
+		   <div className="min-h-screen bg-white flex items-center justify-center">
+			   <div className="text-center">
+				   <p className="text-red-500 mb-4">No household found</p>
+				   <button
+					   type="button"
+					   onClick={() => navigate('/dashboard')}
+					   className="btn"
+				   >
+					   Go back
+				   </button>
+			   </div>
+		   </div>
+	   );
+	}
+
+	// Show wizard modal exclusively until Next is clicked
+	if (showWizard) {
+		return <AddPetWizardModal open={true} onNext={handleWizardNext} onClose={handleWizardClose} />;
 	}
 
 	return (
@@ -291,26 +303,6 @@ export default function AddPet({ user, household, onSignOut }) {
 									className="w-full px-4 py-2 rounded-none border border-gray-200 focus:border-accent focus:outline-none"
 									required
 								/>
-							</div>
-
-							<div className="mt-4">
-								<label className="block text-sm font-medium text-gray-900 mb-2">Species *</label>
-								<select
-									value={species}
-									onChange={(e) => setSpecies(e.target.value)}
-									className="w-full px-4 py-2 rounded-none border border-gray-200 focus:border-accent focus:outline-none"
-									required
-								>
-									<option value="dog">Dog</option>
-									<option value="cat">Cat</option>
-									<option value="bird">Bird</option>
-									<option value="rabbit">Rabbit</option>
-									<option value="hamster">Hamster</option>
-									<option value="guinea pig">Guinea Pig</option>
-									<option value="fish">Fish</option>
-									<option value="reptile">Reptile</option>
-									<option value="other">Other</option>
-								</select>
 							</div>
 
 							<div className="mt-4 relative">
@@ -475,5 +467,4 @@ export default function AddPet({ user, household, onSignOut }) {
 		</div>
 	);
 }
-
 
