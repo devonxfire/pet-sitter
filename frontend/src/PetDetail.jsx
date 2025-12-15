@@ -717,8 +717,55 @@ export default function PetDetail({ household, user, onSignOut }) {
           </div>
         </div>
 
-        {/* Editing form (keeps existing behavior) */}
-        <div className="mx-auto max-w-6xl px-6 w-full">
+
+
+        {/* Notes block removed (now shown in header) */}
+
+        {/* Activities moved to their own page. */}
+        {/* General Information Section */}
+        <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => toggleSection('general')}
+                aria-expanded={!collapsedSections.general}
+                aria-label={collapsedSections.general ? 'Expand general section' : 'Collapse general section'}
+                className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition focus:outline-none focus:ring-0 no-global-accent no-accent-hover"
+              >
+                <span className="text-sm">{collapsedSections.general ? '+' : '−'}</span>
+              </button>
+              <h2 className="text-2xl font-bold text-gray-900">General Information</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              {editingSection === 'general' && (
+                <>
+                  <button
+                    onClick={cancelEditingSection}
+                    className="bg-gray-100 text-gray-900 font-semibold px-3 py-2 rounded-lg text-sm hover:bg-gray-200 transition mr-1"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveSection}
+                    disabled={savingSection}
+                    className="btn font-semibold px-3 py-2 rounded-lg text-sm hover:opacity-90 transition disabled:opacity-50 mr-2"
+                  >
+                    {savingSection ? 'Saving...' : 'Save'}
+                  </button>
+                </>
+              )}
+              {editingSection !== 'general' && (
+                <button
+                  onClick={() => startEditingSection('general')}
+                  className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover cursor-pointer"
+                  style={{ cursor: 'pointer' }}
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+          </div>
+
           {editingSection === 'general' ? (
             <div className="space-y-6 mt-6">
               {/* Species */}
@@ -802,58 +849,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
                 />
               </div>
-
-              {/* Save/Cancel Buttons */}
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={cancelEditingSection}
-                  className="flex-1 bg-gray-100 text-gray-900 font-semibold py-2 rounded-xl hover:bg-gray-200 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveSection}
-                  disabled={savingSection}
-                  className="flex-1 btn font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
-                >
-                  {savingSection ? 'Saving...' : 'Save'}
-                </button>
-              </div>
             </div>
-          ) : (
-            <div />
-          )}
-        </div>
-
-        {/* Notes block removed (now shown in header) */}
-
-        {/* Activities moved to their own page. */}
-        {/* General Information Section */}
-        <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => toggleSection('general')}
-                aria-expanded={!collapsedSections.general}
-                aria-label={collapsedSections.general ? 'Expand general section' : 'Collapse general section'}
-                className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition focus:outline-none focus:ring-0 no-global-accent no-accent-hover"
-              >
-                <span className="text-sm">{collapsedSections.general ? '+' : '−'}</span>
-              </button>
-              <h2 className="text-2xl font-bold text-gray-900">General Information</h2>
-            </div>
-            {editingSection !== 'general' && (
-                <button
-                  onClick={() => startEditingSection('general')}
-                  className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover"
-                >
-                  Edit
-                </button>
-            )}
-          </div>
-
-          {editingSection === 'general' ? (
-            <div />
           ) : (!collapsedSections.general && (
             <div className="space-y-6">
               <div>
@@ -953,22 +949,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   />
                 </div>
 
-                {/* Save/Cancel Buttons */}
-                <div className="flex gap-3 pt-4">
-                  <button
-                    onClick={cancelEditingSection}
-                    className="flex-1 bg-gray-100 text-gray-900 font-semibold py-2 rounded-xl hover:bg-gray-200 transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={saveSection}
-                    disabled={savingSection}
-                    className="flex-1 btn font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
-                  >
-                    {savingSection ? 'Saving...' : 'Save'}
-                  </button>
-                </div>
+                {/* Save/Cancel Buttons moved to header */}
               </div>
             ) : ( !collapsedSections.vet && (
               <div className="space-y-6">
@@ -1044,22 +1025,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   />
                 </div>
 
-                {/* Save/Cancel Buttons */}
-                <div className="flex gap-3 pt-4">
-                  <button
-                    onClick={cancelEditingSection}
-                    className="flex-1 bg-gray-100 text-gray-900 font-semibold py-2 rounded-xl hover:bg-gray-200 transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={saveSection}
-                    disabled={savingSection}
-                    className="flex-1 btn font-semibold py-2 rounded-xl hover:opacity-90 transition disabled:opacity-50"
-                  >
-                    {savingSection ? 'Saving...' : 'Save'}
-                  </button>
-                </div>
+                {/* Save/Cancel Buttons moved to header */}
               </div>
             ) : ( !collapsedSections.food && (
               <div>

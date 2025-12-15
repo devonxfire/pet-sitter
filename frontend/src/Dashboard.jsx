@@ -72,6 +72,15 @@ export default function Dashboard({ user, household, onSignOut }) {
   const handleWizardNext = (data) => {
     setShowWizard(false);
     setWizardData(data);
+    setPets((prev) => {
+      // If pet exists (update), replace it; else, add new
+      const exists = prev.some((p) => p.id === data.id);
+      if (exists) {
+        return prev.map((p) => (p.id === data.id ? data : p));
+      } else {
+        return [...prev, data];
+      }
+    });
     navigate('/dashboard');
   };
 
