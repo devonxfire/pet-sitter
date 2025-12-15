@@ -616,7 +616,7 @@ export default function PetDetail({ household, user, onSignOut }) {
   
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white page-non-landing">
 
       <main className="flex flex-col items-stretch pb-6">
         {/* Full-bleed header band */}
@@ -741,14 +741,15 @@ export default function PetDetail({ household, user, onSignOut }) {
                 <>
                   <button
                     onClick={cancelEditingSection}
-                    className="bg-gray-100 text-gray-900 font-semibold px-3 py-2 rounded-lg text-sm hover:bg-gray-200 transition mr-1"
+                    className="inline-flex items-center gap-2 btn btn-red font-semibold px-6 py-2 rounded-xl mr-1 cursor-pointer !bg-[#C3001F] !text-white !border-0 hover:!bg-[#ED1C24]"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={saveSection}
                     disabled={savingSection}
-                    className="btn font-semibold px-3 py-2 rounded-lg text-sm hover:opacity-90 transition disabled:opacity-50 mr-2"
+                    className="btn font-semibold px-3 py-2 rounded-lg text-sm hover:opacity-90 transition disabled:opacity-50 mr-2 cursor-pointer"
+                    style={{ cursor: 'pointer' }}
                   >
                     {savingSection ? 'Saving...' : 'Save'}
                   </button>
