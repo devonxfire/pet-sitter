@@ -1,13 +1,61 @@
-              // ...existing code...
 
 import React, { useState, useEffect, useRef } from 'react';
 import heic2any from 'heic2any';
 import { apiFetch } from '../api';
 
 
-
 export default function AddPetWizardModal({ open, onClose, onNext, previousVetInfo, wizardData, householdId, onDraftSave }) {
-  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+        // Validation state
+        const [validationError, setValidationError] = useState('');
+        const [triedNext, setTriedNext] = useState(false);
+
+        // Validation logic for each step
+        const isStepValid = () => {
+          if (step === 2) {
+            // General info: petName, age, species, breed, weight
+            if (!form.petName || !form.age || !form.species || !form.breed || !form.weight) return false;
+            return true;
+          }
+          if (step === 3) {
+            // Vet info: not required
+            return true;
+          }
+          if (step === 4) {
+            // Food: not required
+            return true;
+          }
+          if (step === 5) {
+            // Avatar: not required
+            return true;
+          }
+          return true;
+        };
+      // Handler for selecting a breed from suggestions
+      const chooseBreed = (breed) => {
+        setForm((prev) => ({ ...prev, breed }));
+        setShowBreedSuggestions(false);
+        setFocusedSuggestion(-1);
+      };
+    // Ref for breed suggestions dropdown
+    const suggestionsRef = useRef(null);
+  // Advance to next step or finish
+  const handleNext = async () => {
+    setTriedNext(true);
+    setValidationError('');
+    if (!isStepValid()) {
+      setValidationError('Please fill in all required fields before continuing.');
+      return;
+    }
+    setTriedNext(false);
+    if (step < 5) {
+      setStep(step + 1);
+    } else {
+      const pet = await createPet();
+      if (onNext && pet) onNext(pet);
+      onClose();
+    }
+  };
+
   // If resuming a draft, start at the correct step and prefill form
   const initialForm = wizardData && wizardData.resumeDraft ? {
     petName: wizardData.name || '',
@@ -36,6 +84,117 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
     avatar: null,
   };
   const [form, setForm] = useState(initialForm);
+
+  // Fetch breed list based on species
+  useEffect(() => {
+    const species = form.species || 'dog';
+    const storageKey = `petSitter:breeds:${species}`;
+    const capitalizeWords = (s) =>
+      s.split(' ').map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w)).join(' ');
+    const setList = (list) => {
+      setBreedsList(list);
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(list));
+      } catch (err) {}
+    };
+    try {
+      const cached = localStorage.getItem(storageKey);
+      if (cached) {
+        setBreedsList(JSON.parse(cached));
+        return;
+      }
+    } catch (err) {}
+    if (species === 'dog') {
+      fetch('https://dog.ceo/api/breeds/list/all')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.message) {
+            const breeds = Object.entries(data.message)
+              .flatMap(([b, subs]) => {
+                if (Array.isArray(subs) && subs.length) {
+                  return subs.map((sub) => capitalizeWords(`${sub} ${b}`));
+                }
+                return capitalizeWords(b);
+              })
+              .sort((a, z) => a.localeCompare(z));
+            setList(breeds);
+          }
+        })
+        .catch(() => {});
+      return;
+    }
+    if (species === 'cat') {
+      fetch('https://api.thecatapi.com/v1/breeds')
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            const breeds = data.map((b) => capitalizeWords(b.name)).sort((a, z) => a.localeCompare(z));
+            setList(breeds);
+          }
+        })
+        .catch(() => {});
+      return;
+    }
+    if (species === 'bird') {
+      const birds = [
+        'Budgerigar', 'Cockatiel', 'Cockatoo', 'Macaw', 'Conure', 'Lovebird', 'Finch', 'Canary', 'African Grey', 'Parakeet',
+      ];
+      setList(birds.sort((a, z) => a.localeCompare(z)));
+      return;
+    }
+    setBreedsList([]);
+  }, [form.species]);
+          // --- Breed autocomplete input handler ---
+          const updateBreedInput = (value) => {
+            setForm((prev) => ({ ...prev, breed: value }));
+            setFocusedSuggestion(-1);
+            if (!value) {
+              setBreedSuggestions([]);
+              setShowBreedSuggestions(false);
+              return;
+            }
+            const q = value.toLowerCase();
+            const matches = breedsList.filter((b) => b.toLowerCase().includes(q)).slice(0, 8);
+            setBreedSuggestions(matches);
+            setShowBreedSuggestions(matches.length > 0);
+          };
+        // --- Breed autocomplete state ---
+        const [showBreedSuggestions, setShowBreedSuggestions] = useState(false);
+        const [breedSuggestions, setBreedSuggestions] = useState([]);
+        const [breedsList, setBreedsList] = useState([]);
+        const [focusedSuggestion, setFocusedSuggestion] = useState(-1);
+      // --- Breed autocomplete keydown handler ---
+      const handleBreedKeyDown = (e) => {
+        if (!showBreedSuggestions || breedSuggestions.length === 0) return;
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setFocusedSuggestion((prev) => {
+            const next = Math.min(prev + 1, breedSuggestions.length - 1);
+            const el = document.getElementById(`wizard-breed-suggestion-${next}`);
+            if (el) el.scrollIntoView({ block: 'nearest' });
+            return next;
+          });
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setFocusedSuggestion((prev) => {
+            const next = Math.max(prev - 1, 0);
+            const el = document.getElementById(`wizard-breed-suggestion-${next}`);
+            if (el) el.scrollIntoView({ block: 'nearest' });
+            return next;
+          });
+        } else if (e.key === 'Enter') {
+          if (focusedSuggestion >= 0 && focusedSuggestion < breedSuggestions.length) {
+            e.preventDefault();
+            chooseBreed(breedSuggestions[focusedSuggestion]);
+          }
+        } else if (e.key === 'Escape') {
+          setShowBreedSuggestions(false);
+          setFocusedSuggestion(-1);
+        }
+      };
+    // Ref for breed input (for autocomplete/focus)
+    const breedInputRef = useRef(null);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const prevAvatarUrl = useRef(null);
   const [step, setStep] = useState(wizardData && wizardData.resumeDraft ? 2 : 1);
@@ -54,7 +213,7 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
       const hid = householdId || wizardData?.householdId || wizardData?.household_id || window.householdId;
       if (!hid) {
         alert('No household ID found for creating pet.');
-        return;
+        return null;
       }
       const payload = {
         name: form.petName,
@@ -99,35 +258,16 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
             body: formData
           });
           const text = await response.text();
-          let data;
-          try {
-            data = text ? JSON.parse(text) : {};
-          } catch (parseErr) {
-            throw new Error(text || 'Failed to upload photo');
-          }
-          if (!response.ok) {
-            throw new Error(data?.error || 'Failed to upload photo');
-          }
-          pet = data;
+          // handle response if needed
         } catch (err) {
-          alert('Failed to upload avatar: ' + (err?.error || err?.message || err));
+          console.error('Failed to upload avatar:', err);
         }
       }
-
-      if (onNext && pet) {
-        onNext(pet);
-      }
+      return pet;
     } catch (err) {
-      alert('Failed to add pet: ' + (err?.error || err?.message || err));
-    }
-  };
-
-  const handleNext = (e) => {
-    if (e) e.preventDefault();
-    if (step < 5) {
-      setStep(step + 1);
-    } else {
-      createPet();
+      console.error('Failed to create pet:', err);
+      alert('Failed to create pet: ' + (err?.error || err?.message || err));
+      return null;
     }
   };
 
@@ -350,14 +490,61 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
               </div>
               <div className="mb-3">
                 <label className="block text-sm font-medium text-gray-900 mb-1">Breed *</label>
-                <input
-                  type="text"
-                  name="breed"
-                  value={form.breed}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 rounded border border-gray-200 focus:border-accent focus:outline-none"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="breed"
+                    ref={breedInputRef}
+                    value={form.breed}
+                    onChange={e => updateBreedInput(e.target.value)}
+                    onKeyDown={handleBreedKeyDown}
+                    onFocus={() => {
+                      console.log('[onFocus] breedsList.length:', breedsList.length, 'form.breed:', form.breed);
+                      if (breedsList.length && form.breed) {
+                        updateBreedInput(form.breed);
+                      } else if (breedsList.length && !form.breed) {
+                        setBreedSuggestions(breedsList.slice(0, 8));
+                        setShowBreedSuggestions(true);
+                        console.log('[onFocus] showing top 8 breeds:', breedsList.slice(0, 8));
+                      }
+                    }}
+                    onBlur={() => setTimeout(() => setShowBreedSuggestions(false), 150)}
+                    placeholder="Start typing to find your breed..."
+                    className="w-full px-3 py-2 rounded border border-gray-200 focus:border-accent focus:outline-none"
+                    required
+                  />
+                  {showBreedSuggestions && (
+                    !breedsList.length ? (
+                      <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow z-50 px-3 py-2 text-sm text-gray-500">Loading breeds...</div>
+                    ) : (
+                      <ul
+                        role="listbox"
+                        aria-label="Breed suggestions"
+                        className="absolute left-0 right-0 mt-1 max-h-48 overflow-auto bg-white border border-gray-200 rounded shadow z-50"
+                        ref={suggestionsRef}
+                      >
+                        {breedSuggestions.map((b, i) => {
+                          const isFocused = i === focusedSuggestion;
+                          return (
+                            <li
+                              id={`wizard-breed-suggestion-${i}`}
+                              key={b}
+                              role="option"
+                              aria-selected={isFocused}
+                              className={`px-3 py-2 cursor-pointer text-sm ${isFocused ? 'btn' : 'hover:bg-gray-100'}`}
+                              onMouseDown={ev => {
+                                ev.preventDefault();
+                                chooseBreed(b);
+                              }}
+                            >
+                              {b}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )
+                  )}
+                </div>
               </div>
               <div className="mb-3">
                 <label className="block text-sm font-medium text-gray-900 mb-1">Weight *</label>
@@ -467,6 +654,11 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
                 </div>
               </div>
             </form>
+          )}
+          {triedNext && validationError && (
+            <div className="w-full text-center text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1 mb-2 animate-pulse" style={{fontSize:'0.97em'}}>
+              <span role="img" aria-label="Warning" style={{marginRight:4}}>⚠️</span>{validationError}
+            </div>
           )}
           <div className="flex items-center justify-between w-full mt-8" style={{ minHeight: 44 }}>
             <button

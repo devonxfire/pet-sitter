@@ -8,11 +8,136 @@ import ActivityView from './ActivityView';
 import ACTIVITY_TYPES from './activityTypes';
 import { Link } from 'react-router-dom';
 
+
+
+// ...existing code...
+
+
 export default function PetDetail({ household, user, onSignOut }) {
+  // --- All state/refs must be declared before use ---
+  const [editValues, setEditValues] = useState({});
+  const [pet, setPet] = useState(null);
+  // Fetch breed list based on species (for edit mode)
+  useEffect(() => {
+    const species = editValues.species || pet?.species || 'dog';
+              const storageKey = `petSitter:breeds:${species}`;
+              const capitalizeWords = (s) =>
+                s.split(' ').map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w)).join(' ');
+              const setList = (list) => {
+                setBreedsList(list);
+                try {
+                  localStorage.setItem(storageKey, JSON.stringify(list));
+                } catch (err) {}
+              };
+              try {
+                const cached = localStorage.getItem(storageKey);
+                if (cached) {
+                  setBreedsList(JSON.parse(cached));
+                  return;
+                }
+              } catch (err) {}
+              if (species === 'dog') {
+                fetch('https://dog.ceo/api/breeds/list/all')
+                  .then((res) => res.json())
+                  .then((data) => {
+                    if (data && data.message) {
+                      const breeds = Object.entries(data.message)
+                        .flatMap(([b, subs]) => {
+                          if (Array.isArray(subs) && subs.length) {
+                            return subs.map((sub) => capitalizeWords(`${sub} ${b}`));
+                          }
+                          return capitalizeWords(b);
+                        })
+                        .sort((a, z) => a.localeCompare(z));
+                      setList(breeds);
+                    }
+                  })
+                  .catch(() => {});
+                return;
+              }
+              if (species === 'cat') {
+                fetch('https://api.thecatapi.com/v1/breeds')
+                  .then((res) => res.json())
+                  .then((data) => {
+                    if (Array.isArray(data)) {
+                      const breeds = data.map((b) => capitalizeWords(b.name)).sort((a, z) => a.localeCompare(z));
+                      setList(breeds);
+                    }
+                  })
+                  .catch(() => {});
+                return;
+              }
+              if (species === 'bird') {
+                const birds = [
+                  'Budgerigar', 'Cockatiel', 'Cockatoo', 'Macaw', 'Conure', 'Lovebird', 'Finch', 'Canary', 'African Grey', 'Parakeet',
+                ];
+                setList(birds.sort((a, z) => a.localeCompare(z)));
+                return;
+              }
+              setBreedsList([]);
+            }, [editValues.species, pet?.species]);
+          // --- Breed autocomplete input handler ---
+          const updateBreedInput = (value) => {
+            setEditValues((prev) => ({ ...prev, breed: value }));
+            setFocusedSuggestion(-1);
+            if (!value) {
+              setBreedSuggestions([]);
+              setShowBreedSuggestions(false);
+              return;
+            }
+            const q = value.toLowerCase();
+            const matches = breedsList.filter((b) => b.toLowerCase().includes(q)).slice(0, 8);
+            setBreedSuggestions(matches);
+            setShowBreedSuggestions(matches.length > 0);
+          };
+        // --- Breed autocomplete state ---
+        const [showBreedSuggestions, setShowBreedSuggestions] = useState(false);
+        const [breedSuggestions, setBreedSuggestions] = useState([]);
+        const [breedsList, setBreedsList] = useState([]);
+        const [focusedSuggestion, setFocusedSuggestion] = useState(-1);
+      // --- Breed autocomplete keydown handler ---
+      const handleBreedKeyDown = (e) => {
+        if (!showBreedSuggestions || breedSuggestions.length === 0) return;
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setFocusedSuggestion((prev) => {
+            const next = Math.min(prev + 1, breedSuggestions.length - 1);
+            const el = document.getElementById(`petdetail-breed-suggestion-${next}`);
+            if (el) el.scrollIntoView({ block: 'nearest' });
+            return next;
+          });
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setFocusedSuggestion((prev) => {
+            const next = Math.max(prev - 1, 0);
+            const el = document.getElementById(`petdetail-breed-suggestion-${next}`);
+            if (el) el.scrollIntoView({ block: 'nearest' });
+            return next;
+          });
+        } else if (e.key === 'Enter') {
+          if (focusedSuggestion >= 0 && focusedSuggestion < breedSuggestions.length) {
+            e.preventDefault();
+            chooseBreed(breedSuggestions[focusedSuggestion]);
+          }
+        } else if (e.key === 'Escape') {
+          setShowBreedSuggestions(false);
+          setFocusedSuggestion(-1);
+        }
+      };
+
+      // --- Breed autocomplete select handler ---
+      const chooseBreed = (breed) => {
+        setEditValues((prev) => ({ ...prev, breed }));
+        setShowBreedSuggestions(false);
+        setFocusedSuggestion(-1);
+      };
+    // Ref for breed input (for autocomplete/focus)
+    const breedInputRef = useRef(null);
+    // Ref for breed suggestions dropdown (for accessibility/scroll)
+    const suggestionsRef = useRef(null);
   const navigate = useNavigate();
   const { petId } = useParams();
   const fileInputRef = useRef(null);
-  const [pet, setPet] = useState(null);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,7 +156,6 @@ export default function PetDetail({ household, user, onSignOut }) {
   const [showManageFavourites, setShowManageFavourites] = useState(false);
   const favouritesRef = useRef(null);
   const [editingSection, setEditingSection] = useState(null); // 'general', 'vet', 'food'
-  const [editValues, setEditValues] = useState({});
   const [savingSection, setSavingSection] = useState(false);
   const photoContainerRef = useRef(null);
   const [weightUnit, setWeightUnit] = useState('lbs'); // State for weight unit selection
@@ -741,7 +865,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 <>
                   <button
                     onClick={cancelEditingSection}
-                    className="inline-flex items-center gap-2 btn btn-red font-semibold px-6 py-2 rounded-xl mr-1 cursor-pointer !bg-[#C3001F] !text-white !border-0 hover:!bg-[#ED1C24]"
+                    className="inline-flex items-center gap-2 btn btn-red font-semibold px-6 py-2 rounded-xl mr-1 cursor-pointer bg-[#C3001F]! text-white! border-0! hover:bg-[#ED1C24]!"
                   >
                     Cancel
                   </button>
@@ -792,13 +916,52 @@ export default function PetDetail({ household, user, onSignOut }) {
               {/* Breed */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">Breed</label>
-                <input
-                  type="text"
-                  value={editValues.breed}
-                  onChange={(e) => setEditValues({ ...editValues, breed: e.target.value })}
-                  placeholder="e.g., Labrador Retriever"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    ref={breedInputRef}
+                    value={editValues.breed}
+                    onChange={e => updateBreedInput(e.target.value)}
+                    onKeyDown={handleBreedKeyDown}
+                    onFocus={() => {
+                      if (breedsList.length && editValues.breed) updateBreedInput(editValues.breed);
+                      else if (breedsList.length && !editValues.breed) {
+                        setBreedSuggestions(breedsList.slice(0, 8));
+                        setShowBreedSuggestions(true);
+                      }
+                    }}
+                    onBlur={() => setTimeout(() => setShowBreedSuggestions(false), 150)}
+                    placeholder="Start typing to find your breed..."
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
+                  />
+                  {showBreedSuggestions && breedsList.length > 0 && (
+                    <ul
+                      role="listbox"
+                      aria-label="Breed suggestions"
+                      className="absolute left-0 right-0 mt-1 max-h-48 overflow-auto bg-white border border-gray-200 rounded shadow z-50"
+                      ref={suggestionsRef}
+                    >
+                      {breedSuggestions.map((b, i) => {
+                        const isFocused = i === focusedSuggestion;
+                        return (
+                          <li
+                            id={`petdetail-breed-suggestion-${i}`}
+                            key={b}
+                            role="option"
+                            aria-selected={isFocused}
+                            className={`px-3 py-2 cursor-pointer text-sm ${isFocused ? 'btn' : 'hover:bg-gray-100'}`}
+                            onMouseDown={ev => {
+                              ev.preventDefault();
+                              chooseBreed(b);
+                            }}
+                          >
+                            {b}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
               </div>
 
               {/* Age and Weight */}
@@ -881,7 +1044,7 @@ export default function PetDetail({ household, user, onSignOut }) {
 
               <div>
                 <p className="text-sm text-gray-500">Notes</p>
-                <p className="text-lg text-gray-900 whitespace-pre-wrap break-words">{pet?.notes || '-'}</p>
+                <p className="text-lg text-gray-900 whitespace-pre-wrap wrap-break-word">{pet?.notes || '-'}</p>
               </div>
             </div>
           ))}
@@ -975,7 +1138,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                       className="mt-3 inline-flex items-center gap-2 btn btn-red font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
                       aria-label={`Call veterinarian at ${pet.vetContact} (Emergency)`}
                     >
-                      <svg className="w-4 h-4 text-white flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <svg className="w-4 h-4 text-white shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="M21 16.5v3a1.5 1.5 0 0 1-1.76 1.48c-2.13-.32-4.14-1.18-5.99-2.41a15.08 15.08 0 0 1-5.15-5.15C7.18 10.9 6.32 8.89 6 6.76A1.5 1.5 0 0 1 7.48 5H10.5a1.5 1.5 0 0 1 1.5 1.2c.12.82.39 1.62.8 2.35a1.5 1.5 0 0 1-.33 1.62l-1.2 1.2a11.99 11.99 0 0 0 5.15 5.15l1.2-1.2a1.5 1.5 0 0 1 1.62-.33c.73.41 1.53.68 2.35.8A1.5 1.5 0 0 1 21 16.5z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                       <span>Call Vet Now (Emergency)</span>
