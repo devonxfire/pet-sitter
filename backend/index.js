@@ -1,3 +1,6 @@
+// ...existing code...
+// ...existing code...
+// ...existing code...
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -585,13 +588,17 @@ app.get('/api/households/:householdId/pets', authenticateToken, async (req, res)
       return res.status(403).json({ error: 'Access denied to this household' });
     }
 
+    // Support filtering by draft status: /api/households/:householdId/pets?draft=true|false
+    let draftFilter = {};
+    if (typeof req.query.draft !== 'undefined') {
+      draftFilter.draft = req.query.draft === 'true';
+    }
     const pets = await prisma.pet.findMany({
-      where: { householdId: parseInt(householdId) },
+      where: { householdId: parseInt(householdId), ...draftFilter },
       include: {
         activityTypes: true
       }
     });
-
     res.json(pets);
   } catch (error) {
     console.error('Get pets error:', error);
@@ -602,7 +609,7 @@ app.get('/api/households/:householdId/pets', authenticateToken, async (req, res)
 app.post('/api/households/:householdId/pets', authenticateToken, async (req, res) => {
   try {
     const { householdId } = req.params;
-    const { name, species, breed, age, weight, photoUrl, notes, vetName, vetLocation, vetContact, primaryFood } = req.body;
+    const { name, species, breed, age, weight, photoUrl, notes, vetName, vetLocation, vetContact, primaryFood, draft } = req.body;
 
     if (!name || !species) {
       return res.status(400).json({ error: 'Pet name and species are required' });
@@ -634,6 +641,7 @@ app.post('/api/households/:householdId/pets', authenticateToken, async (req, res
         vetContact,
         primaryFood,
         weightUnit: req.body.weightUnit || 'lbs',
+        draft: typeof draft === 'boolean' ? draft : false,
       },
       include: {
         activityTypes: true
@@ -685,7 +693,7 @@ app.get('/api/pets/:petId', authenticateToken, async (req, res) => {
 app.patch('/api/pets/:petId', authenticateToken, async (req, res) => {
   try {
     const { petId } = req.params;
-    const { name, species, breed, age, weight, notes, vetName, vetLocation, vetContact, primaryFood, photoOffsetX, photoOffsetY } = req.body;
+    const { name, species, breed, age, weight, notes, vetName, vetLocation, vetContact, primaryFood, photoOffsetX, photoOffsetY, draft } = req.body;
 
     console.log(`📝 Updating pet ${petId} with data:`, { name, species, breed, age, weight, notes, vetName, vetLocation, vetContact, primaryFood, photoOffsetX, photoOffsetY });
 
@@ -730,6 +738,7 @@ app.patch('/api/pets/:petId', authenticateToken, async (req, res) => {
         photoOffsetX: photoOffsetX !== undefined ? photoOffsetX : pet.photoOffsetX,
         photoOffsetY: photoOffsetY !== undefined ? photoOffsetY : pet.photoOffsetY,
         weightUnit: req.body.weightUnit !== undefined ? req.body.weightUnit : pet.weightUnit,
+        draft: typeof draft === 'boolean' ? draft : pet.draft,
       },
       include: {
         activityTypes: true
@@ -741,6 +750,46 @@ app.patch('/api/pets/:petId', authenticateToken, async (req, res) => {
     res.json(updatedPet);
   } catch (error) {
     console.error('Update pet error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete pet
+app.delete('/api/pets/:petId', authenticateToken, async (req, res) => {
+  try {
+    const { petId } = req.params;
+
+    // Verify user has access to this pet
+    const pet = await prisma.pet.findUnique({
+      where: { id: parseInt(petId) },
+      include: {
+        household: {
+          include: {
+            members: {
+              where: { userId: req.user.userId }
+            }
+          }
+        }
+      }
+    });
+
+    if (!pet) {
+      return res.status(404).json({ error: 'Pet not found' });
+    }
+
+    if (pet.household.members.length === 0) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Delete pet and related data (cascade)
+    await prisma.pet.delete({
+      where: { id: parseInt(petId) }
+    });
+
+    console.log(`🗑️ Pet deleted: ${petId}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete pet error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

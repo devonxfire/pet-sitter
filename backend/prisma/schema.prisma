@@ -92,6 +92,7 @@ model Pet {
   vetContact   String?  @map("vet_contact") // phone number
   // Food information
   primaryFood  String?  @map("primary_food") // kibbles, wet food, raw, etc.
+  draft        Boolean  @default(false) @map("is_draft")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 

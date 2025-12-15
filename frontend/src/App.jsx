@@ -26,9 +26,19 @@ function App() {
   const location = useLocation();
 
   useEffect(() => {
-    // Check for household in router state
+    // Check for household in router state or localStorage
     if (location.state?.household && !household) {
       setHousehold(location.state.household);
+      localStorage.setItem('household', JSON.stringify(location.state.household));
+    } else if (!household) {
+      const storedHousehold = localStorage.getItem('household');
+      if (storedHousehold) {
+        try {
+          setHousehold(JSON.parse(storedHousehold));
+        } catch (e) {
+          localStorage.removeItem('household');
+        }
+      }
     }
   }, [location.state?.household, household]);
 
@@ -57,6 +67,7 @@ function App() {
         const data = await apiFetch('/api/households');
         if (Array.isArray(data) && data.length > 0) {
           setHousehold(data[0]);
+          localStorage.setItem('household', JSON.stringify(data[0]));
         }
       } catch (err) {
         console.error('Failed to load households:', err);
@@ -76,11 +87,13 @@ function App() {
 
   const handleHouseholdCreated = (householdData) => {
     setHousehold(householdData);
+    localStorage.setItem('household', JSON.stringify(householdData));
   };
 
   const handleSignOut = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('household');
     setUser(null);
     setHousehold(null);
     setHouseholdsLoading(false);
