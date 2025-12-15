@@ -749,10 +749,11 @@ export default function PetDetail({ household, user, onSignOut }) {
 
             {/* Compact Header + General Section (grid layout) */}
             <div className="mb-6 py-12 border-b-2 border-gray-200">
-              <div className="grid md:grid-flow-col md:auto-cols-max items-start gap-4 md:gap-4">
+              <div className="grid md:grid-flow-col md:auto-cols-max items-start gap-2 md:gap-2">
+
             {/* Avatar */}
-            <div className="shrink-0 -ml-3 md:ml-0">
-                <div className="relative">
+            <div className="shrink-0 flex flex-col items-center md:items-start">
+              <div className="relative">
                 <div className="w-28 h-28 md:w-40 md:h-40 rounded-2xl bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
                   {pet.photoUrl ? (
                     <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet.name} className="w-full h-full object-cover select-none" draggable={false} />
@@ -770,15 +771,11 @@ export default function PetDetail({ household, user, onSignOut }) {
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => handlePhotoUpload(e)} className="hidden" />
               </div>
-
-              {/* View Activities button removed; use top-nav Activities link */}
-
-              {/* Desktop-only absolute quote removed (duplicate) */}
             </div>
 
             {/* Main info */}
-              <div className="min-w-0 flex-1 h-28 md:h-40 flex flex-col justify-between">
-              <div className="flex flex-col justify-between pl-2 h-full">
+              <div className="min-w-0 flex-1 h-28 md:h-40 flex flex-col justify-between items-start ml-0">
+              <div className="flex flex-col justify-between h-full ml-2">
                 <div>
                   <div className="flex items-baseline gap-3">
                       <h1 className="text-2xl md:text-4xl leading-tight text-gray-900">
@@ -807,24 +804,11 @@ export default function PetDetail({ household, user, onSignOut }) {
                           </span>
                         </div>
                       ) : (
-                        <div className="text-sm text-gray-500">{pet.name}</div>
+                        <div className="flex items-center gap-3 text-sm text-gray-500">
+                          <span>Last Activity:</span>
+                          <span className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full text-sm text-gray-700">No activities logged yet.</span>
+                        </div>
                       )}
-
-                      <div className="mt-2 w-full">
-                        <button
-                          onClick={() => navigate(`/pet/${petId}/activities`)}
-                          className="w-full inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md btn text-sm font-semibold hover:opacity-90 transition cursor-pointer"
-                          aria-label={`View ${pet.name}'s Activities`}
-                          type="button"
-                        >
-                          <span aria-hidden="true" className="inline-block w-5 h-5 text-white" style={{ lineHeight: 0 }}>
-                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                              <path d="M12 5c-5 0-9.27 3.04-10.54 7C2.73 15.96 7 19 12 19s9.27-3.04 10.54-7C21.27 8.04 17 5 12 5zm0 11a4 4 0 110-8 4 4 0 010 8z" />
-                            </svg>
-                          </span>
-                          View {pet.name}'s Activities
-                        </button>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -838,6 +822,46 @@ export default function PetDetail({ household, user, onSignOut }) {
             {/* Actions moved inline with Age value */}
               </div>
               {/* Right-side pet quote removed (moved into header grid) */}
+            </div>
+            {/* Action buttons BELOW avatar and info */}
+            <div className="flex flex-row gap-4 mt-8 ml-2 mb-12">
+              <button
+                onClick={() => navigate(`/pet/${petId}`)}
+                className="flex items-center gap-2 px-6 py-3 rounded-md text-lg font-semibold transition cursor-pointer bg-blue-900 text-white hover:bg-blue-800 shadow"
+                aria-label={`View ${pet.name}'s Profile`}
+                type="button"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4 8-4 8-4s8 0 8 4" />
+                </svg>
+                <span>Profile</span>
+              </button>
+              <button
+                onClick={() => navigate(`/pet/${petId}/activities`)}
+                className="flex items-center gap-2 px-6 py-3 rounded-md text-lg font-semibold transition cursor-pointer bg-blue-900 text-white hover:bg-blue-800 shadow"
+                aria-label={`View ${pet.name}'s Activities`}
+                type="button"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <span>Activities</span>
+              </button>
+              <button
+                onClick={() => navigate(`/pet/${petId}/calendar`)}
+                className="flex items-center gap-2 px-6 py-3 rounded-md text-lg font-semibold transition cursor-pointer bg-blue-900 text-white hover:bg-blue-800 shadow"
+                aria-label={`View ${pet.name}'s Calendar`}
+                type="button"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <path d="M16 2v4M8 2v4M3 10h18" />
+                </svg>
+                <span>Calendar</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1200,9 +1224,8 @@ export default function PetDetail({ household, user, onSignOut }) {
           </div>
         )}
 
-        </div>
-      </main>
-
+       
+      
       {showLogActivity && (
         <LogActivity
           petId={petId}
@@ -1250,6 +1273,8 @@ export default function PetDetail({ household, user, onSignOut }) {
           onDelete={(id) => { setViewingActivity(null); handleDeleteActivity(id); }}
         />
       )}
+    
+      </main>
     </div>
   );
 }

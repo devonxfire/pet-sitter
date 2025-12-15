@@ -117,7 +117,7 @@ nav .nav-link-active[aria-current] {
   font-size: 1.5rem;
   font-weight: 400;
   padding: 1.25rem 2rem;
-  border-radius: 0;
+  /* border-radius removed to allow Tailwind's rounded-* utilities */
   display: inline-block;
   text-align: center;
   transition: background 0.14s, color 0.14s, box-shadow 0.14s;
@@ -302,7 +302,7 @@ h2[data-heading="Profile"],
 h2[data-heading="Activities"],
 .heading-light[data-heading="Profile"],
 .heading-light[data-heading="Activities"] {
-  font-weight: 100 !important;
+  font-weight: 300 !important;
   font-family: var(--font-heading) !important;
 }
 
@@ -376,7 +376,7 @@ button {
   gap: 0.5rem;
   /* No default background or color, let .btn-red/.btn-secondary control it */
   padding: 0.5rem 0.9rem;
-  border-radius: 0; /* square edges */
+  /* border-radius removed to allow Tailwind's rounded-* utilities */
   box-shadow: 0 10px 30px rgba(11,18,32,0.10);
   border: 1px solid rgba(11,18,32,0.04);
   transition: box-shadow .12s ease, background-color .12s ease;
@@ -413,30 +413,18 @@ button,
 input[type="button"],
 input[type="submit"],
 .btn,
-a.btn,
-button[class*="inline-flex"],
-.inline-flex[role="button"] {
-  border-radius: 0 !important;
-}
 
 /* Allow specific avatar/action buttons to remain circular despite the
    global square-button rule. Use a high-specificity override. */
 .avatar-action,
 .avatar-action * {
-  border-radius: 9999px !important;
+  /* border-radius removed to allow Tailwind's rounded-* utilities */
 }
 
 /* Additional targeted overrides: anchors or buttons that include Tailwind
    `rounded-*` utilities should also display as sharp when they are
    interactive (links/buttons). This avoids changing non-interactive
    rounded elements such as cards and panels. */
-a[class*="rounded-"],
-button[class*="rounded-"],
-input[type="button"][class*="rounded-"],
-input[type="submit"][class*="rounded-"],
-.inline-flex[class*="rounded-"] {
-  border-radius: 0 !important;
-}
 
 .border-accent {
   border-color: var(--color-accent);
