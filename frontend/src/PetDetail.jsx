@@ -748,7 +748,7 @@ export default function PetDetail({ household, user, onSignOut }) {
           <div className="mx-auto max-w-6xl px-6 w-full relative">
 
             {/* Compact Header + General Section (grid layout) */}
-            <div className="mb-6 py-12">
+            <div className="mb-1 py-12">
               <div className="grid md:grid-flow-col md:auto-cols-max items-start gap-2 md:gap-2">
 
             {/* Avatar */}
@@ -873,7 +873,7 @@ export default function PetDetail({ household, user, onSignOut }) {
 
         {/* Activities moved to their own page. */}
         {/* General Information Section */}
-        <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200">
+        <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200 pt-8">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <button
@@ -1078,9 +1078,9 @@ export default function PetDetail({ household, user, onSignOut }) {
 
         {/* Vet Information Section */}
         {(pet.vetName || pet.vetLocation || pet.vetContact) && (
-          <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200">
+          <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200 ">
             <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3 mt-20">
+              <div className="flex items-center gap-3 mt-2">
                 <button
                   onClick={() => toggleSection('vet')}
                   aria-expanded={!collapsedSections.vet}
@@ -1091,14 +1091,34 @@ export default function PetDetail({ household, user, onSignOut }) {
                 </button>
                 <h2 className="text-2xl font-bold text-gray-900">Vet Information</h2>
               </div>
-              {editingSection !== 'vet' && (
-                <button
-                  onClick={() => startEditingSection('vet')}
-                  className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover"
-                >
-                  Edit
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {editingSection === 'vet' ? (
+                  <>
+                    <button
+                      onClick={cancelEditingSection}
+                      className="inline-flex items-center gap-2 btn btn-red font-semibold px-6 py-2 rounded-xl mr-1 cursor-pointer bg-[#C3001F]! text-white! border-0! hover:bg-[#ED1C24]!"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveSection}
+                      disabled={savingSection}
+                      className="btn font-semibold px-3 py-2 rounded-lg text-sm hover:opacity-90 transition disabled:opacity-50 mr-2 cursor-pointer"
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {savingSection ? 'Saving...' : 'Save'}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => startEditingSection('vet')}
+                    className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover cursor-pointer"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
             </div>
 
             {editingSection === 'vet' ? (
@@ -1138,8 +1158,6 @@ export default function PetDetail({ household, user, onSignOut }) {
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
                   />
                 </div>
-
-                {/* Save/Cancel Buttons moved to header */}
               </div>
             ) : ( !collapsedSections.vet && (
               <div className="space-y-6">
@@ -1191,14 +1209,34 @@ export default function PetDetail({ household, user, onSignOut }) {
                 </button>
                 <h2 className="text-2xl font-bold text-gray-900">Food Information</h2>
               </div>
-              {editingSection !== 'food' && (
-                <button
-                  onClick={() => startEditingSection('food')}
-                  className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover"
-                >
-                  Edit
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {editingSection === 'food' ? (
+                  <>
+                    <button
+                      onClick={cancelEditingSection}
+                      className="inline-flex items-center gap-2 btn btn-red font-semibold px-6 py-2 rounded-xl mr-1 cursor-pointer bg-[#C3001F]! text-white! border-0! hover:bg-[#ED1C24]!"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveSection}
+                      disabled={savingSection}
+                      className="btn font-semibold px-3 py-2 rounded-lg text-sm hover:opacity-90 transition disabled:opacity-50 mr-2 cursor-pointer"
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {savingSection ? 'Saving...' : 'Save'}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => startEditingSection('food')}
+                    className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover cursor-pointer"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
             </div>
 
             {editingSection === 'food' ? (
@@ -1215,7 +1253,6 @@ export default function PetDetail({ household, user, onSignOut }) {
                   />
                 </div>
 
-                {/* Save/Cancel Buttons moved to header */}
               </div>
             ) : ( !collapsedSections.food && (
               <div>
