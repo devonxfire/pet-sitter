@@ -63,21 +63,7 @@ export default function PetActivities({ household, user, onSignOut }) {
   const [favHover, setFavHover] = useState(false);
   const [showFavouritesModal, setShowFavouritesModal] = useState(false);
 
-  useEffect(() => {
-    const el = favBtnRef.current;
-    if (!el) return;
-    const bg = favHover ? '#F9FAFB' : '#F3F4F6';
-    el.style.setProperty('background-color', bg, 'important');
-    el.style.setProperty('color', '#0B1220', 'important');
-    el.style.setProperty('background-clip', 'padding-box', 'important');
-    el.style.setProperty('padding', '0.5rem 1.25rem', 'important');
-    const svg = el.querySelector('svg');
-    if (svg) {
-      svg.style.setProperty('background-color', 'transparent', 'important');
-      svg.style.setProperty('display', 'inline-block', 'important');
-      svg.style.setProperty('margin-right', '0.5rem', 'important');
-    }
-  }, [favHover]);
+
 
   useEffect(() => {
     const apply = () => {
@@ -374,28 +360,42 @@ export default function PetActivities({ household, user, onSignOut }) {
         {activities && activities.length > 0 && (
           <PetActivityGraph activities={activities} />
         )}
-        <div className="flex gap-2 mb-8 mt-6 items-center flex-wrap">
-          <button onClick={() => setActivityFilter('past')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'past' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>✓ Past</button>
-          <button onClick={() => setActivityFilter('all')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'all' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>All</button>
-          <button onClick={() => setActivityFilter('upcoming')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'upcoming' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>📅 Upcoming</button>
-          <button
-            onClick={() => setShowLogActivity(true)}
-            className="px-2 py-1 rounded-md text-sm font-medium transition btn hover:opacity-90 shadow"
-            style={{ minWidth: '110px' }}
-          >
-            Log New Activity
-          </button>
-          <button
-            onClick={() => setShowFavouritesModal(true)}
-            aria-pressed={activityFilter === 'quick'}
-            ref={favBtnRef}
-            className="inline-flex items-center gap-2 text-gray-900 font-semibold px-4 py-2 rounded-md transition no-global-accent no-accent-hover"
-            onMouseEnter={() => setFavHover(true)}
-            onMouseLeave={() => setFavHover(false)}
-          >
-            <svg className="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#C3001F" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6.01 4.01 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 17.99 4 20 6.01 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
-            <span>Repeat Favourite</span>
-          </button>
+        <div className="flex justify-between items-center mb-8 mt-6 flex-wrap gap-2">
+          <div className="flex gap-2 items-center flex-wrap">
+            <button
+              onClick={() => setShowLogActivity(true)}
+              className="px-2 py-1 rounded-md text-sm font-medium transition btn bg-green-500 text-white hover:bg-green-600 shadow cursor-pointer flex items-center gap-2"
+              style={{ minWidth: '110px' }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
+              Log New Activity
+            </button>
+            <button
+              onClick={() => setShowFavouritesModal(true)}
+              aria-pressed={activityFilter === 'quick'}
+              ref={favBtnRef}
+              className="inline-flex items-center gap-2 text-gray-900 font-medium text-sm px-4 py-2 rounded-md transition no-global-accent no-accent-hover cursor-pointer"
+              style={{
+                background: activityFilter === 'quick' ? '#E5E7EB' : '#F3F4F6',
+                transition: 'background 0.2s',
+                boxShadow: 'none',
+              }}
+              onMouseEnter={e => {
+                if (activityFilter !== 'quick') e.currentTarget.style.background = '#E5E7EB';
+              }}
+              onMouseLeave={e => {
+                if (activityFilter !== 'quick') e.currentTarget.style.background = '#F3F4F6';
+              }}
+            >
+              <svg className="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#C3001F" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6.01 4.01 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 17.99 4 20 6.01 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+              <span>Repeat Favourite</span>
+            </button>
+          </div>
+          <div className="flex gap-2 items-center flex-wrap">
+            <button onClick={() => setActivityFilter('past')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'past' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>✓ Past</button>
+            <button onClick={() => setActivityFilter('all')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'all' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>All</button>
+            <button onClick={() => setActivityFilter('upcoming')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'upcoming' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>📅 Upcoming</button>
+          </div>
         </div>
 
         {activityFilter === 'quick' && (
