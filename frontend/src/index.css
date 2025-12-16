@@ -1,5 +1,39 @@
-/* Keep this import at the top */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap');
+/* Custom override for PetDetail action buttons with maximum specificity */
+/* FINAL, MAXIMUM-SPECIFICITY OVERRIDE for PetDetail action buttons */
+body.page-non-landing button.petdetail-action-btn,
+body.page-non-landing .petdetail-action-btn {
+  background: #22c55e !important; /* Tailwind green-500 */
+  background-color: #22c55e !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+  font-weight: 400 !important;
+}
+body.page-non-landing button.petdetail-action-btn:hover,
+body.page-non-landing .petdetail-action-btn:hover {
+  background: #15803d !important; /* Tailwind green-800 */
+  background-color: #15803d !important;
+  color: #fff !important;
+}
+.page-non-landing .petdetail-action-btn,
+.page-non-landing button.petdetail-action-btn,
+.page-non-landing .petdetail-action-btn:active,
+.page-non-landing .petdetail-action-btn:focus,
+.page-non-landing .petdetail-action-btn:visited {
+  background: #bdbdbd !important;
+  background-color: #bdbdbd !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+  font-weight: 400 !important;
+}
+.page-non-landing .petdetail-action-btn:hover {
+  background: #a3a3a3 !important;
+  background-color: #a3a3a3 !important;
+  color: #fff !important;
+}
+/* Keep this import at the top */
 /* Remove forced hover/focus bright red for .btn-red on non-landing pages */
 .page-non-landing .btn.btn-red:hover,
 .page-non-landing a.btn.btn-red:hover,

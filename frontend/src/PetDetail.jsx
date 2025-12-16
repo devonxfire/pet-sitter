@@ -686,7 +686,7 @@ export default function PetDetail({ household, user, onSignOut }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        <header className="border-b border-gray-200 px-4 py-4">
+        <header className="px-4 py-4">
           <button
             onClick={() => navigate('/dashboard')}
             className="text-gray-600 hover:text-gray-900"
@@ -704,7 +704,7 @@ export default function PetDetail({ household, user, onSignOut }) {
   if (error) {
     return (
       <div className="min-h-screen bg-white">
-        <header className="border-b border-gray-200 px-4 py-4">
+        <header className="px-4 py-4">
           <button
             onClick={() => navigate('/dashboard')}
             className="text-gray-600 hover:text-gray-900"
@@ -722,7 +722,7 @@ export default function PetDetail({ household, user, onSignOut }) {
   if (!pet) {
     return (
       <div className="min-h-screen bg-white">
-        <header className="border-b border-gray-200 px-4 py-4">
+        <header className="px-4 py-4">
           <button
             onClick={() => navigate('/dashboard')}
             className="text-gray-600 hover:text-gray-900"
@@ -744,11 +744,11 @@ export default function PetDetail({ household, user, onSignOut }) {
 
       <main className="flex flex-col items-stretch pb-6">
         {/* Full-bleed header band */}
-        <div className="w-full bg-gray-50 border-b border-gray-200">
+        <div className="w-full bg-gray-50">
           <div className="mx-auto max-w-6xl px-6 w-full relative">
 
             {/* Compact Header + General Section (grid layout) */}
-            <div className="mb-6 py-12 border-b-2 border-gray-200">
+            <div className="mb-6 py-12">
               <div className="grid md:grid-flow-col md:auto-cols-max items-start gap-2 md:gap-2">
 
             {/* Avatar */}
@@ -813,9 +813,49 @@ export default function PetDetail({ household, user, onSignOut }) {
                   </div>
                 </div>
 
-                <blockquote className="text-gray-700 italic mt-3 max-w-lg text-lg md:text-xl leading-tight" style={{ fontFamily: `'Dancing Script', cursive` }}>
-                  “{getPetQuote(pet.name)}”
-                </blockquote>
+                <div className="flex flex-row items-center gap-6 mt-3">
+                  <div className="flex flex-row gap-3">
+                    <button
+                      onClick={() => navigate(`/pet/${petId}`)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-md text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      aria-label={`View ${pet?.name || ''}'s Profile`}
+                      type="button"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                        <circle cx="12" cy="8" r="4" />
+                        <path d="M4 20c0-4 8-4 8-4s8 0 8 4" />
+                      </svg>
+                      <span>Profile</span>
+                    </button>
+                    <button
+                      onClick={() => navigate(`/pet/${petId}/activities`)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-md text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      aria-label={`View ${pet?.name || ''}'s Activities`}
+                      type="button"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      <span>Activities</span>
+                    </button>
+                    <button
+                      onClick={() => navigate(`/pet/${petId}/calendar`)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-md text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      aria-label={`View ${pet?.name || ''}'s Calendar`}
+                      type="button"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                        <rect x="3" y="4" width="18" height="18" rx="2" />
+                        <path d="M16 2v4M8 2v4M3 10h18" />
+                      </svg>
+                      <span>Calendar</span>
+                    </button>
+                  </div>
+                  <blockquote className="text-gray-700 italic max-w-lg text-lg md:text-xl leading-tight ml-6" style={{ fontFamily: `'Dancing Script', cursive` }}>
+                    <span>“{getPetQuote(pet.name)}”</span>
+                  </blockquote>
+                </div>
               </div>
             </div>
 
@@ -823,45 +863,7 @@ export default function PetDetail({ household, user, onSignOut }) {
               </div>
               {/* Right-side pet quote removed (moved into header grid) */}
             </div>
-            {/* Action buttons BELOW avatar and info */}
-            <div className="flex flex-row gap-4 mt-8 ml-2 mb-12">
-              <button
-                onClick={() => navigate(`/pet/${petId}`)}
-                className="flex items-center gap-2 px-6 py-3 rounded-md text-lg font-semibold transition cursor-pointer bg-blue-900 text-white hover:bg-blue-800 shadow"
-                aria-label={`View ${pet.name}'s Profile`}
-                type="button"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
-                  <circle cx="12" cy="8" r="4" />
-                  <path d="M4 20c0-4 8-4 8-4s8 0 8 4" />
-                </svg>
-                <span>Profile</span>
-              </button>
-              <button
-                onClick={() => navigate(`/pet/${petId}/activities`)}
-                className="flex items-center gap-2 px-6 py-3 rounded-md text-lg font-semibold transition cursor-pointer bg-blue-900 text-white hover:bg-blue-800 shadow"
-                aria-label={`View ${pet.name}'s Activities`}
-                type="button"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
-                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-                <span>Activities</span>
-              </button>
-              <button
-                onClick={() => navigate(`/pet/${petId}/calendar`)}
-                className="flex items-center gap-2 px-6 py-3 rounded-md text-lg font-semibold transition cursor-pointer bg-blue-900 text-white hover:bg-blue-800 shadow"
-                aria-label={`View ${pet.name}'s Calendar`}
-                type="button"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
-                  <rect x="3" y="4" width="18" height="18" rx="2" />
-                  <path d="M16 2v4M8 2v4M3 10h18" />
-                </svg>
-                <span>Calendar</span>
-              </button>
-            </div>
+            {/* Action buttons BELOW avatar and info removed (now only in header) */}
           </div>
         </div>
 
@@ -1078,7 +1080,7 @@ export default function PetDetail({ household, user, onSignOut }) {
         {(pet.vetName || pet.vetLocation || pet.vetContact) && (
           <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200">
             <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 mt-20">
                 <button
                   onClick={() => toggleSection('vet')}
                   aria-expanded={!collapsedSections.vet}

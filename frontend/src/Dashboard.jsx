@@ -164,15 +164,15 @@ export default function Dashboard({ user, household, onSignOut }) {
                     }
                   }}
                 >
-                  {/* Delete button (bin icon) */}
+                  {/* Delete button (X icon) - top right, smaller */}
                   <button
-                    className="absolute top-2 left-2 text-gray-400 hover:text-red-600 bg-white rounded-full p-1 shadow group-hover:opacity-100 opacity-70 transition"
+                    className="absolute top-2 right-2 text-gray-400 hover:text-red-600 bg-white rounded-full p-0.5 shadow group-hover:opacity-100 opacity-70 transition cursor-pointer"
                     title="Delete pet"
                     onClick={e => { e.stopPropagation(); handleDeletePet(pet); }}
                     style={{ zIndex: 20 }}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 14L14 6M6 6l8 8" />
                     </svg>
                   </button>
                   {/* Draft badge */}
