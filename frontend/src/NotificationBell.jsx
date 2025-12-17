@@ -29,6 +29,7 @@ const VERB_TEMPLATES = {
   medication: { past: 'was given medication', future: 'has medication scheduled' },
   water: { past: 'was given water', future: 'has water scheduled' },
   grooming: { past: 'was groomed', future: 'has grooming scheduled' },
+  chilling: { past: 'chilled', future: 'is scheduled to chill' },
   photo: { past: 'had a photo taken', future: 'has a photo scheduled' },
   other: { past: 'had an activity', future: 'has an activity scheduled' }
 };

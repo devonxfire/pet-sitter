@@ -415,27 +415,24 @@ export default function PetActivities({ household, user, onSignOut }) {
           <div className="flex gap-2 items-center flex-wrap">
             <button
               onClick={() => setShowLogActivity(true)}
-              className="px-2 py-1 rounded-md text-sm font-medium transition btn text-white shadow cursor-pointer flex items-center gap-2"
-              style={{ minWidth: '110px' }}
+              className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer shadow"
               ref={el => {
                 if (el) {
+                  el.style.setProperty('background', '#10B981', 'important'); // green-500
+                  el.style.setProperty('background-color', '#10B981', 'important');
+                  el.style.setProperty('color', '#fff', 'important');
+                  el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                  el.style.setProperty('border-radius', '0.75rem', 'important');
                   el.style.setProperty('min-width', '110px', 'important');
-                  el.style.setProperty('background', '#1e293b', 'important');
-                  el.style.setProperty('background-color', '#1e293b', 'important');
-                  el.style.setProperty('box-shadow', 'none', 'important');
-                  el.style.setProperty('border', 'none', 'important');
-                  el.style.setProperty('outline', 'none', 'important');
-                  el.style.setProperty('z-index', '1', 'important');
-                  el.style.setProperty('position', 'relative', 'important');
                 }
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.setProperty('background', '#0f172a', 'important');
-                e.currentTarget.style.setProperty('background-color', '#0f172a', 'important');
+                e.currentTarget.style.setProperty('background', '#059669', 'important'); // green-600
+                e.currentTarget.style.setProperty('background-color', '#059669', 'important');
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.setProperty('background', '#1e293b', 'important');
-                e.currentTarget.style.setProperty('background-color', '#1e293b', 'important');
+                e.currentTarget.style.setProperty('background', '#10B981', 'important');
+                e.currentTarget.style.setProperty('background-color', '#10B981', 'important');
               }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
@@ -444,18 +441,26 @@ export default function PetActivities({ household, user, onSignOut }) {
             <button
               onClick={() => setShowFavouritesModal(true)}
               aria-pressed={activityFilter === 'quick'}
-              ref={favBtnRef}
-              className="inline-flex items-center gap-2 text-gray-900 font-medium text-sm px-4 py-2 rounded-md transition no-global-accent no-accent-hover cursor-pointer"
-              style={{
-                background: activityFilter === 'quick' ? '#E5E7EB' : '#F3F4F6',
-                transition: 'background 0.2s',
-                boxShadow: 'none',
+              ref={el => {
+                favBtnRef.current = el;
+                if (el) {
+                  el.style.setProperty('background', activityFilter === 'quick' ? '#E5E7EB' : '#F3F4F6', 'important');
+                  el.style.setProperty('box-shadow', '0 2px 6px 0 rgba(0,0,0,0.10)', 'important');
+                  el.style.setProperty('border-radius', '0.75rem', 'important');
+                  el.style.setProperty('color', '#111827', 'important');
+                  el.style.setProperty('margin-left', '12px', 'important');
+                }
               }}
+              className="inline-flex items-center gap-2 text-gray-900 font-medium text-base px-4 py-2 transition no-global-accent no-accent-hover cursor-pointer"
               onMouseEnter={e => {
-                if (activityFilter !== 'quick') e.currentTarget.style.background = '#E5E7EB';
+                if (activityFilter !== 'quick') {
+                  e.currentTarget.style.setProperty('background', '#E5E7EB', 'important');
+                }
               }}
               onMouseLeave={e => {
-                if (activityFilter !== 'quick') e.currentTarget.style.background = '#F3F4F6';
+                if (activityFilter !== 'quick') {
+                  e.currentTarget.style.setProperty('background', '#F3F4F6', 'important');
+                }
               }}
             >
               <svg className="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#C3001F" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6.01 4.01 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 17.99 4 20 6.01 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
@@ -469,9 +474,9 @@ export default function PetActivities({ household, user, onSignOut }) {
         )}
         <div className="flex justify-between items-center mb-8 mt-6 flex-wrap gap-2">
           <div className="flex gap-2 items-center flex-wrap">
-            <button onClick={() => setActivityFilter('all')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'all' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>All</button>
-            <button onClick={() => setActivityFilter('past')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'past' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>✓ Past</button>
-            <button onClick={() => setActivityFilter('upcoming')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'upcoming' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>📅 Upcoming</button>
+            <button onClick={() => setActivityFilter('all')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover cursor-pointer ${activityFilter === 'all' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>All</button>
+            <button onClick={() => setActivityFilter('past')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover cursor-pointer ${activityFilter === 'past' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>✓ Past</button>
+            <button onClick={() => setActivityFilter('upcoming')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover cursor-pointer ${activityFilter === 'upcoming' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>📅 Upcoming</button>
           </div>
         </div>
 
@@ -510,7 +515,7 @@ export default function PetActivities({ household, user, onSignOut }) {
                 medication: { past: 'was given medication', future: 'has medication scheduled' },
                 water: { past: 'was given water', future: 'has water scheduled' },
                 grooming: { past: 'was groomed', future: 'has grooming scheduled' },
-                chilling: { past: 'chilled out', future: 'is scheduled to chill' },
+                chilling: { past: 'chilled', future: 'is scheduled to chill' },
                 other: { past: 'had an activity', future: 'has an activity scheduled' }
               };
               const now = new Date();
@@ -547,21 +552,34 @@ export default function PetActivities({ household, user, onSignOut }) {
                   }
                 }
               }
+              // Find the image name for the activity type
+              let imgName = (activity.activityType?.name || activity.activityType?.id || '').toLowerCase().replace(/\s+/g, '-') + '-activity.png';
+              if (
+                activity.activityType?.id === 'feeding' ||
+                activity.activityType?.name === 'feeding'
+              ) imgName = 'food-activity.png';
+              if (
+                activity.activityType?.id === 'chilling' ||
+                activity.activityType?.name === 'chilling'
+              ) imgName = 'chill-activity.png';
               return (
                 <div key={activity.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                   <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <p className="font-semibold text-gray-900">
-                        {heading}
-                      </p>
-                      {activity.notes && <p className="text-gray-700 text-sm mt-1">{activity.notes}</p>}
-                      {activity.user && <p className="text-xs text-gray-500 mt-2">by {activity.user.name}</p>}
+                    <div className="flex items-center flex-1">
+                      <img src={`/${imgName}`} alt={activity.activityType?.label || activity.activityType?.name || 'Activity'} style={{ width: '56px', height: '40px', objectFit: 'contain', marginRight: '1.25rem', borderRadius: 0, boxShadow: 'none' }} />
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900">
+                          {heading}
+                        </p>
+                        {activity.notes && <p className="text-gray-700 text-sm mt-1">{activity.notes}</p>}
+                        {activity.user && <p className="text-xs text-gray-500 mt-2">by {activity.user.name}</p>}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 ml-4 shrink-0">
                       <time className="text-sm text-gray-500 whitespace-nowrap">{when.toLocaleString()}</time>
-                      <button onClick={() => setViewingActivity(activity)} className="px-2 py-1 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-md transition no-global-accent no-accent-hover">View</button>
-                      <button onClick={() => setEditingActivity(activity)} className="px-2 py-1 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-md transition no-global-accent no-accent-hover">Edit</button>
-                      <button onClick={() => handleDeleteActivity(activity.id)} className="px-2 py-1 text-sm font-medium text-accent hover:bg-red-50 rounded-md transition no-global-accent no-accent-hover delete-btn" style={{ color: 'var(--color-accent)' }}>Delete</button>
+                      <button onClick={() => setViewingActivity(activity)} className="px-2 py-1 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-md transition no-global-accent no-accent-hover cursor-pointer">View</button>
+                      <button onClick={() => setEditingActivity(activity)} className="px-2 py-1 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-md transition no-global-accent no-accent-hover cursor-pointer">Edit</button>
+                      <button onClick={() => handleDeleteActivity(activity.id)} className="px-2 py-1 text-sm font-medium text-accent hover:bg-red-50 rounded-md transition no-global-accent no-accent-hover delete-btn cursor-pointer" style={{ color: 'var(--color-accent)' }}>Delete</button>
                     </div>
                   </div>
                 </div>

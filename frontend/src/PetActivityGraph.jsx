@@ -30,6 +30,7 @@ function PetActivityGraph({ activities }) {
     medication: { past: 'MEDICATED', future: 'FUTURE MEDICATION' },
     water: { past: 'WATERED', future: 'FUTURE WATER' },
     grooming: { past: 'GROOMED', future: 'FUTURE GROOMING' },
+    chilling: { past: 'CHILLED', future: 'FUTURE CHILL' },
     photo: { past: 'PHOTO TAKEN', future: 'FUTURE PHOTO' },
     other: { past: 'ACTIVITY', future: 'FUTURE ACTIVITY' }
   };
