@@ -4,6 +4,20 @@ import ACTIVITY_TYPES from './activityTypes';
 import { theme } from './theme';
 
 export default function LogActivity({ petId, household, activity, onActivityLogged, onActivityDeleted, onClose, onFavouritesUpdated, step, setStep }) {
+  // Ref for the date/time input (for schedule activity slide)
+  const dateTimeInputRef = React.useRef(null);
+  // Style override for reminder toggle background color
+  // This must be at the top level so it is not shadowed by the button element
+  // and will apply globally to the toggle
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .reminder-toggle-on { background: #10B981 !important; }
+      .reminder-toggle-off { background: #EF4444 !important; }
+    `;
+    document.head.appendChild(style);
+    return () => { document.head.removeChild(style); };
+  }, []);
   console.log('[LogActivity] Render', { activity, petId, household, step });
   const [selectedType, setSelectedType] = useState(activity?.activityType?.name || '');
   const [timing, setTiming] = useState(''); // 'happened' or 'upcoming'
@@ -236,7 +250,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem', minWidth: '700px'}}>
           <button
-            className="absolute top-3 right-3 text-2xl font-bold focus:outline-none"
+            className="absolute top-3 right-3 text-2xl font-bold focus:outline-none cursor-pointer"
             onClick={onClose}
             aria-label="Close"
             style={{ background: 'none', border: 'none', color: '#b0b0b0', padding: 0, boxShadow: 'none', lineHeight: 1, outline: 'none', cursor: 'pointer', zIndex: 10, fontWeight: 400, fontSize: '1.8rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
@@ -256,7 +270,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
               <button
                 key={type.id}
                 onClick={() => handleTypeSelect(type.id)}
-                className="py-8 px-4 rounded-xl flex flex-col items-center gap-2 border border-gray-200 hover:bg-gray-50 hover:shadow transition-all duration-150 focus:outline-none activity-type-card-fix"
+                className="py-8 px-4 rounded-xl flex flex-col items-center gap-2 border border-gray-200 hover:bg-gray-50 hover:shadow transition-all duration-150 focus:outline-none activity-type-card-fix cursor-pointer"
                 style={{ boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)' }}
               >
                 <img src="/create-pet-food.png" alt="Activity" style={{ width: '90px', height: '60px', objectFit: 'contain', marginBottom: '0.5rem', borderRadius: 0, boxShadow: 'none' }} />
@@ -294,7 +308,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           <div className="space-y-4">
             <button
               onClick={() => handleTimingSelect('happened')}
-              className="w-full py-6 px-6 rounded-xl border border-gray-200 text-left focus:outline-none activity-type-card-fix"
+              className="w-full py-6 px-6 rounded-xl border border-gray-200 text-left focus:outline-none activity-type-card-fix cursor-pointer"
               style={{}}
             >
               <div className="font-semibold text-lg text-gray-900">Already Happened</div>
@@ -302,7 +316,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
             </button>
             <button
               onClick={() => handleTimingSelect('upcoming')}
-              className="w-full py-6 px-6 rounded-xl border border-gray-200 text-left focus:outline-none activity-type-card-fix"
+              className="w-full py-6 px-6 rounded-xl border border-gray-200 text-left focus:outline-none activity-type-card-fix cursor-pointer"
               style={{}}
             >
               <div className="font-semibold text-lg text-gray-900">Upcoming</div>
@@ -311,7 +325,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           </div>
           <button
             onClick={() => setStep('selectType')}
-            className="mt-6 w-full py-3 text-gray-600 hover:text-gray-900 font-medium"
+            className="mt-6 w-full py-3 text-gray-600 hover:text-gray-900 font-medium cursor-pointer"
           >
             ← Back
           </button>
@@ -339,29 +353,43 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
             <img src="/create-pet-food.png" alt="Activity" style={{ width: '220px', maxWidth: '100%', height: '110px', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />
             <p className="text-xl font-semibold text-gray-900 mt-2">{selectedActivity?.label}</p>
           </div>
-          <div className="mb-6">
+          <div
+            className="mb-6 cursor-pointer group"
+            onClick={() => dateTimeInputRef.current && dateTimeInputRef.current.showPicker ? dateTimeInputRef.current.showPicker() : dateTimeInputRef.current && dateTimeInputRef.current.focus()}
+            tabIndex={0}
+            role="button"
+            style={{ userSelect: 'none' }}
+          >
             <label className="block text-lg font-medium text-gray-900 mb-3">
               Date & Time
             </label>
             <input
+              ref={dateTimeInputRef}
               type="datetime-local"
               value={timestamp}
               onChange={(e) => setTimestamp(e.target.value)}
               min={new Date().toISOString().slice(0, 16)}
-              className="w-full px-4 py-4 rounded-xl border border-gray-200 focus:border-accent focus:outline-none text-lg"
+              className="w-full px-4 py-4 rounded-xl border border-gray-200 focus:border-accent focus:outline-none text-lg schedule-cursor-pointer"
+              style={{ cursor: 'pointer' }}
+              tabIndex={-1}
             />
             <p className="text-sm text-gray-500 mt-2">Pick a future date and time</p>
+            <style>{`
+              .schedule-cursor-pointer, .schedule-cursor-pointer::-webkit-calendar-picker-indicator {
+                cursor: pointer !important;
+              }
+            `}</style>
           </div>
           <div className="flex gap-3">
             <button
               onClick={() => setStep('timing')}
-              className="flex-1 py-3 bg-white text-gray-900 font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition"
+              className="flex-1 py-3 bg-white text-gray-900 font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition cursor-pointer"
             >
               ← Back
             </button>
             <button
               onClick={handleScheduleSubmit}
-              className="flex-1 py-3 bg-accent text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
+              className="flex-1 py-3 bg-accent text-gray-900 font-semibold rounded-xl hover:opacity-90 transition cursor-pointer"
             >
               Next
             </button>
@@ -406,13 +434,13 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           <div className="flex gap-3">
             <button
               onClick={() => setStep('timing')}
-              className="flex-1 py-3 bg-white text-gray-900 font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition"
+              className="flex-1 py-3 bg-white text-gray-900 font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition cursor-pointer"
             >
               ← Back
             </button>
             <button
               onClick={handleHappenedSubmit}
-              className="flex-1 py-3 bg-accent text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
+              className="flex-1 py-3 bg-accent text-gray-900 font-semibold rounded-xl hover:opacity-90 transition cursor-pointer"
             >
               Next
             </button>
@@ -451,14 +479,28 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
                 <p className="font-semibold text-gray-900">Enable Reminder</p>
                 <p className="text-sm text-gray-500">Get notified before this activity</p>
               </div>
-              <button
-                onClick={() => setReminderEnabled(!reminderEnabled)}
-                className={`relative inline-flex h-8 w-16 items-center rounded-full transition ${reminderEnabled ? 'bg-accent' : 'bg-gray-300'}`}
-              >
-                <span
-                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition ${reminderEnabled ? 'translate-x-9' : 'translate-x-1'}`}
-                />
-              </button>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-bold ${reminderEnabled ? 'text-green-600' : 'text-red-600'}`}>{reminderEnabled ? 'ON' : 'OFF'}</span>
+                <button
+                  onClick={() => setReminderEnabled(!reminderEnabled)}
+                  className={`reminder-toggle-btn ${reminderEnabled ? 'on' : 'off'} relative inline-flex h-8 w-16 items-center rounded-full transition`}
+                  style={{
+                    boxShadow: 'none',
+                    border: 'none',
+                    outline: 'none',
+                    backgroundImage: 'none',
+                  }}
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition ${reminderEnabled ? 'translate-x-9' : 'translate-x-1'}`}
+                  />
+                </button>
+              </div>
+                  {/* Place style block at the end of the component to guarantee override */}
+                  <style>{`
+                    .reminder-toggle-btn.on { background: #10B981 !important; }
+                    .reminder-toggle-btn.off { background: #EF4444 !important; }
+                  `}</style>
             </div>
             {reminderEnabled && (
               <>
@@ -486,14 +528,17 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
                     <p className="font-semibold text-gray-900">Add to Google Calendar</p>
                     <p className="text-sm text-gray-500">Sync to your calendar</p>
                   </div>
-                  <button
-                    onClick={() => setAddToGoogleCalendar(!addToGoogleCalendar)}
-                    className={`relative inline-flex h-8 w-16 items-center rounded-full transition ${addToGoogleCalendar ? 'bg-accent' : 'bg-gray-300'}`}
-                  >
-                    <span
-                      className={`inline-block h-6 w-6 transform rounded-full bg-white transition ${addToGoogleCalendar ? 'translate-x-9' : 'translate-x-1'}`}
-                    />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-bold ${addToGoogleCalendar ? 'text-green-600' : 'text-red-600'}`}>{addToGoogleCalendar ? 'ON' : 'OFF'}</span>
+                    <button
+                      onClick={() => setAddToGoogleCalendar(!addToGoogleCalendar)}
+                      className={`relative inline-flex h-8 w-16 items-center rounded-full transition ${addToGoogleCalendar ? 'bg-accent' : 'bg-gray-300'}`}
+                    >
+                      <span
+                        className={`inline-block h-6 w-6 transform rounded-full bg-white transition ${addToGoogleCalendar ? 'translate-x-9' : 'translate-x-1'}`}
+                      />
+                    </button>
+                  </div>
                 </div>
                 {/* Email Reminder */}
                 <div className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-xl bg-accent/10">
@@ -509,13 +554,13 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           <div className="flex gap-3 mt-8">
             <button
               onClick={() => setStep('schedule')}
-              className="flex-1 py-3 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition"
+              className="flex-1 py-3 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition cursor-pointer"
             >
               ← Back
             </button>
             <button
               onClick={handleReminderSubmit}
-              className="flex-1 py-3 bg-accent text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
+              className="flex-1 py-3 bg-accent text-gray-900 font-semibold rounded-xl hover:opacity-90 transition cursor-pointer"
             >
               Next
             </button>
@@ -542,7 +587,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
             <span style={{ color: '#d1d5db', background: 'none', border: 'none', boxShadow: 'none', textShadow: 'none', WebkitTextStroke: 0, filter: 'none', fontWeight: 300 }}>×</span>
           </button>
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">{isEditing ? 'Edit Activity' : 'Details'}</h2>
+            <h2 className="text-3xl font-bold text-gray-900">{isEditing ? 'Edit Activity' : 'Summary'}</h2>
           </div>
           <div className="text-center mb-8">
             <span className="text-6xl">{selectedActivity?.icon}</span>
@@ -658,16 +703,16 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
             <button
               type="button"
               onClick={() => isEditing ? onClose() : setStep(timing === 'upcoming' ? 'reminder' : 'happened')}
-              className="flex-1 bg-gray-100 text-gray-900 font-semibold py-3 rounded-xl hover:bg-gray-200 transition"
+              className="flex-1 bg-gray-100 text-gray-900 font-semibold py-3 rounded-xl hover:bg-gray-200 transition cursor-pointer"
             >
               {isEditing ? 'Cancel' : '← Back'}
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-accent text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50"
+              className="flex-1 bg-accent text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 cursor-pointer"
             >
-              {loading ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Activity'}
+              {loading ? 'Saving...' : isEditing ? 'Save Changes' : 'Log Activity'}
             </button>
           </div>
         </form>
