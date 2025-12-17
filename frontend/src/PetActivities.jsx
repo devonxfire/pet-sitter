@@ -53,7 +53,7 @@ export default function PetActivities({ household, user, onSignOut }) {
   const [logStep, setLogStep] = useState('selectType');
   const [editingActivity, setEditingActivity] = useState(null);
   const [viewingActivity, setViewingActivity] = useState(null);
-  const [activityFilter, setActivityFilter] = useState('past');
+  const [activityFilter, setActivityFilter] = useState('all');
   const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(1);
   const [sortOrder, setSortOrder] = useState('newest');
@@ -280,7 +280,7 @@ export default function PetActivities({ household, user, onSignOut }) {
                   <div className="relative">
                     <div className="w-28 h-28 md:w-40 md:h-40 rounded-2xl bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
                       {pet?.photoUrl ? (
-                        <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet?.name || 'Pet'} className="w-full h-full object-cover select-none" draggable={false} />
+                        <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet?.name || 'Pet'} className="w-full h-full object-cover select-none" draggable={false} style={{ boxShadow: '0 4px 16px 0 rgba(0,0,0,0.18)' }} />
                       ) : (
                         <div className="text-gray-400 text-4xl">📷</div>
                       )}
@@ -410,11 +410,8 @@ export default function PetActivities({ household, user, onSignOut }) {
       </div>
 
       <div className="mx-auto max-w-6xl px-6 w-full py-8">
-        {/* Activity scatter plot graph */}
-        {activities && activities.length > 0 && (
-          <PetActivityGraph activities={activities} />
-        )}
-        <div className="flex justify-between items-center mb-8 mt-6 flex-wrap gap-2">
+        {/* Log Activity and Favourites buttons ABOVE the graph */}
+        <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
           <div className="flex gap-2 items-center flex-wrap">
             <button
               onClick={() => setShowLogActivity(true)}
@@ -465,9 +462,15 @@ export default function PetActivities({ household, user, onSignOut }) {
               <span>Repeat Favourite</span>
             </button>
           </div>
+        </div>
+        {/* Activity scatter plot graph */}
+        {activities && activities.length > 0 && (
+          <PetActivityGraph activities={activities} />
+        )}
+        <div className="flex justify-between items-center mb-8 mt-6 flex-wrap gap-2">
           <div className="flex gap-2 items-center flex-wrap">
-            <button onClick={() => setActivityFilter('past')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'past' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>✓ Past</button>
             <button onClick={() => setActivityFilter('all')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'all' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>All</button>
+            <button onClick={() => setActivityFilter('past')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'past' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>✓ Past</button>
             <button onClick={() => setActivityFilter('upcoming')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover ${activityFilter === 'upcoming' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>📅 Upcoming</button>
           </div>
         </div>

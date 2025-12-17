@@ -4,6 +4,7 @@ import ACTIVITY_TYPES from './activityTypes';
 import { theme } from './theme';
 
 export default function LogActivity({ petId, household, activity, onActivityLogged, onActivityDeleted, onClose, onFavouritesUpdated, step, setStep }) {
+    // ...existing code...
   // Ref for the date/time input (for schedule activity slide)
   const dateTimeInputRef = React.useRef(null);
   // Style override for reminder toggle background color
@@ -245,6 +246,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   }, [household?.id, petId]);
 
   // Step 1: Select Activity Type
+  const [hoveredType, setHoveredType] = React.useState(null);
   if (step === 'selectType') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -257,28 +259,85 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           >
             <span style={{ color: '#b0b0b0', fontWeight: 300 }}>×</span>
           </button>
-          <div className="flex flex-col items-center mb-6">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Select Activity Type</h2>
-            <img src="/create-pet-food.png" alt="Activity" style={{ width: '220px', maxWidth: '100%', height: '110px', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />
+          <div className="flex flex-row items-center mb-6 justify-center w-full">
+            <div className="flex flex-col items-center w-full">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center w-full">Select Activity Type</h2>
+            </div>
           </div>
           {/* Force white background for activity type cards in this modal only */}
           <style>{`
-            .activity-type-card-fix { background: #fff !important; background-color: #fff !important; }
+            .activity-type-card-fix {
+              background: #fff !important;
+              background-color: #fff !important;
+              border-radius: 0.75rem !important;
+              position: relative;
+              overflow: visible;
+            }
+            .activity-type-card-fix::after {
+              content: '';
+              display: block;
+              position: absolute;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              height: 0;
+              border-bottom-left-radius: 0.75rem;
+              border-bottom-right-radius: 0.75rem;
+              background: transparent;
+              pointer-events: none;
+              transition: height 0.18s, background 0.18s;
+              z-index: 2;
+            }
+            /* Show red border by default ONLY if Feeding and nothing is selected and no other card is hovered */
+            .activity-type-card-fix.feeding-default::after {
+              height: 4px;
+              background: #C3001F;
+              border-bottom-left-radius: 0.75rem;
+              border-bottom-right-radius: 0.75rem;
+            }
+            /* Show red border on hover ONLY if a type is selected (no feeding-default) */
+            .activity-type-card-fix:not(.feeding-default):hover::after {
+              height: 4px;
+              background: #C3001F;
+              border-bottom-left-radius: 0.75rem;
+              border-bottom-right-radius: 0.75rem;
+            }
+            /* Hide feeding-default border if any card is hovered */
+            .activity-type-card-fix.feeding-default.hide-default::after {
+              height: 0 !important;
+              background: transparent !important;
+            }
           `}</style>
           <div className="grid grid-cols-4 gap-5">
-            {ACTIVITY_TYPES.map((type) => (
-              <button
-                key={type.id}
-                onClick={() => handleTypeSelect(type.id)}
-                className="py-8 px-4 rounded-xl flex flex-col items-center gap-2 border border-gray-200 hover:bg-gray-50 hover:shadow transition-all duration-150 focus:outline-none activity-type-card-fix cursor-pointer"
-                style={{ boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)' }}
-              >
-                <img src="/create-pet-food.png" alt="Activity" style={{ width: '90px', height: '60px', objectFit: 'contain', marginBottom: '0.5rem', borderRadius: 0, boxShadow: 'none' }} />
-                <span className="text-base font-medium text-gray-800 text-center">
-                  {type.label}
-                </span>
-              </button>
-            ))}
+            {ACTIVITY_TYPES.map((type) => {
+              // Map special cases for image names
+              let imgName = (type.name || type.id || '').toLowerCase().replace(/\s+/g, '-') + '-activity.png';
+              if (type.id === 'feeding') imgName = 'food-activity.png';
+              if (type.id === 'chilling') imgName = 'chill-activity.png';
+              // Add feeding-default class if this is the Feeding card and no type is selected yet and no other card is hovered
+              const isFeedingDefault = type.id === 'feeding' && !selectedType && !hoveredType;
+              // Hide feeding-default border if any card is hovered (except itself)
+              const hideFeedingDefault = type.id === 'feeding' && !selectedType && hoveredType && hoveredType !== 'feeding';
+              return (
+                <button
+                  key={type.id}
+                  onClick={() => handleTypeSelect(type.id)}
+                  onMouseEnter={() => setHoveredType(type.id)}
+                  onMouseLeave={() => setHoveredType(null)}
+                  className={
+                    `py-8 px-4 rounded-xl flex flex-col items-center gap-2 border border-gray-200 shadow-2xl transition-all duration-150 focus:outline-none activity-type-card-fix cursor-pointer` +
+                    (isFeedingDefault ? ' feeding-default' : '') +
+                    (hideFeedingDefault ? ' hide-default' : '')
+                  }
+                  style={{ boxShadow: '0 12px 48px 0 rgba(0,0,0,0.28)' }}
+                >
+                  <img src={`/${imgName}`} alt={type.label} style={{ width: '90px', height: '60px', objectFit: 'contain', marginBottom: '0.5rem', borderRadius: 0, boxShadow: 'none' }} />
+                  <span className="text-base font-medium text-gray-500 text-center">
+                    {type.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -302,7 +361,12 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           </button>
           <div className="flex flex-col items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">When?</h2>
-            <img src="/create-pet-food.png" alt="Activity" style={{ width: '220px', maxWidth: '100%', height: '110px', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />
+            {(() => {
+              let imgName = ((selectedActivity?.name || selectedActivity?.id || '').toLowerCase().replace(/\s+/g, '-') + '-activity.png');
+              if (selectedActivity?.id === 'feeding') imgName = 'food-activity.png';
+              if (selectedActivity?.id === 'chilling') imgName = 'chill-activity.png';
+              return <img src={`/${imgName}`} alt={selectedActivity?.label} style={{ width: '192px', maxWidth: '100%', height: 'auto', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />;
+            })()}
             <p className="text-xl font-semibold text-gray-900 mt-2">{selectedActivity?.label}</p>
           </div>
           <div className="space-y-4">
@@ -350,7 +414,12 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           </button>
           <div className="flex flex-col items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Schedule Activity</h2>
-            <img src="/create-pet-food.png" alt="Activity" style={{ width: '220px', maxWidth: '100%', height: '110px', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />
+            {(() => {
+              let imgName = ((selectedActivity?.name || selectedActivity?.id || '').toLowerCase().replace(/\s+/g, '-') + '-activity.png');
+              if (selectedActivity?.id === 'feeding') imgName = 'food-activity.png';
+              if (selectedActivity?.id === 'chilling') imgName = 'chill-activity.png';
+              return <img src={`/${imgName}`} alt={selectedActivity?.label} style={{ width: '192px', maxWidth: '100%', height: 'auto', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />;
+            })()}
             <p className="text-xl font-semibold text-gray-900 mt-2">{selectedActivity?.label}</p>
           </div>
           <div
@@ -415,7 +484,12 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           </button>
           <div className="flex flex-col items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">When did it happen?</h2>
-            <img src="/create-pet-food.png" alt="Activity" style={{ width: '220px', maxWidth: '100%', height: '110px', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />
+            {(() => {
+              let imgName = ((selectedActivity?.name || selectedActivity?.id || '').toLowerCase().replace(/\s+/g, '-') + '-activity.png');
+              if (selectedActivity?.id === 'feeding') imgName = 'food-activity.png';
+              if (selectedActivity?.id === 'chilling') imgName = 'chill-activity.png';
+              return <img src={`/${imgName}`} alt={selectedActivity?.label} style={{ width: '192px', maxWidth: '100%', height: 'auto', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />;
+            })()}
             <p className="text-xl font-semibold text-gray-900 mt-2">{selectedActivity?.label}</p>
           </div>
           <div className="mb-6">
@@ -468,8 +542,13 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Set Reminder?</h2>
           </div>
-          <div className="text-center mb-8">
-            <span className="text-6xl">{selectedActivity?.icon}</span>
+          <div className="text-center mb-8 flex flex-col items-center justify-center">
+            {(() => {
+              let imgName = ((selectedActivity?.name || selectedActivity?.id || '').toLowerCase().replace(/\s+/g, '-') + '-activity.png');
+              if (selectedActivity?.id === 'feeding') imgName = 'food-activity.png';
+              if (selectedActivity?.id === 'chilling') imgName = 'chill-activity.png';
+              return <img src={`/${imgName}`} alt={selectedActivity?.label} style={{ width: '192px', maxWidth: '100%', height: 'auto', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />;
+            })()}
             <p className="text-xl font-semibold text-gray-900 mt-4">{selectedActivity?.label}</p>
           </div>
           <div className="space-y-6">
@@ -589,8 +668,13 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-gray-900">{isEditing ? 'Edit Activity' : 'Summary'}</h2>
           </div>
-          <div className="text-center mb-8">
-            <span className="text-6xl">{selectedActivity?.icon}</span>
+          <div className="text-center mb-8 flex flex-col items-center justify-center">
+            {(() => {
+              let imgName = ((selectedActivity?.name || selectedActivity?.id || '').toLowerCase().replace(/\s+/g, '-') + '-activity.png');
+              if (selectedActivity?.id === 'feeding') imgName = 'food-activity.png';
+              if (selectedActivity?.id === 'chilling') imgName = 'chill-activity.png';
+              return <img src={`/${imgName}`} alt={selectedActivity?.label} style={{ width: '192px', maxWidth: '100%', height: 'auto', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />;
+            })()}
             <p className="text-xl font-semibold text-gray-900 mt-4">{selectedActivity?.label}</p>
           </div>
           <div className="mb-6">
