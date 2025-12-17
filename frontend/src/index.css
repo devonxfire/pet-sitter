@@ -1,4 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap');
+/* MAXIMUM-SPECIFICITY: Force transparent background for modal close (X) button, no gray on hover/focus */
+.fixed.inset-0.z-50.flex.items-center.justify-center.bg-black\/50 button[aria-label="Close"],
+.fixed.inset-0.z-50.flex.items-center.justify-center.bg-black\/50 button[aria-label="Close"]:hover,
+.fixed.inset-0.z-50.flex.items-center.justify-center.bg-black\/50 button[aria-label="Close"]:focus {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  color: #b0b0b0 !important;
+}
+/* MAXIMUM-SPECIFICITY: Force white background for activity type cards in LogActivity modal */
+.fixed.inset-0.z-50.flex.items-center.justify-center.bg-black\/50 .activity-type-card-fix,
+.fixed.inset-0.z-50.flex.items-center.justify-center.bg-black\/50 button.activity-type-card-fix {
+  background: #fff !important;
+  background-color: #fff !important;
+  color: #222 !important;
+  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.04) !important;
+  border: 1px solid #e5e7eb !important;
+  transition: transform 0.16s cubic-bezier(.4,1.2,.4,1), box-shadow 0.16s cubic-bezier(.4,1.2,.4,1);
+}
+.fixed.inset-0.z-50.flex.items-center.justify-center.bg-black\/50 .activity-type-card-fix:hover,
+.fixed.inset-0.z-50.flex.items-center.justify-center.bg-black\/50 button.activity-type-card-fix:hover {
+  transform: scale(1.045);
+  box-shadow: 0 6px 32px 0 rgba(0,0,0,0.13), 0 1.5px 6px 0 rgba(0,0,0,0.08);
+  z-index: 2;
+}
 /* Custom override for PetDetail action buttons with maximum specificity */
 /* FINAL, MAXIMUM-SPECIFICITY OVERRIDE for PetDetail action buttons */
 body.page-non-landing button.petdetail-action-btn,

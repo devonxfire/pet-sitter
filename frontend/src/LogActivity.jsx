@@ -211,28 +211,34 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   // Step 1: Select Activity Type
   if (step === 'selectType') {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Select Activity Type</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl"
-            >
-              ✕
-            </button>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem'}}>
+          <button
+            className="absolute top-3 right-3 text-2xl font-bold focus:outline-none"
+            onClick={onClose}
+            aria-label="Close"
+            style={{ background: 'none', border: 'none', color: '#b0b0b0', padding: 0, boxShadow: 'none', lineHeight: 1, outline: 'none', cursor: 'pointer', zIndex: 10, fontWeight: 400, fontSize: '1.8rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
+          >
+            <span style={{ color: '#b0b0b0', fontWeight: 300 }}>×</span>
+          </button>
+          <div className="flex flex-col items-center mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Select Activity Type</h2>
+            <img src="/create-pet-food.png" alt="Activity" style={{ width: '220px', maxWidth: '100%', height: '110px', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />
           </div>
-
-          <div className="grid grid-cols-4 gap-4">
+          {/* Force white background for activity type cards in this modal only */}
+          <style>{`
+            .activity-type-card-fix { background: #fff !important; background-color: #fff !important; }
+          `}</style>
+          <div className="grid grid-cols-2 gap-5">
             {ACTIVITY_TYPES.map((type) => (
               <button
                 key={type.id}
                 onClick={() => handleTypeSelect(type.id)}
-                className="py-6 px-4 rounded-xl flex flex-col items-center gap-3 transition border-2 border-gray-200 hover:border-gray-300"
-                style={{ background: theme.colors.lightGray }}
+                className="py-8 px-4 rounded-xl flex flex-col items-center gap-2 border border-gray-200 hover:bg-gray-50 hover:shadow transition-all duration-150 focus:outline-none activity-type-card-fix"
+                style={{ boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)' }}
               >
-                <span className="text-4xl" style={{ color: theme.colors.textSecondary }}>{type.icon}</span>
-                <span className="text-sm font-medium text-gray-700 text-center">
+                <img src="/create-pet-food.png" alt="Activity" style={{ width: '60px', height: '30px', objectFit: 'contain', marginBottom: '0.5rem', borderRadius: 0, boxShadow: 'none' }} />
+                <span className="text-base font-medium text-gray-800 text-center">
                   {type.label}
                 </span>
               </button>
@@ -241,49 +247,45 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
         </div>
       </div>
     );
+  
   }
 
   // Step 2: Timing - Happened or Upcoming
   if (step === 'timing') {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-2xl p-8 max-w-lg w-full mx-4">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">When?</h2>
-            <button
-              onClick={onClose}
-              className="text-2xl bg-transparent border-none p-0"
-              style={{ color: theme.colors.textSecondary, background: 'none' }}
-            >
-              ✕
-            </button>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem'}}>
+          <button
+            className="absolute top-3 right-3 text-2xl font-bold focus:outline-none"
+            onClick={onClose}
+            aria-label="Close"
+            style={{ background: 'none', border: 'none', color: '#b0b0b0', padding: 0, boxShadow: 'none', lineHeight: 1, outline: 'none', cursor: 'pointer', zIndex: 10, fontWeight: 400, fontSize: '1.8rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
+          >
+            <span style={{ color: '#b0b0b0', fontWeight: 300 }}>×</span>
+          </button>
+          <div className="flex flex-col items-center mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">When?</h2>
+            <img src="/create-pet-food.png" alt="Activity" style={{ width: '220px', maxWidth: '100%', height: '110px', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />
+            <p className="text-xl font-semibold text-gray-900 mt-2">{selectedActivity?.label}</p>
           </div>
-
-          <div className="text-center mb-8">
-            <span className="text-6xl">{selectedActivity?.icon}</span>
-            <p className="text-xl font-semibold text-gray-900 mt-4">{selectedActivity?.label}</p>
-          </div>
-
           <div className="space-y-4">
             <button
               onClick={() => handleTimingSelect('happened')}
-              className="w-full py-6 px-6 rounded-xl border-2 border-gray-200 hover:border-accent hover:bg-accent/10 transition text-left"
+              className="w-full py-6 px-6 rounded-xl border border-gray-200 text-left focus:outline-none activity-type-card-fix"
+              style={{}}
             >
-              <div className="text-2xl mb-2">✓</div>
               <div className="font-semibold text-lg text-gray-900">Already Happened</div>
               <div className="text-sm text-gray-500">Log a past activity</div>
             </button>
-
             <button
               onClick={() => handleTimingSelect('upcoming')}
-              className="w-full py-6 px-6 rounded-xl border-2 border-gray-200 hover:border-accent hover:bg-accent/10 transition text-left"
+              className="w-full py-6 px-6 rounded-xl border border-gray-200 text-left focus:outline-none activity-type-card-fix"
+              style={{}}
             >
-              <div className="text-2xl mb-2">📅</div>
               <div className="font-semibold text-lg text-gray-900">Upcoming</div>
               <div className="text-sm text-gray-500">Schedule for later</div>
             </button>
           </div>
-
           <button
             onClick={() => setStep('selectType')}
             className="mt-6 w-full py-3 text-gray-600 hover:text-gray-900 font-medium"
@@ -298,23 +300,21 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   // Step 3a: When it Happened
   if (step === 'happened') {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-2xl p-8 max-w-lg w-full mx-4">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">When did it happen?</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl"
-            >
-              ✕
-            </button>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem'}}>
+          <button
+            className="absolute top-3 right-3 text-2xl font-bold focus:outline-none"
+            onClick={onClose}
+            aria-label="Close"
+            style={{ background: 'none', border: 'none', color: '#b0b0b0', padding: 0, boxShadow: 'none', lineHeight: 1, outline: 'none', cursor: 'pointer', zIndex: 10, fontWeight: 400, fontSize: '1.8rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
+          >
+            <span style={{ color: '#b0b0b0', fontWeight: 300 }}>×</span>
+          </button>
+          <div className="flex flex-col items-center mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">When did it happen?</h2>
+            <img src="/create-pet-food.png" alt="Activity" style={{ width: '220px', maxWidth: '100%', height: '110px', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />
+            <p className="text-xl font-semibold text-gray-900 mt-2">{selectedActivity?.label}</p>
           </div>
-
-          <div className="text-center mb-8">
-            <span className="text-6xl">{selectedActivity?.icon}</span>
-            <p className="text-xl font-semibold text-gray-900 mt-4">{selectedActivity?.label}</p>
-          </div>
-
           <div className="mb-6">
             <label className="block text-lg font-medium text-gray-900 mb-3">
               Date & Time
@@ -324,15 +324,14 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
               value={timestamp}
               onChange={(e) => setTimestamp(e.target.value)}
               max={new Date().toISOString().slice(0, 16)}
-              className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-accent focus:outline-none text-lg"
+              className="w-full px-4 py-4 rounded-xl border border-gray-200 focus:border-accent focus:outline-none text-lg"
             />
             <p className="text-sm text-gray-500 mt-2">Defaults to current time</p>
           </div>
-
           <div className="flex gap-3">
             <button
               onClick={() => setStep('timing')}
-              className="flex-1 py-3 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition"
+              className="flex-1 py-3 bg-white text-gray-900 font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition"
             >
               ← Back
             </button>
@@ -351,23 +350,23 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   // Step 4: Reminder Setup (if upcoming)
   if (step === 'reminder') {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-2xl p-8 max-w-lg w-full mx-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
+          <button
+            className="absolute top-3 right-3 text-2xl font-bold focus:outline-none"
+            onClick={onClose}
+            aria-label="Close"
+            style={{ background: 'none', backgroundColor: 'transparent', border: 'none', padding: 0, boxShadow: 'none', lineHeight: 1, color: '#d1d5db', outline: 'none', cursor: 'pointer', WebkitTextStroke: '0', textShadow: 'none', filter: 'none', zIndex: 10, fontWeight: 400, fontSize: '1.8rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
+          >
+            <span style={{ color: '#d1d5db', background: 'none', border: 'none', boxShadow: 'none', textShadow: 'none', WebkitTextStroke: 0, filter: 'none', fontWeight: 300 }}>×</span>
+          </button>
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Set Reminder?</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl"
-            >
-              ✕
-            </button>
           </div>
-
           <div className="text-center mb-8">
             <span className="text-6xl">{selectedActivity?.icon}</span>
             <p className="text-xl font-semibold text-gray-900 mt-4">{selectedActivity?.label}</p>
           </div>
-
           <div className="space-y-6">
             {/* Enable Reminder Toggle */}
             <div className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-xl">
@@ -384,7 +383,6 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
                 />
               </button>
             </div>
-
             {reminderEnabled && (
               <>
                 {/* Reminder Time */}
@@ -405,7 +403,6 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
                     <option value="1440">1 day before</option>
                   </select>
                 </div>
-
                 {/* Add to Google Calendar */}
                 <div className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-xl">
                   <div>
@@ -421,19 +418,17 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
                     />
                   </button>
                 </div>
-
                 {/* Email Reminder */}
                 <div className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-xl bg-accent/10">
                   <div>
                     <p className="font-semibold text-gray-900">📧 Email Reminder</p>
-                    <p className="text-sm text-gray-500\">Always enabled when reminders are on</p>
+                    <p className="text-sm text-gray-500">Always enabled when reminders are on</p>
                   </div>
                   <span className="text-xl">✓</span>
                 </div>
               </>
             )}
           </div>
-
           <div className="flex gap-3 mt-8">
             <button
               onClick={() => setStep('schedule')}
@@ -456,23 +451,23 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   // Step 5: Details (notes, photo, etc.) OR Edit Mode
   if (step === 'schedule') {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-2xl p-8 max-w-lg w-full mx-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
+          <button
+            className="absolute top-3 right-3 text-2xl font-bold focus:outline-none"
+            onClick={onClose}
+            aria-label="Close"
+            style={{ background: 'none', backgroundColor: 'transparent', border: 'none', padding: 0, boxShadow: 'none', lineHeight: 1, color: '#d1d5db', outline: 'none', cursor: 'pointer', WebkitTextStroke: '0', textShadow: 'none', filter: 'none', zIndex: 10, fontWeight: 400, fontSize: '1.8rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
+          >
+            <span style={{ color: '#d1d5db', background: 'none', border: 'none', boxShadow: 'none', textShadow: 'none', WebkitTextStroke: 0, filter: 'none', fontWeight: 300 }}>×</span>
+          </button>
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Schedule</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl"
-            >
-              ✕
-            </button>
           </div>
-
           <div className="text-center mb-8">
             <span className="text-6xl">{selectedActivity?.icon}</span>
             <p className="text-xl font-semibold text-gray-900 mt-4">{selectedActivity?.label}</p>
           </div>
-
           <div className="mb-6">
             <label className="block text-lg font-medium text-gray-900 mb-3">
               Date & Time
@@ -481,55 +476,12 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
               type="datetime-local"
               value={timestamp}
               onChange={(e) => setTimestamp(e.target.value)}
-              className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-accent focus:outline-none text-lg"
+              className="w-full px-4 py-4 rounded-xl border border-gray-200 focus:border-accent focus:outline-none text-lg"
             />
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => setStep('timing')}
-              className="flex-1 py-3 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition"
-            >
-              ← Back
-            </button>
-            <button
-              onClick={handleScheduleSubmit}
-              className="flex-1 py-3 bg-accent text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Step 4: Details (notes, photo, etc.) OR Edit Mode
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-8 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold text-gray-900">
-            {isEditing ? `Edit ${activity.activityType?.name}` : 'Add Details'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl"
-          >
-            ✕
-          </button>
-        </div>
-
-        {!isEditing && (
-          <div className="text-center mb-8">
-            <span className="text-6xl">{selectedActivity?.icon}</span>
-            <p className="text-xl font-semibold text-gray-900 mt-4">{selectedActivity?.label}</p>
             <p className="text-sm text-gray-500 mt-2">
               {timing === 'upcoming' ? `📅 Scheduled for ${new Date(timestamp).toLocaleString()}` : '✓ Logged as complete'}
             </p>
           </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Activity Type (Edit mode only) */}
@@ -590,7 +542,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
                           checked={selectedPetIds.includes(p.id)}
                           disabled={isCurrent}
                           onChange={(e) => {
-                            if (isCurrent) return; // should be impossible since disabled, but guard
+                            if (isCurrent) return;
                             if (e.target.checked) setSelectedPetIds((s) => [...new Set([...(s||[]), p.id])]);
                             else setSelectedPetIds((s) => (s || []).filter(id => id !== p.id));
                           }}
@@ -602,47 +554,6 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
                     );
                   })
                 )}
-              </div>
-            </div>
-          )}
-
-          {/* Notes */}
-          <div>
-            <label className="block text-lg font-medium text-gray-900 mb-3">
-              Notes (optional)
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add any details..."
-              rows="4"
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-accent focus:outline-none"
-            />
-          </div>
-
-          {/* Favourites opt-in (server-backed) */}
-          {!isEditing && (
-            <div>
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={addToFavourites}
-                  onChange={(e) => setAddToFavourites(e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <span className="text-sm text-gray-700">Add this activity to Favourites ❤️</span>
-              </label>
-            </div>
-          )}
-
-          {/* Photo Upload - Placeholder for future */}
-          {!isEditing && (
-            <div>
-              <label className="block text-lg font-medium text-gray-900 mb-3">
-                Photo (coming soon)
-              </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center text-gray-400">
-                📸 Photo upload coming soon
               </div>
             </div>
           )}
@@ -683,4 +594,4 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
       </div>
     </div>
   );
-}
+  }}
