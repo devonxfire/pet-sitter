@@ -7,6 +7,8 @@ import ActivityView from './ActivityView';
 import ACTIVITY_TYPES from './activityTypes';
 
 function FavouritesModal({ favourites, onLog, onDelete, onClose }) {
+    console.log('[PetActivities] Render', { household, user });
+    console.log('[PetActivities] Render body', { showLogActivity, editingActivity, viewingActivity });
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 relative">
@@ -48,6 +50,7 @@ export default function PetActivities({ household, user, onSignOut }) {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showLogActivity, setShowLogActivity] = useState(false);
+  const [logStep, setLogStep] = useState('selectType');
   const [editingActivity, setEditingActivity] = useState(null);
   const [viewingActivity, setViewingActivity] = useState(null);
   const [activityFilter, setActivityFilter] = useState('past');
@@ -504,7 +507,7 @@ export default function PetActivities({ household, user, onSignOut }) {
                 medication: { past: 'was given medication', future: 'has medication scheduled' },
                 water: { past: 'was given water', future: 'has water scheduled' },
                 grooming: { past: 'was groomed', future: 'has grooming scheduled' },
-                photo: { past: 'had a photo taken', future: 'has a photo scheduled' },
+                chilling: { past: 'chilled out', future: 'is scheduled to chill' },
                 other: { past: 'had an activity', future: 'has an activity scheduled' }
               };
               const now = new Date();
@@ -575,7 +578,19 @@ export default function PetActivities({ household, user, onSignOut }) {
       </div>
 
       {showLogActivity && (
-        <LogActivity petId={petId} household={household} onActivityLogged={(newActivity) => { setActivities(prev => [newActivity, ...prev]); setShowLogActivity(false); }} onClose={() => setShowLogActivity(false)} onFavouritesUpdated={loadFavourites} />
+        <LogActivity
+          petId={petId}
+          household={household}
+          step={logStep}
+          setStep={setLogStep}
+          onActivityLogged={(newActivity) => { setActivities(prev => [newActivity, ...prev]); setShowLogActivity(false); setLogStep('selectType'); }}
+          onClose={() => {
+            console.log('[PetActivities] LogActivity onClose called');
+            setShowLogActivity(false);
+            setLogStep('selectType');
+          }}
+          onFavouritesUpdated={loadFavourites}
+        />
       )}
 
       {editingActivity && (

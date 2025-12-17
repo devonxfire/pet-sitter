@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap');
+/* import getSocket from './socket';  // Not valid in CSS, but shown for reference */
 /* MAXIMUM-SPECIFICITY: Force transparent background for modal close (X) button, no gray on hover/focus */
 .fixed.inset-0.z-50.flex.items-center.justify-center.bg-black\/50 button[aria-label="Close"],
 .fixed.inset-0.z-50.flex.items-center.justify-center.bg-black\/50 button[aria-label="Close"]:hover,

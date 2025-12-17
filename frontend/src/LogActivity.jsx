@@ -3,8 +3,8 @@ import { apiFetch } from './api';
 import ACTIVITY_TYPES from './activityTypes';
 import { theme } from './theme';
 
-export default function LogActivity({ petId, household, activity, onActivityLogged, onActivityDeleted, onClose, onFavouritesUpdated }) {
-  const [step, setStep] = useState(activity ? 'edit' : 'selectType'); // selectType -> timing -> happened/schedule -> details -> reminder (if upcoming)
+export default function LogActivity({ petId, household, activity, onActivityLogged, onActivityDeleted, onClose, onFavouritesUpdated, step, setStep }) {
+  console.log('[LogActivity] Render', { activity, petId, household, step });
   const [selectedType, setSelectedType] = useState(activity?.activityType?.name || '');
   const [timing, setTiming] = useState(''); // 'happened' or 'upcoming'
   const [notes, setNotes] = useState(activity?.notes || '');
@@ -30,25 +30,34 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   const [addToFavourites, setAddToFavourites] = useState(false);
 
   const handleScheduleSubmit = () => {
+    console.log('[LogActivity] handleScheduleSubmit', { timing, step });
     if (timing === 'upcoming') {
       setStep('reminder');
+      console.log('[LogActivity] Set step to reminder');
     } else {
       setStep('details');
+      console.log('[LogActivity] Set step to details');
     }
   };
 
   const handleTypeSelect = (typeId) => {
     setSelectedType(typeId);
     setStep('timing');
+    console.log('[LogActivity] handleTypeSelect', { typeId, step });
   };
 
+  const [, forceRerender] = useState(0);
   const handleTimingSelect = (timingChoice) => {
+    console.log('[LogActivity] handleTimingSelect', { timingChoice, step });
     setTiming(timingChoice);
     if (timingChoice === 'happened') {
       setTimestamp(toLocalInputValue(new Date()));
       setStep('happened');
+      console.log('[LogActivity] Set step to happened');
     } else {
       setStep('schedule');
+      console.log('[LogActivity] Set step to schedule');
+      setTimeout(() => forceRerender(n => n + 1), 0);
     }
   };
 
@@ -57,6 +66,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   };
 
   const handleReminderSubmit = () => {
+    console.log('[LogActivity] handleReminderSubmit called');
     setStep('details');
   };
 
@@ -64,6 +74,14 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
     e.preventDefault();
     setError('');
     setLoading(true);
+    // Debug: log timestamp values
+    console.log('[LogActivity] Raw timestamp input:', timestamp);
+    try {
+      const iso = new Date(timestamp).toISOString();
+      console.log('[LogActivity] Converted to ISO:', iso);
+    } catch (err) {
+      console.warn('[LogActivity] Error converting timestamp to ISO:', err);
+    }
 
     try {
       // derive client-side type info so we can label notifications immediately
@@ -95,15 +113,19 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           throw new Error('Please select at least one pet to apply this activity to.');
         }
 
-        const promises = petIdsToSend.map((pid) => apiFetch(`/api/pets/${pid}/activities`, {
-          method: 'POST',
-          body: JSON.stringify({
+        const promises = petIdsToSend.map((pid) => {
+          const payload = {
             activityTypeId: selectedType,
             timestamp: new Date(timestamp).toISOString(),
             notes: notes || null,
             data: {}
-          })
-        }));
+          };
+          console.log('[LogActivity] POST payload for pet', pid, payload);
+          return apiFetch(`/api/pets/${pid}/activities`, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+          });
+        });
 
         const results = await Promise.all(promises);
         results.forEach((res) => {
@@ -212,7 +234,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   if (step === 'selectType') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem'}}>
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem', minWidth: '700px'}}>
           <button
             className="absolute top-3 right-3 text-2xl font-bold focus:outline-none"
             onClick={onClose}
@@ -229,7 +251,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           <style>{`
             .activity-type-card-fix { background: #fff !important; background-color: #fff !important; }
           `}</style>
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid grid-cols-4 gap-5">
             {ACTIVITY_TYPES.map((type) => (
               <button
                 key={type.id}
@@ -237,7 +259,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
                 className="py-8 px-4 rounded-xl flex flex-col items-center gap-2 border border-gray-200 hover:bg-gray-50 hover:shadow transition-all duration-150 focus:outline-none activity-type-card-fix"
                 style={{ boxShadow: '0 1px 4px 0 rgba(0,0,0,0.04)' }}
               >
-                <img src="/create-pet-food.png" alt="Activity" style={{ width: '60px', height: '30px', objectFit: 'contain', marginBottom: '0.5rem', borderRadius: 0, boxShadow: 'none' }} />
+                <img src="/create-pet-food.png" alt="Activity" style={{ width: '90px', height: '60px', objectFit: 'contain', marginBottom: '0.5rem', borderRadius: 0, boxShadow: 'none' }} />
                 <span className="text-base font-medium text-gray-800 text-center">
                   {type.label}
                 </span>
@@ -252,6 +274,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
 
   // Step 2: Timing - Happened or Upcoming
   if (step === 'timing') {
+    console.log('[LogActivity] Rendering timing step', { step, timing });
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem'}}>
@@ -297,8 +320,60 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
     );
   }
 
+  // Step 3b: Schedule (for upcoming)
+  if (step === 'schedule') {
+    console.log('[LogActivity] Rendering schedule step', { step, timing });
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem'}}>
+          <button
+            className="absolute top-3 right-3 text-2xl font-bold focus:outline-none"
+            onClick={onClose}
+            aria-label="Close"
+            style={{ background: 'none', border: 'none', color: '#b0b0b0', padding: 0, boxShadow: 'none', lineHeight: 1, outline: 'none', cursor: 'pointer', zIndex: 10, fontWeight: 400, fontSize: '1.8rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
+          >
+            <span style={{ color: '#b0b0b0', fontWeight: 300 }}>×</span>
+          </button>
+          <div className="flex flex-col items-center mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Schedule Activity</h2>
+            <img src="/create-pet-food.png" alt="Activity" style={{ width: '220px', maxWidth: '100%', height: '110px', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />
+            <p className="text-xl font-semibold text-gray-900 mt-2">{selectedActivity?.label}</p>
+          </div>
+          <div className="mb-6">
+            <label className="block text-lg font-medium text-gray-900 mb-3">
+              Date & Time
+            </label>
+            <input
+              type="datetime-local"
+              value={timestamp}
+              onChange={(e) => setTimestamp(e.target.value)}
+              min={new Date().toISOString().slice(0, 16)}
+              className="w-full px-4 py-4 rounded-xl border border-gray-200 focus:border-accent focus:outline-none text-lg"
+            />
+            <p className="text-sm text-gray-500 mt-2">Pick a future date and time</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setStep('timing')}
+              className="flex-1 py-3 bg-white text-gray-900 font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition"
+            >
+              ← Back
+            </button>
+            <button
+              onClick={handleScheduleSubmit}
+              className="flex-1 py-3 bg-accent text-gray-900 font-semibold rounded-xl hover:opacity-90 transition"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Step 3a: When it Happened
   if (step === 'happened') {
+    console.log('[LogActivity] Rendering happened step', { step, timing });
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem'}}>
@@ -349,6 +424,8 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
 
   // Step 4: Reminder Setup (if upcoming)
   if (step === 'reminder') {
+    console.log('[LogActivity] Rendering reminder step', { step, timing });
+    console.log('[LogActivity] Rendering reminder step');
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
@@ -449,7 +526,10 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   }
 
   // Step 5: Details (notes, photo, etc.) OR Edit Mode
-  if (step === 'schedule') {
+  if (step === 'details' || step === 'edit') {
+    console.log('[LogActivity] Rendering details step', { step, timing });
+    // Log entry into details step for debugging
+    console.log('[LogActivity] Entered details step. Timing:', timing);
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
@@ -462,7 +542,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
             <span style={{ color: '#d1d5db', background: 'none', border: 'none', boxShadow: 'none', textShadow: 'none', WebkitTextStroke: 0, filter: 'none', fontWeight: 300 }}>×</span>
           </button>
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Schedule</h2>
+            <h2 className="text-3xl font-bold text-gray-900">{isEditing ? 'Edit Activity' : 'Details'}</h2>
           </div>
           <div className="text-center mb-8">
             <span className="text-6xl">{selectedActivity?.icon}</span>

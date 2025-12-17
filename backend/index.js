@@ -923,8 +923,30 @@ app.post('/api/pets/:petId/activities', authenticateToken, async (req, res) => {
   try {
     const { petId } = req.params;
     const { activityTypeId, timestamp, notes, photoUrl, data } = req.body;
+    console.log('[ACTIVITY][POST] Incoming:', { petId, activityTypeId, timestamp, notes, photoUrl, data, userId: req.user.userId });
+
+    // Validate timestamp
+    let parsedTimestamp = null;
+    if (timestamp) {
+      parsedTimestamp = new Date(timestamp);
+      if (isNaN(parsedTimestamp.getTime())) {
+        console.warn('[ACTIVITY][POST] Invalid timestamp:', timestamp);
+        return res.status(400).json({ error: 'Invalid timestamp' });
+      }
+      // Log if timestamp is in the future or past
+      const now = new Date();
+      if (parsedTimestamp > now) {
+        console.log('[ACTIVITY][POST] Timestamp is in the future:', parsedTimestamp.toISOString());
+      } else {
+        console.log('[ACTIVITY][POST] Timestamp is in the past or now:', parsedTimestamp.toISOString());
+      }
+    } else {
+      parsedTimestamp = new Date();
+      console.log('[ACTIVITY][POST] No timestamp provided, using now:', parsedTimestamp.toISOString());
+    }
 
     if (!activityTypeId) {
+      console.warn('[ACTIVITY][POST] Missing activityTypeId');
       return res.status(400).json({ error: 'Activity type is required' });
     }
 
@@ -940,8 +962,11 @@ app.post('/api/pets/:petId/activities', authenticateToken, async (req, res) => {
         }
       }
     });
-
+    if (!pet) {
+      console.warn('[ACTIVITY][POST] Pet not found:', petId);
+    }
     if (!pet || pet.household.members.length === 0) {
+      console.warn('[ACTIVITY][POST] Access denied for user', req.user.userId, 'on pet', petId);
       return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -954,9 +979,9 @@ app.post('/api/pets/:petId/activities', authenticateToken, async (req, res) => {
           name: activityTypeId
         }
       });
-
       if (activityType) {
         finalActivityTypeId = activityType.id;
+        console.log('[ACTIVITY][POST] Found existing activityType:', activityTypeId, '->', finalActivityTypeId);
       } else {
         // Create activity type if it doesn't exist
         const newActivityType = await prisma.activityType.create({
@@ -967,51 +992,56 @@ app.post('/api/pets/:petId/activities', authenticateToken, async (req, res) => {
           }
         });
         finalActivityTypeId = newActivityType.id;
+        console.log('[ACTIVITY][POST] Created new activityType:', activityTypeId, '->', finalActivityTypeId);
       }
     }
 
-    const activity = await prisma.activity.create({
-      data: {
-        petId: parseInt(petId),
-        activityTypeId: finalActivityTypeId,
-        userId: req.user.userId,
-        timestamp: timestamp ? new Date(timestamp) : new Date(),
-        notes,
-        photoUrl,
-        data: data || {}
-      },
-      include: {
-        activityType: true,
-        user: {
-          select: {
-            id: true,
-            name: true
+    try {
+      const activity = await prisma.activity.create({
+        data: {
+          petId: parseInt(petId),
+          activityTypeId: finalActivityTypeId,
+          userId: req.user.userId,
+          timestamp: parsedTimestamp,
+          notes,
+          photoUrl,
+          data: data || {}
+        },
+        include: {
+          activityType: true,
+          user: {
+            select: {
+              id: true,
+              name: true
+            }
           }
         }
-      }
-    });
+      });
+      console.log(`✅ Activity logged: ${activity.activityType.name} for pet ${petId} by user ${req.user.userId}`);
 
-    console.log(`✅ Activity logged: ${activity.activityType.name} for pet ${petId} by user ${req.user.userId}`);
-
-    // Emit real-time event to household room (if socket server available)
-    try {
-      const householdId = pet && pet.household && (pet.household.id || pet.householdId);
-      if (typeof io !== 'undefined' && householdId) {
-        io.to(`household:${householdId}`).emit('newActivity', { activity });
-        // Also target each member's personal room so users who didn't join household rooms still get it
-        const members = await prisma.householdMember.findMany({ where: { householdId: parseInt(householdId), userId: { not: null } }, select: { userId: true } });
-        members.forEach(m => {
-          try { io.to(`user:${m.userId}`).emit('newActivity', { activity }); } catch (e) {}
-        });
+      // Emit real-time event to household room (if socket server available)
+      try {
+        const householdId = pet && pet.household && (pet.household.id || pet.householdId);
+        if (typeof io !== 'undefined' && householdId) {
+          io.to(`household:${householdId}`).emit('newActivity', { activity });
+          // Also target each member's personal room so users who didn't join household rooms still get it
+          const members = await prisma.householdMember.findMany({ where: { householdId: parseInt(householdId), userId: { not: null } }, select: { userId: true } });
+          members.forEach(m => {
+            try { io.to(`user:${m.userId}`).emit('newActivity', { activity }); } catch (e) {}
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to emit socket newActivity', err);
       }
-    } catch (err) {
-      console.warn('Failed to emit socket newActivity', err);
+
+      res.json(activity);
+    } catch (dbErr) {
+      console.error('[ACTIVITY][POST] DB error:', dbErr);
+      return res.status(500).json({ error: 'Failed to create activity', details: dbErr.message });
     }
-
-    res.json(activity);
   } catch (error) {
     console.error('Create activity error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
 

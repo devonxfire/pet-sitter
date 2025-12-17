@@ -5,7 +5,7 @@ export const ACTIVITY_TYPES = [
   { id: 'medication', label: 'Medication', icon: '💊', color: 'bg-red-100' },
   { id: 'water', label: 'Water', icon: '💧', color: 'bg-cyan-100' },
   { id: 'grooming', label: 'Grooming', icon: '🛁', color: 'bg-purple-100' },
-  { id: 'photo', label: 'Photo', icon: '📸', color: 'bg-yellow-100' },
+  { id: 'chilling', label: 'Chilling', icon: '📸', color: 'bg-yellow-100' },
   { id: 'other', label: 'Other', icon: '📝', color: 'bg-gray-100' }
 ];
 
