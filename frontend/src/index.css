@@ -767,17 +767,17 @@ button.no-global-accent:hover:not(.user-toggle):not(.no-accent-hover) > * {
 /* Notification badge: always render as white-on-brand-red even when parent
    controls opt out of the global accent. This is intentionally specific and
    uses !important so it overrides the `.no-accent-hover *` rule above. */
-.notif-badge,
-.user-toggle .notif-badge,
-.no-accent-hover .notif-badge,
-.no-global-accent .notif-badge,
-.page-non-landing .notif-badge {
-  background-color: var(--color-accent) !important;
-  color: #ffffff !important;
-  padding-left: 0.375rem !important; /* keep px-1.5 look */
-  padding-right: 0.375rem !important;
-  padding-top: 0.125rem !important;
-  padding-bottom: 0.125rem !important;
+ .notif-badge,
+ .user-toggle .notif-badge,
+ .no-accent-hover .notif-badge,
+ .no-global-accent .notif-badge,
+ .page-non-landing .notif-badge {
+   background-color: #C3001F !important;
+   color: #ffffff !important;
+   padding-left: 0.375rem !important; /* keep px-1.5 look */
+   padding-right: 0.375rem !important;
+   padding-top: 0.125rem !important;
+   padding-bottom: 0.125rem !important;
   min-width: 1.25rem !important;
   height: 1.25rem !important;
   line-height: 1rem !important;

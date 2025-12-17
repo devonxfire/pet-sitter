@@ -744,7 +744,7 @@ export default function PetDetail({ household, user, onSignOut }) {
 
       <main className="flex flex-col items-stretch pb-6">
         {/* Full-bleed header band */}
-        <div className="w-full bg-gray-50">
+        <div className="w-full" style={{ backgroundColor: '#f3f4f6', background: '#f3f4f6', color: '#111', zIndex: 2, position: 'relative' }}>
           <div className="mx-auto max-w-6xl px-6 w-full relative">
 
             {/* Compact Header + General Section (grid layout) */}
@@ -818,6 +818,23 @@ export default function PetDetail({ household, user, onSignOut }) {
                     <button
                       onClick={() => navigate(`/pet/${petId}`)}
                       className="flex items-center gap-2 px-4 py-2 rounded-md text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      ref={el => {
+                        if (el) {
+                          el.style.setProperty('background', '#C3001F', 'important');
+                          el.style.setProperty('background-color', '#C3001F', 'important');
+                          el.style.setProperty('color', '#fff', 'important');
+                          el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                          el.style.setProperty('border-radius', '0.75rem', 'important');
+                        }
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.setProperty('background', '#8B0016', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.setProperty('background', '#C3001F', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
+                      }}
                       aria-label={`View ${pet?.name || ''}'s Profile`}
                       type="button"
                     >
@@ -830,6 +847,23 @@ export default function PetDetail({ household, user, onSignOut }) {
                     <button
                       onClick={() => navigate(`/pet/${petId}/activities`)}
                       className="flex items-center gap-2 px-4 py-2 rounded-md text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      ref={el => {
+                        if (el) {
+                          el.style.setProperty('background', '#C3001F', 'important');
+                          el.style.setProperty('background-color', '#C3001F', 'important');
+                          el.style.setProperty('color', '#fff', 'important');
+                          el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                          el.style.setProperty('border-radius', '0.75rem', 'important');
+                        }
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.setProperty('background', '#8B0016', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.setProperty('background', '#C3001F', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
+                      }}
                       aria-label={`View ${pet?.name || ''}'s Activities`}
                       type="button"
                     >
@@ -842,6 +876,23 @@ export default function PetDetail({ household, user, onSignOut }) {
                     <button
                       onClick={() => navigate(`/pet/${petId}/calendar`)}
                       className="flex items-center gap-2 px-4 py-2 rounded-md text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      ref={el => {
+                        if (el) {
+                          el.style.setProperty('background', '#C3001F', 'important');
+                          el.style.setProperty('background-color', '#C3001F', 'important');
+                          el.style.setProperty('color', '#fff', 'important');
+                          el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                          el.style.setProperty('border-radius', '0.75rem', 'important');
+                        }
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.setProperty('background', '#8B0016', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.setProperty('background', '#C3001F', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
+                      }}
                       aria-label={`View ${pet?.name || ''}'s Calendar`}
                       type="button"
                     >

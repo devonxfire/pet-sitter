@@ -261,7 +261,7 @@ export default function PetActivities({ household, user, onSignOut }) {
     <div className="min-h-screen bg-white">
 
       {/* Header band: match PetDetail header UI for consistency */}
-      <div className="w-full bg-gray-50">
+      <div className="w-full" style={{ backgroundColor: '#f3f4f6', background: '#f3f4f6', color: '#111', zIndex: 2, position: 'relative' }}>
         <div className="mx-auto max-w-6xl px-6 w-full relative">
           <div className="py-12">
             <div className="grid md:grid-flow-col md:auto-cols-max items-start gap-4 md:gap-4">
@@ -312,7 +312,24 @@ export default function PetActivities({ household, user, onSignOut }) {
                     <div className="flex flex-row gap-3">
                       <button
                         onClick={() => navigate(`/pet/${petId}`)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-md text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                        className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                        ref={el => {
+                          if (el) {
+                            el.style.setProperty('background', '#C3001F', 'important');
+                            el.style.setProperty('background-color', '#C3001F', 'important');
+                            el.style.setProperty('color', '#fff', 'important');
+                            el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                            el.style.setProperty('border-radius', '0.75rem', 'important');
+                          }
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.setProperty('background', '#8B0016', 'important');
+                          e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.setProperty('background', '#C3001F', 'important');
+                          e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
+                        }}
                         aria-label={`View ${pet?.name || ''}'s Profile`}
                         type="button"
                       >
@@ -324,7 +341,24 @@ export default function PetActivities({ household, user, onSignOut }) {
                       </button>
                       <button
                         onClick={() => navigate(`/pet/${petId}/activities`)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-md text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                        className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                        ref={el => {
+                          if (el) {
+                            el.style.setProperty('background', '#C3001F', 'important');
+                            el.style.setProperty('background-color', '#C3001F', 'important');
+                            el.style.setProperty('color', '#fff', 'important');
+                            el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                            el.style.setProperty('border-radius', '0.75rem', 'important');
+                          }
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.setProperty('background', '#8B0016', 'important');
+                          e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.setProperty('background', '#C3001F', 'important');
+                          e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
+                        }}
                         aria-label={`View ${pet?.name || ''}'s Activities`}
                         type="button"
                       >
@@ -336,7 +370,24 @@ export default function PetActivities({ household, user, onSignOut }) {
                       </button>
                       <button
                         onClick={() => navigate(`/pet/${petId}/calendar`)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-md text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                        className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                        ref={el => {
+                          if (el) {
+                            el.style.setProperty('background', '#C3001F', 'important');
+                            el.style.setProperty('background-color', '#C3001F', 'important');
+                            el.style.setProperty('color', '#fff', 'important');
+                            el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                            el.style.setProperty('border-radius', '0.75rem', 'important');
+                          }
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.setProperty('background', '#8B0016', 'important');
+                          e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.setProperty('background', '#C3001F', 'important');
+                          e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
+                        }}
                         aria-label={`View ${pet?.name || ''}'s Calendar`}
                         type="button"
                       >
@@ -364,8 +415,28 @@ export default function PetActivities({ household, user, onSignOut }) {
           <div className="flex gap-2 items-center flex-wrap">
             <button
               onClick={() => setShowLogActivity(true)}
-              className="px-2 py-1 rounded-md text-sm font-medium transition btn bg-green-500 text-white hover:bg-green-600 shadow cursor-pointer flex items-center gap-2"
+              className="px-2 py-1 rounded-md text-sm font-medium transition btn text-white shadow cursor-pointer flex items-center gap-2"
               style={{ minWidth: '110px' }}
+              ref={el => {
+                if (el) {
+                  el.style.setProperty('min-width', '110px', 'important');
+                  el.style.setProperty('background', '#1e293b', 'important');
+                  el.style.setProperty('background-color', '#1e293b', 'important');
+                  el.style.setProperty('box-shadow', 'none', 'important');
+                  el.style.setProperty('border', 'none', 'important');
+                  el.style.setProperty('outline', 'none', 'important');
+                  el.style.setProperty('z-index', '1', 'important');
+                  el.style.setProperty('position', 'relative', 'important');
+                }
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.setProperty('background', '#0f172a', 'important');
+                e.currentTarget.style.setProperty('background-color', '#0f172a', 'important');
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.setProperty('background', '#1e293b', 'important');
+                e.currentTarget.style.setProperty('background-color', '#1e293b', 'important');
+              }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
               Log New Activity
