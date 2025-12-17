@@ -6,6 +6,7 @@ import { getFallbackFlower, assignHouseholdFlowers, FLOWER_LIST } from './flower
 // ...existing code...
 
 export default function Dashboard({ user, household, onSignOut }) {
+    const [hoveredPetIdx, setHoveredPetIdx] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const [pets, setPets] = useState([]);
@@ -125,8 +126,10 @@ export default function Dashboard({ user, household, onSignOut }) {
         {/* Welcome Message */}
         {household?.name && (
           <div className="mb-8 bg-transparent">
-            <h1 className="text-5xl font-bold" style={{ color: 'var(--color-footer)' }}>
-              Welcome, {household.name}!
+            <h1 className="text-5xl" style={{ color: 'var(--color-footer)' }}>
+              <span className="heading-light">Welcome,</span>
+              {' '}
+              <span className="font-bold">{household.name}!</span>
             </h1>
           </div>
         )}
@@ -140,77 +143,113 @@ export default function Dashboard({ user, household, onSignOut }) {
             <p className="text-gray-500 mb-2">Welcome! Let's set up your first pet.</p>
             <button
               onClick={handleWizardOpen}
-              className="btn font-semibold px-8 py-3 rounded-xl hover:opacity-90 transition"
+              className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer shadow"
+              style={{
+                background: '#10B981',
+                backgroundColor: '#10B981',
+                color: '#fff',
+                boxShadow: '0 4px 16px 0 rgba(0,0,0,0.18)',
+                borderRadius: '0.75rem',
+                minWidth: '110px',
+                fontWeight: 400,
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = '#059669';
+                e.currentTarget.style.backgroundColor = '#059669';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = '#10B981';
+                e.currentTarget.style.backgroundColor = '#10B981';
+              }}
             >
-              Add Your First Pet
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
+              Add Pet
             </button>
           </div>
         ) : (
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900">Your Pets</h2>
+              <h2 className="text-2xl font-normal" style={{ color: '#6b7280' }}>Your Pets</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pets.map((pet) => (
-                <div
-                  key={pet.id}
-                  className="bg-gray-50 rounded-2xl p-6 border border-gray-200 transition-transform duration-300 ease-in-out transform-gpu hover:scale-105 hover:shadow-xl flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4 relative group cursor-pointer"
-                  onClick={() => {
-                    if (pet.draft) {
-                      setShowWizard(true);
-                      setWizardData({ ...pet, resumeDraft: true });
-                    } else {
-                      navigate(`/pet/${pet.id}`);
-                    }
-                  }}
-                >
-                  {/* Delete button (X icon) - top right, smaller */}
-                  <button
-                    className="absolute top-2 right-2 text-gray-400 hover:text-red-600 bg-white rounded-full p-0.5 shadow group-hover:opacity-100 opacity-70 transition cursor-pointer"
-                    title="Delete pet"
-                    onClick={e => { e.stopPropagation(); handleDeletePet(pet); }}
-                    style={{ zIndex: 20 }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 14L14 6M6 6l8 8" />
-                    </svg>
-                  </button>
-                  {/* Draft badge */}
-                  {pet.draft && (
-                    <span className="absolute top-2 right-2 bg-yellow-400 text-xs font-bold px-2 py-1 rounded shadow text-gray-900">Draft</span>
-                  )}
-                  {/* Rounded-square Photo */}
-                  <div className="w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-gray-200 border-2 border-gray-200 shrink-0 flex items-center justify-center overflow-hidden shadow-sm">
-                    {pet.photoUrl ? (
-                      <img
-                        src={resolvePhotoUrl(pet.photoUrl)}
-                        alt={pet.name}
-                        className="w-full h-full object-cover select-none"
-                        draggable={false}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">📷</div>
-                    )}
-                  </div>
-
-                  {/* Text content next to avatar (match avatar height) */}
-                  <div className="flex-1 h-28 md:h-32 flex flex-col justify-between">
-                    <div>
-                      <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                        {pet.name}
-                      </h2>
-                      <p className="text-sm md:text-base text-gray-600 mt-1">
-                        {(pet.species || '').charAt(0).toUpperCase() + (pet.species || '').slice(1)}{pet.breed ? ` • ${pet.breed}` : ''}
-                      </p>
+              {pets.map((pet, idx) => {
+                // Determine border logic: default on first, or on hovered
+                const isDefault = hoveredPetIdx === null && idx === 0;
+                const isHovered = hoveredPetIdx === idx;
+                const borderClass = isDefault ? 'pet-card-default' : isHovered ? 'pet-card-hovered' : '';
+                return (
+                  <React.Fragment key={pet.id}>
+                    <div
+                      className={`bg-gray-50 rounded-2xl p-6 border border-gray-200 transition-transform duration-300 ease-in-out transform-gpu hover:scale-105 hover:shadow-xl flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4 relative group cursor-pointer pet-card-fix ${borderClass}`}
+                      onMouseEnter={() => setHoveredPetIdx(idx)}
+                      onMouseLeave={() => setHoveredPetIdx(null)}
+                      onClick={() => {
+                        if (pet.draft) {
+                          setShowWizard(true);
+                          setWizardData({ ...pet, resumeDraft: true });
+                        } else {
+                          navigate(`/pet/${pet.id}/activities`);
+                        }
+                      }}
+                    >
+                      {/* Text content next to avatar (match avatar height) */}
+                      <div className="flex-1 h-28 md:h-32 flex flex-col justify-between">
+                        <div>
+                          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                            {pet.name}
+                          </h2>
+                          <p className="text-sm md:text-base text-gray-600 mt-1">
+                            {(pet.species || '').charAt(0).toUpperCase() + (pet.species || '').slice(1)}{pet.breed ? ` • ${pet.breed}` : ''}
+                          </p>
+                        </div>
+                        <div className="text-sm text-gray-500 space-y-1">
+                          {pet.age && <div>Age: {pet.age} years</div>}
+                          {pet.weight && <div>Weight: {pet.weight} {pet.weightUnit || 'lbs'}</div>}
+                        </div>
+                      </div>
+                      {/* Red border effect for first or hovered card */}
+                      <style>{`
+                        .pet-card-fix {
+                          box-shadow: none;
+                          position: relative;
+                        }
+                        .pet-card-fix.pet-card-default,
+                        .pet-card-fix.pet-card-hovered {
+                          box-shadow: 0 -4px 0 0 #C3001F inset;
+                        }
+                      `}</style>
+                      {/* Delete button (X icon) - top right, smaller */}
+                      <button
+                        className="absolute top-2 right-2 text-gray-400 hover:text-red-600 bg-white rounded-full p-0.5 shadow group-hover:opacity-100 opacity-70 transition cursor-pointer"
+                        title="Delete pet"
+                        onClick={e => { e.stopPropagation(); handleDeletePet(pet); }}
+                        style={{ zIndex: 20 }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 14L14 6M6 6l8 8" />
+                        </svg>
+                      </button>
+                      {/* Draft badge */}
+                      {pet.draft && (
+                        <span className="absolute top-2 right-2 bg-yellow-400 text-xs font-bold px-2 py-1 rounded shadow text-gray-900">Draft</span>
+                      )}
+                      {/* Rounded-square Photo */}
+                      <div className="w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-gray-200 border-2 border-gray-200 shrink-0 flex items-center justify-center overflow-hidden shadow-sm">
+                        {pet.photoUrl ? (
+                          <img
+                            src={resolvePhotoUrl(pet.photoUrl)}
+                            alt={pet.name}
+                            className="w-full h-full object-cover select-none"
+                            draggable={false}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">📷</div>
+                        )}
+                      </div>
                     </div>
-
-                    <div className="text-sm text-gray-500 space-y-1">
-                      {pet.age && <div>Age: {pet.age} years</div>}
-                      {pet.weight && <div>Weight: {pet.weight} {pet.weightUnit || 'lbs'}</div>}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                  </React.Fragment>
+                );
+              })}
             </div>
             {/* Delete confirmation modal (only one, outside map) */}
             {showDeleteConfirm && (

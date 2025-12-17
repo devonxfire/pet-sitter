@@ -445,13 +445,12 @@ export default function PetActivities({ household, user, onSignOut }) {
                 favBtnRef.current = el;
                 if (el) {
                   el.style.setProperty('background', activityFilter === 'quick' ? '#E5E7EB' : '#F3F4F6', 'important');
-                  el.style.setProperty('box-shadow', '0 2px 6px 0 rgba(0,0,0,0.10)', 'important');
+                  el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
                   el.style.setProperty('border-radius', '0.75rem', 'important');
                   el.style.setProperty('color', '#111827', 'important');
-                  el.style.setProperty('margin-left', '12px', 'important');
                 }
               }}
-              className="inline-flex items-center gap-2 text-gray-900 font-medium text-base px-4 py-2 transition no-global-accent no-accent-hover cursor-pointer"
+              className="inline-flex items-center gap-2 text-gray-900 font-medium text-base px-4 py-2 transition no-global-accent no-accent-hover cursor-pointer shadow"
               onMouseEnter={e => {
                 if (activityFilter !== 'quick') {
                   e.currentTarget.style.setProperty('background', '#E5E7EB', 'important');
@@ -515,7 +514,7 @@ export default function PetActivities({ household, user, onSignOut }) {
                 medication: { past: 'was given medication', future: 'has medication scheduled' },
                 water: { past: 'was given water', future: 'has water scheduled' },
                 grooming: { past: 'was groomed', future: 'has grooming scheduled' },
-                chilling: { past: 'chilled', future: 'is scheduled to chill' },
+                chilling: { past: 'chilled out', future: 'is scheduled to chill' },
                 other: { past: 'had an activity', future: 'has an activity scheduled' }
               };
               const now = new Date();
