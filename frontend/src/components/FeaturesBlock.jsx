@@ -2,7 +2,7 @@ import React from 'react'
 import featurePet from '/features-pet.png'
 
 function Icon({name}){
-  const common = { className: 'w-5 h-5', strokeWidth: 1.5, fill: 'none', stroke: 'currentColor' }
+  const common = { className: 'w-6 h-6', strokeWidth: 2, fill: 'none', stroke: '#C3001F' };
   switch(name){
     case 'timeline':
       return (
@@ -44,19 +44,19 @@ function Icon({name}){
         </svg>
       )
     default:
-      return null
+      return null;
   }
 }
 
 function FeatureCard({icon, title, desc}){
   return (
     <div className="p-6 bg-white rounded-xl">
-      <div className="flex items-start gap-4">
-        <div className="w-11 h-11 flex items-center justify-center text-accent">
+      <div className="flex items-center gap-4">
+        <div className="w-11 h-11 flex items-center justify-center">
           <Icon name={icon} />
         </div>
         <div>
-          <div className="font-medium">{title}</div>
+          <div className="font-medium text-base align-middle">{title}</div>
           <div className="text-sm text-gray-500">{desc}</div>
         </div>
       </div>

@@ -1,7 +1,22 @@
+function ActivityLogExampleImage() {
+  return (
+    <div className="w-full h-auto flex items-center justify-center">
+      <img
+        src={"/activitylog-example.png"}
+        alt="Example Activity Log"
+        className="rounded-xl border border-gray-200 shadow-sm max-w-full h-auto"
+        style={{ background: '#f7f8fa' }}
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
+  );
+}
 import React from 'react'
 import { Link } from 'react-router-dom'
 import HeroBlock from './components/HeroBlock'
 import FeaturesBlock from './components/FeaturesBlock'
+import TimelineExampleImage from './components/TimelineExampleImage'
 import TimelineBlock from './components/TimelineBlock'
 
 export default function Landing({ user, onSignOut }) {
@@ -10,7 +25,38 @@ export default function Landing({ user, onSignOut }) {
       <main>
         <HeroBlock user={user} onSignOut={onSignOut} />
         <FeaturesBlock />
-        <TimelineBlock />
+        <section className="py-8 bg-white">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+              <div>
+                <h3 className="text-3xl md:text-4xl font-extrabold leading-tight mb-4">Activity Timeline Example</h3>
+                <p className="text-gray-600 mb-6 max-w-xl">See how a household uses the timeline to coordinate daily care — meals, walks, meds and sitter notes. Receive instant notifications of activities from your household about each pet.</p>
+              </div>
+              <div className="flex items-center justify-center md:justify-end">
+                <div className="w-full max-w-2xl">
+                  <TimelineExampleImage />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-8 bg-white">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+              <div className="flex items-center justify-center md:justify-start order-1 md:order-none">
+                <div className="w-full max-w-2xl">
+                  <ActivityLogExampleImage />
+                </div>
+              </div>
+              <div className="order-2 md:order-none text-right">
+                <h3 className="text-3xl md:text-4xl font-extrabold leading-tight mb-4">Documented Activity Logs</h3>
+                <p className="text-gray-600 mb-6 max-w-xl ml-auto">View and edit all activities, past, present and upcoming. Add notes or upload photos to document any activity!</p>
+              </div>
+            </div>
+          </div>
+        </section>
+       
         <section className="py-8 bg-white">
           <div className="max-w-7xl mx-auto px-6">
             <h3 className="text-2xl font-semibold text-center mb-6">Loved by households and sitters</h3>

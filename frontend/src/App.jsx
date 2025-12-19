@@ -17,6 +17,7 @@ import Footer from './Footer';
 import Terms from './Terms';
 import Privacy from './Privacy';
 import Contact from './Contact';
+import PlansPage from './Plans';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -214,6 +215,7 @@ function App() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/plans" element={<PlansPage />} />
 
         <Route
           path="/dashboard"
