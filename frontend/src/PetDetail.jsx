@@ -975,9 +975,9 @@ export default function PetDetail({ household, user, onSignOut }) {
           </div>
         </div>
 
-        {/* Activity List Section */}
+        {/* Activity List removed from profile page; view full history on Activities tab */}
         <div className="mx-auto max-w-6xl px-6 w-full">
-          {renderActivityList()}
+          {/* Activities are intentionally not shown on the pet profile. Use the "Activities" tab or the Activities page to view history. */}
         </div>
 
         {/* General Information Section */}

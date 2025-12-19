@@ -3,6 +3,9 @@ import { apiFetch, API_BASE } from './api';
 import { io as makeIo } from 'socket.io-client';
 import ACTIVITY_TYPES, { getActivityLabel } from './activityTypes';
 import { Link, useNavigate } from 'react-router-dom';
+import ActivityView from './ActivityView';
+import ConfirmDialog from './ConfirmDialog';
+
 
 function timeAgo(ts) {
   try {
@@ -41,6 +44,7 @@ export default function NotificationBell({ navigate }) {
   });
   const [justReceived, setJustReceived] = useState(false);
   const dropdownRef = useRef(null);
+  const [viewingActivity, setViewingActivity] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('petSitter:notifications', JSON.stringify(notifications));
@@ -344,10 +348,81 @@ export default function NotificationBell({ navigate }) {
   const handleClickNotification = (n) => {
     // mark read
     setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, read: true } : item));
-    setOpen(false);
-    if (n.petId) {
-      try { navigate(`/pet/${n.petId}`); } catch (e) { window.location.href = `/pet/${n.petId}`; }
-    }
+    // Attempt to open ActivityView modal. Only navigate as a fallback if fetch fails.
+    const openActivityModal = async () => {
+      // If the notification already contains full activity object, use it
+      if (n.activity && typeof n.activity === 'object') {
+        setViewingActivity(n.activity);
+        setOpen(false);
+        return;
+      }
+
+      // Derive a candidate activity id from the notification id/title
+      let activityId = null;
+      const rawId = String(n.id || '');
+      if (/^updated-(\d+)$/.test(rawId)) {
+        activityId = rawId.replace(/^updated-/, '');
+      } else if (/^tmp-/.test(rawId)) {
+        // tmp ids are client-only; fall back to title if numeric
+        if (/^\d+$/.test(String(n.title || ''))) activityId = String(n.title);
+      } else if (/^\d+$/.test(rawId)) {
+        activityId = rawId;
+      } else if (/^\d+$/.test(String(n.title || ''))) {
+        activityId = String(n.title);
+      }
+
+      if (!activityId) {
+        // nothing to fetch, fallback to navigating to pet page
+        if (n.petId) {
+          try { navigate(`/pet/${n.petId}`); } catch (e) { window.location.href = `/pet/${n.petId}`; }
+        }
+        return;
+      }
+
+      try {
+        const act = await apiFetch(`/api/activities/${activityId}`);
+        if (act) {
+          setViewingActivity(act);
+          setOpen(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('Failed to fetch activity for notification', err);
+        // Try fallback: fetch activities for the pet and try to find a matching activity
+        if (n.petId) {
+          try {
+            const list = await apiFetch(`/api/pets/${n.petId}/activities`);
+            if (Array.isArray(list) && list.length > 0) {
+              // Try to match by id, then timestamp, then title/actionLabel
+              let found = null;
+              found = list.find(x => String(x.id) === String(activityId));
+              if (!found && n.timestamp) {
+                found = list.find(x => String(new Date(x.timestamp).getTime()) === String(new Date(n.timestamp).getTime()));
+              }
+              if (!found && n.title) {
+                const t = String(n.title).toLowerCase();
+                found = list.find(x => (String(x._clientActionLabel || x.activityType?.label || x.activityType?.name || x.type || '')).toLowerCase().includes(t) );
+              }
+              if (found) {
+                setViewingActivity(found);
+                setOpen(false);
+                return;
+              }
+            }
+          } catch (err2) {
+            console.warn('Fallback fetch of pet activities failed', err2);
+          }
+        }
+      }
+
+      // final fallback: navigate to pet page if available
+      if (n.petId) {
+        try { navigate(`/pet/${n.petId}`); } catch (e) { window.location.href = `/pet/${n.petId}`; }
+      }
+    };
+
+    // run fetch but keep dropdown open until we have result
+    openActivityModal();
   };
 
   const markAllRead = () => {
@@ -451,6 +526,24 @@ export default function NotificationBell({ navigate }) {
             <Link to="/dashboard" className="text-sm text-accent hover:underline">View all</Link>
           </div>
         </div>
+      )}
+      {viewingActivity && (
+        <ActivityView
+          activity={viewingActivity}
+          onClose={() => setViewingActivity(null)}
+          onEdit={(act) => { setViewingActivity(null); try { navigate(`/pet/${act.petId}/activities`); } catch (e) { window.location.href = `/pet/${act.petId}/activities`; } }}
+          onDelete={async (id) => {
+            try {
+              await apiFetch(`/api/activities/${id}`, { method: 'DELETE' });
+              setViewingActivity(null);
+              setNotifications(prev => prev.filter(n => String(n.id).replace(/^updated-/, '') !== String(id)));
+              try { window.dispatchEvent(new CustomEvent('petSitter:deletedActivity', { detail: { activityId: id } })); } catch (e) {}
+            } catch (err) {
+              console.error('Failed to delete activity from notification modal', err);
+              alert('Failed to delete activity');
+            }
+          }}
+        />
       )}
     </div>
   );

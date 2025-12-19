@@ -1,8 +1,20 @@
 import React, { useRef, useEffect } from 'react';
-import { API_BASE } from './api';
+import { API_BASE, apiFetch } from './api';
 import ACTIVITY_TYPES from './activityTypes';
 import ConfirmDialog from './ConfirmDialog';
 import { useState } from 'react';
+
+const VERB_TEMPLATES = {
+  feeding: { past: 'was fed', future: 'is scheduled for feeding' },
+  walk: { past: 'had a walk', future: 'has a walk scheduled' },
+  play: { past: 'played', future: 'has playtime scheduled' },
+  medication: { past: 'was given medication', future: 'has medication scheduled' },
+  water: { past: 'was given water', future: 'has water scheduled' },
+  grooming: { past: 'was groomed', future: 'has grooming scheduled' },
+  chilling: { past: 'chilled out', future: 'is scheduled to chill' },
+  photo: { past: 'had a photo taken', future: 'has a photo scheduled' },
+  other: { past: 'had an activity', future: 'has an activity scheduled' }
+};
 
 export default function ActivityView({ activity, onClose, onEdit, onDelete }) {
   if (!activity) return null;
@@ -18,6 +30,60 @@ export default function ActivityView({ activity, onClose, onEdit, onDelete }) {
   const typeIcon = typeDef?.icon || null;
   let typeLabel = typeDef?.label || (activity._clientActionLabel || (activity.activityType && (activity.activityType.label || activity.activityType.name)) || activity.type || 'Activity');
   if (typeLabel && typeof typeLabel === 'string') typeLabel = typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1);
+
+  // Resolve pet name (activity may not include full pet object)
+  const initialPetName = activity.pet?.name || activity.petName || '';
+  const [petNameState, setPetNameState] = useState(initialPetName);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (petNameState || !activity.petId) return;
+    (async () => {
+      try {
+        const p = await apiFetch(`/api/pets/${activity.petId}`);
+        if (!cancelled && p && p.name) setPetNameState(p.name);
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [activity.petId, petNameState]);
+
+  const petNameResolved = petNameState || '';
+
+  // Build conversational heading like "Lilly was groomed" to match activity containers
+  const heading = (() => {
+    const petName = petNameResolved;
+    const now = new Date();
+    const when = activity.timestamp ? new Date(activity.timestamp) : now;
+    const isFuture = when > now;
+    const rawLabel = (activity._clientActionLabel || activity.activityType?.name || activity.activityType?.label || activity.type || 'Activity');
+    const actionKey = String(rawLabel || '').toLowerCase().trim();
+    const isUpdated = activity._updatedActivity === true || (activity.id && String(activity.id).startsWith('updated-'));
+    let h = typeLabel || 'Activity';
+    const tmpl = VERB_TEMPLATES[actionKey];
+    if (petName) {
+      if (tmpl) {
+        if (isFuture) {
+          h = `Future ${String(typeLabel).toLowerCase()} organised for ${petName}`;
+        } else {
+          h = `${petName} ${tmpl.past}`;
+        }
+      } else {
+        const lowerAct = String(typeLabel || '').toLowerCase();
+        if (isFuture) {
+          h = `Future ${lowerAct} organised for ${petName}`;
+        } else {
+          const article = /^[aeiou]/.test(lowerAct) ? 'an' : 'a';
+          h = `${petName} had ${article} ${lowerAct}`;
+        }
+      }
+      if (isUpdated && !isFuture) {
+        h = `${h} (updated)`;
+      }
+    }
+    return h;
+  })();
 
   const resolvePhotoUrl = (url) => {
     if (!url) return null;
@@ -85,7 +151,7 @@ export default function ActivityView({ activity, onClose, onEdit, onDelete }) {
         <div className="flex flex-col items-center p-4 pt-2 w-full">
           <div className="flex flex-col items-center mb-2 w-full">
             {typeIcon && <span className="text-5xl mb-2">{typeIcon}</span>}
-            <h2 className="text-2xl font-semibold text-gray-900 mb-0">{typeLabel}</h2>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-0">{heading}</h2>
           </div>
           <div className="w-full mb-4 flex items-center justify-center">
             <img

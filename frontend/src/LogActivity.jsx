@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiFetch, API_BASE } from './api';
+import { apiFetch } from './api';
 import ACTIVITY_TYPES from './activityTypes';
 import { theme } from './theme';
 import ModalClose from './ModalClose';
@@ -132,39 +132,11 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           throw new Error('Please select at least one pet to apply this activity to.');
         }
 
-        // If a photo was chosen, upload it first and reuse the returned path for the created activity
-        let uploadedPhotoPath = null;
-        if (photoFile) {
-          try {
-            const token = localStorage.getItem('token');
-            const form = new FormData();
-            form.append('photo', photoFile);
-            // Upload to the first pet folder and reuse URL for all created activities
-            const uploadRes = await fetch(`${API_BASE}/api/pets/${petIdsToSend[0]}/activities/photo`, {
-              method: 'POST',
-              headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-              body: form
-            });
-            if (!uploadRes.ok) {
-              const errBody = await uploadRes.json().catch(() => ({}));
-              throw new Error(errBody.error || `Photo upload failed (${uploadRes.status})`);
-            }
-            const uploadJson = await uploadRes.json();
-            uploadedPhotoPath = uploadJson.photoPath || uploadJson.photoUrl || null;
-            console.log('[LogActivity] Photo uploaded, path:', uploadedPhotoPath);
-          } catch (err) {
-            console.error('Failed to upload photo before creating activity', err);
-            // continue without photo
-            uploadedPhotoPath = null;
-          }
-        }
-
         const promises = petIdsToSend.map((pid) => {
           const payload = {
             activityTypeId: selectedType,
             timestamp: new Date(timestamp).toISOString(),
             notes: notes || null,
-            photoUrl: uploadedPhotoPath || null,
             data: {}
           };
           console.log('[LogActivity] POST payload for pet', pid, payload);

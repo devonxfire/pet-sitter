@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiFetch, apiUrl, API_BASE } from './api';
 import PetActivityGraph from './PetActivityGraph.jsx';
@@ -63,6 +64,12 @@ export default function PetActivities({ household, user, onSignOut }) {
   const [memberFilter, setMemberFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [favourites, setFavourites] = useState([]);
+  const [householdPets, setHouseholdPets] = useState([]);
+  const [showPetMenu, setShowPetMenu] = useState(false);
+  const petMenuRef = useRef(null);
+  const changePetBtnRef = useRef(null);
+  const menuRef = useRef(null);
+  const [menuPos, setMenuPos] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const favouritesRef = useRef(null);
   const favBtnRef = useRef(null);
@@ -123,17 +130,45 @@ export default function PetActivities({ household, user, onSignOut }) {
 
   // Flower mapping for household pets (so flowers are unique in a household)
   const [flowerMap, setFlowerMap] = useState({});
+  const handleTogglePetMenu = async () => {
+    // Toggle immediately for responsive UI, then lazily load pets if needed
+    // compute button position for fixed placement using the button ref
+    try {
+      const btn = changePetBtnRef.current || petMenuRef.current;
+      if (btn && typeof btn.getBoundingClientRect === 'function') {
+        const r = btn.getBoundingClientRect();
+        setMenuPos({ left: r.left + window.scrollX, top: r.bottom + window.scrollY, width: r.width });
+      }
+    } catch (e) {}
+    setShowPetMenu(s => !s);
+    console.log('[PetActivities] toggle pet menu, now open:', !showPetMenu);
+    if (!household?.id) return;
+    if (!householdPets || householdPets.length === 0) {
+      try {
+        const data = await apiFetch(`/api/households/${household.id}/pets`);
+        if (Array.isArray(data)) setHouseholdPets(data);
+      } catch (e) {
+        // ignore load errors
+      }
+    }
+  };
   useEffect(() => {
     let cancelled = false;
     const loadHouseholdPets = async () => {
       try {
         if (!household?.id) return;
         if (Array.isArray(household.pets) && household.pets.length > 0) {
-          if (!cancelled) setFlowerMap(assignHouseholdFlowers(household.pets));
+          if (!cancelled) {
+            setFlowerMap(assignHouseholdFlowers(household.pets));
+            setHouseholdPets(household.pets);
+          }
           return;
         }
         const data = await apiFetch(`/api/households/${household.id}/pets`);
-        if (!cancelled && Array.isArray(data)) setFlowerMap(assignHouseholdFlowers(data));
+        if (!cancelled && Array.isArray(data)) {
+          setFlowerMap(assignHouseholdFlowers(data));
+          setHouseholdPets(data);
+        }
       } catch (err) {}
     };
     loadHouseholdPets();
@@ -145,6 +180,9 @@ export default function PetActivities({ household, user, onSignOut }) {
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
     return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
   };
+
+  // list of household pets excluding the current one (so we don't navigate to same page)
+  const otherPets = (Array.isArray(householdPets) ? householdPets.filter(p => String(p.id) !== String(petId)) : []);
 
   // Hover debounce for activity graph: delay opening modal to avoid flicker
   const hoverTimer = useRef(null);
@@ -285,6 +323,59 @@ export default function PetActivities({ household, user, onSignOut }) {
   });
 
   const totalItems = sortedActivities.length;
+    // Close pet menu when clicking outside
+    useEffect(() => {
+      function onDocClick(e) {
+        if (!showPetMenu) return;
+        const clicked = e.target;
+        const insideButton = changePetBtnRef.current && changePetBtnRef.current.contains(clicked);
+        const insideMenu = menuRef.current && menuRef.current.contains(clicked);
+        if (!insideButton && !insideMenu) {
+          setShowPetMenu(false);
+        }
+      }
+      document.addEventListener('mousedown', onDocClick);
+      return () => document.removeEventListener('mousedown', onDocClick);
+    }, [showPetMenu]);
+
+    // Force inline important styles on the pet menu to override global theme rules
+    useEffect(() => {
+      if (!menuRef.current) return;
+      const el = menuRef.current;
+      if (!showPetMenu) return;
+      try {
+        el.style.setProperty('background', '#ffffff', 'important');
+        el.style.setProperty('border-radius', '0.5rem', 'important');
+        el.style.setProperty('overflow', 'hidden', 'important');
+        el.style.setProperty('box-shadow', '0 8px 24px rgba(0,0,0,0.12)', 'important');
+
+        // also ensure child buttons use white background / dark text
+        const buttons = el.querySelectorAll('button');
+        buttons.forEach((b) => {
+          try {
+            b.style.setProperty('background', '#ffffff', 'important');
+            b.style.setProperty('color', '#111111', 'important');
+            b.style.setProperty('border', 'none', 'important');
+          } catch (e) {}
+        });
+      } catch (e) {
+        // swallow errors — this is best-effort defensive styling
+      }
+    }, [showPetMenu]);
+
+  // Ensure the Change pet button text stays white and has no background (use setProperty with priority)
+  useEffect(() => {
+    const el = changePetBtnRef.current;
+    if (!el) return;
+    try {
+      el.style.setProperty('color', '#ffffff', 'important');
+      el.style.setProperty('background', 'none', 'important');
+      el.style.setProperty('background-color', 'transparent', 'important');
+      el.style.setProperty('border', 'none', 'important');
+      el.style.setProperty('box-shadow', 'none', 'important');
+      el.style.setProperty('outline', 'none', 'important');
+    } catch (e) {}
+  }, []);
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const clampedPage = Math.min(Math.max(1, page), totalPages);
   const visibleActivities = sortedActivities.slice((clampedPage - 1) * pageSize, clampedPage * pageSize);
@@ -359,18 +450,9 @@ export default function PetActivities({ household, user, onSignOut }) {
                     <div className="mt-1">
                       <div className="inline-block align-top">
                         <span className="text-sm text-white">All logged activities for this pet — </span>
-                        <button 
-                          onClick={() => navigate('/activities')}
-                          className="text-sm text-white underline no-global-accent no-accent-hover"
-                          style={{ color: '#fff', fontWeight: 'bold', textShadow: '0 1px 6px rgba(0,0,0,0.25)', border: 'none', background: 'none', padding: 0 }}
-                          ref={el => {
-                            if (el) {
-                              el.style.setProperty('color', '#fff', 'important');
-                              el.style.setProperty('font-weight', 'bold', 'important');
-                              el.style.setProperty('text-shadow', '0 1px 6px rgba(0,0,0,0.25)', 'important');
-                            }
-                          }}
-                        >Change pet</button>
+                        <div className="inline-block align-top">
+                          <span className="text-sm text-white">Change pet</span>
+                        </div>
                       </div>
                     </div>
                   </div>
