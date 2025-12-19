@@ -7,12 +7,10 @@ import TimelineBlock from './components/TimelineBlock'
 export default function Landing({ user, onSignOut }) {
   return (
     <div className="min-h-screen bg-white text-gray-900">
-
       <main>
-        <HeroBlock />
+        <HeroBlock user={user} onSignOut={onSignOut} />
         <FeaturesBlock />
         <TimelineBlock />
-
         <section className="py-8 bg-white">
           <div className="max-w-7xl mx-auto px-6">
             <h3 className="text-2xl font-semibold text-center mb-6">Loved by households and sitters</h3>
@@ -24,7 +22,6 @@ export default function Landing({ user, onSignOut }) {
           </div>
         </section>
       </main>
-
       <footer className="border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between">
           <div className="text-sm text-gray-500">© {new Date().getFullYear()} Pet-Sitter</div>

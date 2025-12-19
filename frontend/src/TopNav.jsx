@@ -83,14 +83,18 @@ export default function TopNav({ user, household, onSignOut }) {
         {/* Center: primary nav (centered) */}
         <div className="flex-1 flex justify-center">
           <div className="flex items-center gap-6">
-            <Link
-              to="/dashboard"
-              className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${location.pathname === '/dashboard' ? 'border-accent nav-link-active' : 'border-transparent'}`}
-            >My Pets</Link>
-            <Link
-              to={firstPetId ? `/pet/${firstPetId}/activities` : '/activities'}
-              className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${(location.pathname.startsWith('/pet') || location.pathname === '/activities') ? 'border-accent nav-link-active' : 'border-transparent'}`}
-            >Activities</Link>
+            {user && (
+              <>
+                <Link
+                  to="/dashboard"
+                  className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${location.pathname === '/dashboard' ? 'border-accent nav-link-active' : 'border-transparent'}`}
+                >My Pets</Link>
+                <Link
+                  to={firstPetId ? `/pet/${firstPetId}/activities` : '/activities'}
+                  className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${(location.pathname.startsWith('/pet') || location.pathname === '/activities') ? 'border-accent nav-link-active' : 'border-transparent'}`}
+                >Activities</Link>
+              </>
+            )}
             <Link
               to="/plans"
               className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${location.pathname === '/plans' ? 'border-accent nav-link-active' : 'border-transparent'}`}

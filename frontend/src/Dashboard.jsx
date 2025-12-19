@@ -121,18 +121,54 @@ export default function Dashboard({ user, household, onSignOut }) {
           onDraftSave={handleDraftSave}
         />
       )}
-      <main className="flex justify-center py-12">
-        <div className="max-w-6xl px-6 w-full">
-        {/* Welcome Message */}
-        {household?.name && (
-          <div className="mb-8 bg-transparent">
-            <h1 className="text-5xl" style={{ color: 'var(--color-footer)' }}>
-              <span className="heading-light">Welcome,</span>
-              {' '}
-              <span className="font-bold">{household.name}!</span>
+      {/* Header band: match Profile/PetActivities header UI for consistency */}
+      <div
+        className="w-full mb-10 flex items-center justify-center"
+        style={{
+          backgroundImage: 'url(/hero-pets.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          minHeight: '320px',
+          position: 'relative',
+          zIndex: 2,
+        }}
+      >
+        <div
+          className="flex flex-col items-center justify-center w-full"
+          style={{
+            background: 'rgba(0,0,0,0.45)',
+            minHeight: '320px',
+            width: '100%',
+            textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {household?.name && (
+            <h1
+              className="font-extrabold mb-2"
+              style={{
+                color: '#fff',
+                fontSize: '3rem',
+                lineHeight: 1.1,
+                textShadow: '0 2px 16px rgba(0,0,0,0.35)',
+                letterSpacing: '-1px',
+                margin: 0,
+                padding: 0,
+                fontWeight: 900,
+                maxWidth: '90vw',
+              }}
+            >
+              <span className="heading-light" style={{ fontWeight: 300, fontSize: '2.5rem' }}>Welcome,</span>
+              <br />
+              <span style={{ fontWeight: 900, fontSize: '3.5rem' }}>{household.name}!</span>
             </h1>
-          </div>
-        )}
+          )}
+        </div>
+      </div>
+      <main className="flex justify-center py-0">
+        <div className="max-w-6xl px-6 w-full">
 
         {loading ? (
           <div className="text-center py-12">
@@ -215,7 +251,12 @@ export default function Dashboard({ user, household, onSignOut }) {
                         }
                         .pet-card-fix.pet-card-default,
                         .pet-card-fix.pet-card-hovered {
-                          box-shadow: 0 -4px 0 0 #C3001F inset;
+                          box-shadow: 0 0 0 4px #C3001F inset;
+                          box-shadow: 0 4px 0 0 #C3001F inset;
+                        }
+                        .pet-card-fix.pet-card-default,
+                        .pet-card-fix.pet-card-hovered {
+                          box-shadow: 0 -4px 0 0 #C3001F inset !important;
                         }
                       `}</style>
                       {/* Delete button (X icon) - top right, smaller */}

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
-export default function HeroBlock() {
+export default function HeroBlock({ user, onSignOut }) {
   return (
     <section className="relative overflow-hidden">
       {/* Background image layer (decorative) */}
@@ -25,8 +25,23 @@ export default function HeroBlock() {
 
         {/* Centered CTA buttons across the hero width */}
         <div className="mt-8 cta-equal">
-          <Link to="/create-household" className="btn btn-red text-lg font-normal px-8 py-5 min-w-[220px]">Get started — it's free</Link>
-          <Link to="/login" className="btn btn-secondary text-lg font-normal px-8 py-5 min-w-[220px]">Sign in</Link>
+          {user ? (
+            <>
+              <Link to="/dashboard" className="btn btn-red text-lg font-normal px-8 py-5 min-w-[220px]">My Pets</Link>
+              <Link
+                to="#"
+                className="btn btn-secondary text-lg font-normal px-8 py-5 min-w-[220px]"
+                onClick={e => { e.preventDefault(); onSignOut && onSignOut(); }}
+              >
+                Sign out
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/create-household" className="btn btn-red text-lg font-normal px-8 py-5 min-w-[220px]">Get started — it's free</Link>
+              <Link to="/login" className="btn btn-secondary text-lg font-normal px-8 py-5 min-w-[220px]">Sign in</Link>
+            </>
+          )}
         </div>
       </div>
     </section>
