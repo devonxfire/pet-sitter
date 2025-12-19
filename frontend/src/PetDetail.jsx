@@ -741,18 +741,21 @@ export default function PetDetail({ household, user, onSignOut }) {
 
   return (
     <div className="min-h-screen bg-white page-non-landing">
-
       <main className="flex flex-col items-stretch pb-6">
-        {/* Full-bleed header band */}
+        {/* Full-bleed header band with grayscale bg image and overlay for consistency */}
         <div className="w-full" style={{ backgroundColor: '#f3f4f6', background: '#f3f4f6', color: '#111', zIndex: 2, position: 'relative' }}>
-          <div className="mx-auto max-w-6xl px-6 w-full relative">
-
-            {/* Compact Header + General Section (grid layout) */}
+          <div style={{position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none'}}>
+            <div style={{width: '100%', height: '100%', position: 'relative'}}>
+              <div style={{width: '100%', height: '100%', backgroundImage: 'url(/hero-pets.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', filter: 'grayscale(1)'}} />
+              <div style={{position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)'}} />
+            </div>
+          </div>
+          <div className="mx-auto max-w-6xl px-6 w-full relative" style={{zIndex: 1}}>
             <div className="mb-1 py-12">
               <div className="grid md:grid-flow-col md:auto-cols-max items-start gap-2 md:gap-2">
 
             {/* Avatar */}
-            <div className="shrink-0 flex flex-col items-center md:items-start">
+            <div className="shrink-0 flex flex-col items-center md:items-start -ml-3 md:ml-0">
               <div className="relative">
                 <div className="w-28 h-28 md:w-40 md:h-40 rounded-2xl bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
                   {pet.photoUrl ? (
@@ -774,18 +777,18 @@ export default function PetDetail({ household, user, onSignOut }) {
             </div>
 
             {/* Main info */}
-              <div className="min-w-0 flex-1 h-28 md:h-40 flex flex-col justify-between items-start ml-0">
-              <div className="flex flex-col justify-between h-full ml-2">
+              <div className="min-w-0 flex-1 h-28 md:h-40 flex flex-col justify-between items-start ml-3 md:ml-5">
+              <div className="flex flex-col justify-between h-full ">
                 <div>
                   <div className="flex items-baseline gap-3">
-                      <h1 className="text-2xl md:text-4xl leading-tight text-gray-900">
+                      <h1 className="text-2xl md:text-4xl leading-tight">
                         {pet ? (
                           <>
-                            <span className="font-bold">{pet.name}'s </span>
-                            <span className="heading-light" data-heading="Profile">Profile</span>
+                            <span className="font-bold text-white">{pet.name}'s </span>
+                            <span className="heading-light text-white" data-heading="Profile">Profile</span>
                           </>
                         ) : (
-                          <span className="heading-light" data-heading="Profile">Profile</span>
+                          <span className="heading-light text-white" data-heading="Profile">Profile</span>
                         )}
                     </h1>
                     {/* single edit control is shown in the General Information section below */}
@@ -794,7 +797,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   <div className="mt-1">
                     <div className="inline-block align-top">
                       {latestActivity ? (
-                        <div className="flex items-center gap-3 text-sm text-gray-500">
+                        <div className="flex items-center gap-3 text-sm text-white">
                           <span className="">Latest Activity:</span>
                           <span className="inline-flex items-center gap-2 px-2 py-0.5 bg-gray-100 rounded-full text-sm">
                             {(() => {
@@ -817,9 +820,9 @@ export default function PetDetail({ household, user, onSignOut }) {
                           </span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-3 text-sm text-gray-500">
+                        <div className="flex items-center gap-3 text-sm text-white">
                           <span>Last Activity:</span>
-                          <span className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full text-sm text-gray-700">No activities logged yet.</span>
+                          <span className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full text-sm text-gray-200">No activities logged yet.</span>
                         </div>
                       )}
                     </div>
@@ -830,7 +833,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   <div className="flex flex-row gap-3">
                     <button
                       onClick={() => navigate(`/pet/${petId}`)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-md text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
                       ref={el => {
                         if (el) {
                           el.style.setProperty('background', '#C3001F', 'important');
@@ -859,7 +862,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                     </button>
                     <button
                       onClick={() => navigate(`/pet/${petId}/activities`)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-md text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
                       ref={el => {
                         if (el) {
                           el.style.setProperty('background', '#C3001F', 'important');
@@ -888,7 +891,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                     </button>
                     <button
                       onClick={() => navigate(`/pet/${petId}/calendar`)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-md text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
                       ref={el => {
                         if (el) {
                           el.style.setProperty('background', '#C3001F', 'important');
@@ -916,7 +919,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                       <span>Calendar</span>
                     </button>
                   </div>
-                  <blockquote className="text-gray-700 italic max-w-lg text-lg md:text-xl leading-tight ml-6" style={{ fontFamily: `'Dancing Script', cursive` }}>
+                  <blockquote className="italic max-w-lg text-lg md:text-xl leading-tight ml-6" style={{ fontFamily: `'Dancing Script', cursive`, color: '#fff', textShadow: '0 1px 6px rgba(0,0,0,0.25)' }}>
                     <span>“{getPetQuote(pet.name)}”</span>
                   </blockquote>
                 </div>

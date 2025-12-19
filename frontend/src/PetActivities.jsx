@@ -264,8 +264,23 @@ export default function PetActivities({ household, user, onSignOut }) {
     <div className="min-h-screen bg-white">
 
       {/* Header band: match PetDetail header UI for consistency */}
-      <div className="w-full" style={{ backgroundColor: '#f3f4f6', background: '#f3f4f6', color: '#111', zIndex: 2, position: 'relative' }}>
-        <div className="mx-auto max-w-6xl px-6 w-full relative">
+      <div
+        className="w-full"
+        style={{
+          backgroundColor: '#f3f4f6',
+          background: '#f3f4f6',
+          color: '#111',
+          zIndex: 2,
+          position: 'relative',
+        }}
+      >
+        <div style={{position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none'}}>
+          <div style={{width: '100%', height: '100%', position: 'relative'}}>
+            <div style={{width: '100%', height: '100%', backgroundImage: 'url(/hero-pets.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', filter: 'grayscale(1)'}} />
+            <div style={{position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)'}} />
+          </div>
+        </div>
+        <div className="mx-auto max-w-6xl px-6 w-full relative" style={{zIndex: 1}}>
           <div className="py-12">
             <div className="grid md:grid-flow-col md:auto-cols-max items-start gap-4 md:gap-4">
               {/* Avatar */}
@@ -293,21 +308,32 @@ export default function PetActivities({ household, user, onSignOut }) {
                 <div className="flex flex-col justify-between  h-full">
                   <div>
                     <div className="flex items-baseline gap-3">
-                      <h1 className="text-2xl md:text-4xl leading-tight text-gray-900">
+                      <h1 className="text-2xl md:text-4xl leading-tight">
                         {pet ? (
                           <>
-                            <span className="font-bold">{pet.name}'s </span>
-                            <span className="heading-light" data-heading="Activities">Activities</span>
+                            <span className="font-bold text-white">{pet.name}'s </span>
+                            <span className="heading-light text-white" data-heading="Activities">Activities</span>
                           </>
                         ) : (
-                          <span className="heading-light" data-heading="Activities">Activities</span>
+                          <span className="heading-light text-white" data-heading="Activities">Activities</span>
                         )}
                       </h1>
                     </div>
                     <div className="mt-1">
                       <div className="inline-block align-top">
-                        <span className="text-sm text-gray-500">All logged activities for this pet — </span>
-                        <button onClick={() => navigate('/activities')} className="text-sm text-gray-500 underline no-global-accent no-accent-hover">Change pet</button>
+                        <span className="text-sm text-white">All logged activities for this pet — </span>
+                        <button 
+                          onClick={() => navigate('/activities')}
+                          className="text-sm text-white underline no-global-accent no-accent-hover"
+                          style={{ color: '#fff', fontWeight: 'bold', textShadow: '0 1px 6px rgba(0,0,0,0.25)', border: 'none', background: 'none', padding: 0 }}
+                          ref={el => {
+                            if (el) {
+                              el.style.setProperty('color', '#fff', 'important');
+                              el.style.setProperty('font-weight', 'bold', 'important');
+                              el.style.setProperty('text-shadow', '0 1px 6px rgba(0,0,0,0.25)', 'important');
+                            }
+                          }}
+                        >Change pet</button>
                       </div>
                     </div>
                   </div>
