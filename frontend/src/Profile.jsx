@@ -115,7 +115,29 @@ export default function Profile({ user, household, onSignOut }) {
     <div className="min-h-screen bg-white">
       <main className="flex justify-center py-12">
         <div className="max-w-3xl w-full px-6">
-          <h1 className="text-3xl font-bold mb-6">My Profile</h1>
+          <div className="flex flex-row gap-3 mb-6">
+            <button
+              className={`flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer border-b-2 ${window.location.pathname === '/profile' ? 'border-gray-400 border-b-2' : 'border-transparent'} text-white bg-[#C3001F] ${window.location.pathname === '/profile' ? '' : 'hover:bg-[#ED1C24]'}`}
+              onClick={() => window.location.pathname !== '/profile' && (window.location.href = '/profile')}
+              type="button"
+            >
+              <span>Profile</span>
+            </button>
+            <button
+              className={`flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer border-b-2 ${window.location.pathname === '/activities' ? 'border-gray-400 border-b-2' : 'border-transparent'} text-white bg-[#C3001F] ${window.location.pathname === '/activities' ? '' : 'hover:bg-[#ED1C24]'}`}
+              onClick={() => window.location.pathname !== '/activities' && (window.location.href = '/activities')}
+              type="button"
+            >
+              <span>Activities</span>
+            </button>
+            <button
+              className={`flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer border-b-2 ${window.location.pathname === '/calendar' ? 'border-gray-400 border-b-2' : 'border-transparent'} text-white bg-[#C3001F] ${window.location.pathname === '/calendar' ? '' : 'hover:bg-[#ED1C24]'}`}
+              onClick={() => window.location.pathname !== '/calendar' && (window.location.href = '/calendar')}
+              type="button"
+            >
+              <span>Calendar</span>
+            </button>
+          </div>
 
           {error && <div className="text-red-500 mb-4">{error}</div>}
 
@@ -136,7 +158,7 @@ export default function Profile({ user, household, onSignOut }) {
               </div>
             </div>
             <div className="mt-4 flex gap-3">
-              <button onClick={handleSave} disabled={saving} className="btn">{saving ? 'Saving...' : 'Save'}</button>
+              <button onClick={handleSave} disabled={saving} className="bg-white border border-gray-200 text-gray-800 px-4 py-2 rounded-lg">{saving ? 'Saving...' : 'Save'}</button>
             </div>
           </section>
 

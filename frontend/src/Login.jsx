@@ -46,9 +46,15 @@ export default function Login({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-12">
+    <div className="min-h-screen flex items-start justify-center bg-white px-4 pt-10 md:pt-16">
+      <div className="w-full max-w-md border border-gray-200 rounded-2xl shadow-lg bg-white p-8">
+        <div className="text-center mb-10">
+          <img
+            src="/walk-activity.png"
+            alt="Walk Activity"
+            className="mx-auto mb-8"
+            style={{ width: 200, height: 200, objectFit: 'contain' }}
+          />
           <h1 className="text-3xl font-medium text-gray-900 mb-2">
             Pet-Sitter
           </h1>

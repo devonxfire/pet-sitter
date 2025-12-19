@@ -797,7 +797,20 @@ export default function PetDetail({ household, user, onSignOut }) {
                         <div className="flex items-center gap-3 text-sm text-gray-500">
                           <span className="">Latest Activity:</span>
                           <span className="inline-flex items-center gap-2 px-2 py-0.5 bg-gray-100 rounded-full text-sm">
-                            <span className="text-base leading-none">{getActivityIcon(latestActivity.activityType?.name)}</span>
+                            {(() => {
+                              const name = latestActivity.activityType?.name?.toLowerCase() || '';
+                              let imgName = 'other-activity.png';
+                              if (name.includes('play')) imgName = 'play-activity.png';
+                              else if (name.includes('walk')) imgName = 'walk-activity.png';
+                              else if (name.includes('feed') || name.includes('food')) imgName = 'food-activity.png';
+                              else if (name.includes('water')) imgName = 'water-activity.png';
+                              else if (name.includes('groom')) imgName = 'grooming-activity.png';
+                              else if (name.includes('medicat')) imgName = 'medication-activity.png';
+                              else if (name.includes('chill')) imgName = 'chill-activity.png';
+                              return (
+                                <img src={`/${imgName}`} alt={name} style={{ width: 28, height: 28, objectFit: 'contain' }} />
+                              );
+                            })()}
                             <span className="text-sm font-medium text-gray-900">{(latestActivity.activityType?.name
                               ? `${latestActivity.activityType.name.charAt(0).toUpperCase()}${latestActivity.activityType.name.slice(1)}`
                               : 'Activity')}</span>
