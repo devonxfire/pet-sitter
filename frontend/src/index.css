@@ -300,10 +300,16 @@ nav, .page-non-landing nav {
   /* Accent: blended red + gray (softer, desaturated red that ties into footer grays) */
   /* Mix: old bright red + footer gray → softer/desaturated red for CTAs */
   /* Match landing page brand red from Tailwind theme */
+  /* Core accent (app-wide) — restore to neutral so existing UI keeps intended colors */
   --color-accent: #374151; /* neutral gray (Tailwind gray-700) */
   --color-accent-2: #555E6B; /* lighter gray for hover */
   --color-accent-hover: #374151; /* keep same as primary for now */
   --color-accent-hover-light: #E5E7EB; /* light gray for highlights */
+
+  /* Brand-specific red — use these when a component explicitly needs brand red */
+  --brand-red: #C3001F;
+  --brand-red-hover: #ED1C24;
+  --brand-red-soft: #FCECEA;
   --color-footer: #374151; /* dark gray used for footer/backgrounds */
   --color-footer-light: #555E6B; /* lighter variant for interior CTAs (15% lighter than --color-footer) */
   --color-bg: #FFFFFF; /* page background */

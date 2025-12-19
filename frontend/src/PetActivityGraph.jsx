@@ -1,6 +1,6 @@
 import React from 'react';
 import './PetActivityGraph.css';
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LabelList } from 'recharts';
 
 // Theme colors from tailwind.config.js and index.css
 const theme = {
@@ -20,7 +20,7 @@ function formatTimeOfDay(dateStr) {
 }
 
 // Props: activities = [{ timestamp, activityType: { name } }]
-function PetActivityGraph({ activities }) {
+function PetActivityGraph({ activities, onHoverActivity, onClickActivity, onLeaveActivity }) {
   // Last 5 activities, sorted by timestamp
   // Conversational label logic
   const VERB_LABELS = {
@@ -78,6 +78,7 @@ function PetActivityGraph({ activities }) {
       label,
       time: formatTimeOfDay(a.timestamp),
       id: a.id || i,
+      rawActivity: a,
     };
   });
 
@@ -113,19 +114,7 @@ function PetActivityGraph({ activities }) {
               axisLine={{ stroke: theme.grayBorder }}
               tickLine={{ stroke: theme.grayBorder }}
             />
-            <Tooltip
-              cursor={{ stroke: theme.redLight, strokeWidth: 2 }}
-              contentStyle={{ background: theme.white, borderColor: theme.grayBorder, color: theme.grayText }}
-              labelStyle={{ color: theme.red }}
-              formatter={(value, name, props) => {
-                if (name === 'y') {
-                  const h = Math.floor(value);
-                  const m = Math.round((value % 1) * 60);
-                  return [`${h}:${String(m).padStart(2, '0')}`, 'Time'];
-                }
-                return [value, name];
-              }}
-            />
+            {/* Tooltip disabled — we handle hover with the modal instead */}
             <Scatter
               name="Activity"
               data={data}
@@ -137,15 +126,19 @@ function PetActivityGraph({ activities }) {
                 const xJitter = props.payload?.xJitter || 0;
                 const cx = props.cx + (props.width ? props.width * xJitter : 0);
                 // For vertical jitter, y is already adjusted in data.y
+                const activity = props.payload?.rawActivity || null;
                 return (
                   <g style={{ transform: 'translate(0,0)' }}>
                     <circle
                       cx={cx}
                       cy={props.cy}
-                      r={5}
+                      r={6}
                       className="activity-dot-pulse"
                       fill={theme.red}
-                      style={{ transformOrigin: `${cx}px ${props.cy}px` }}
+                      style={{ transformOrigin: `${cx}px ${props.cy}px`, cursor: 'pointer' }}
+                      onMouseEnter={() => { if (onHoverActivity && activity) onHoverActivity(activity); }}
+                      onMouseLeave={() => { if (onLeaveActivity) onLeaveActivity(activity); }}
+                      onClick={() => { if (onClickActivity && activity) onClickActivity(activity); }}
                     />
                   </g>
                 );

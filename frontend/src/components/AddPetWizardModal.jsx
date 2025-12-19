@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import heic2any from 'heic2any';
 import { apiFetch } from '../api';
+import ModalClose from '../ModalClose';
 
 
 export default function AddPetWizardModal({ open, onClose, onNext, previousVetInfo, wizardData, householdId, onDraftSave }) {
@@ -397,15 +398,7 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
-        <button
-          id="add-pet-wizard-close"
-          className="absolute top-3 right-3 text-2xl font-bold focus:outline-none"
-          onClick={handleRequestClose}
-          aria-label="Close"
-          style={{ background: 'none', backgroundColor: 'transparent', border: 'none', padding: 0, boxShadow: 'none', lineHeight: 1, color: '#d1d5db', outline: 'none', cursor: 'pointer', WebkitTextStroke: '0', textShadow: 'none', filter: 'none', zIndex: 10, fontWeight: 400, fontSize: '1.8rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
-        >
-          <span style={{ color: '#d1d5db', background: 'none', border: 'none', boxShadow: 'none', textShadow: 'none', WebkitTextStroke: 0, filter: 'none', fontWeight: 300 }}>×</span>
-        </button>
+        <ModalClose id="add-pet-wizard-close" onClick={handleRequestClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none" />
               {/* Close confirmation modal */}
               {showCloseConfirm && (
                 <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40">

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { apiFetch } from './api';
+import ModalClose from './ModalClose';
 
 export default function EditActivityModal({ activity, onActivityUpdated, onClose }) {
   // Parse timestamp robustly and produce a local datetime-local input value
@@ -82,12 +83,7 @@ export default function EditActivityModal({ activity, onActivityUpdated, onClose
       <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900">Edit Activity</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl"
-          >
-            ✕
-          </button>
+          <ModalClose onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl" />
         </div>
 
         <form onSubmit={handleUpdate} className="space-y-4">
@@ -136,21 +132,21 @@ export default function EditActivityModal({ activity, onActivityUpdated, onClose
               type="button"
               onClick={handleDelete}
               disabled={deleting}
-              className="flex-1 bg-gray-100 text-red-600 font-semibold py-2 rounded-lg hover:bg-gray-200 transition disabled:opacity-50"
+              className="flex-1 bg-gray-100 text-red-600 font-semibold py-2 rounded-lg hover:bg-gray-200 transition disabled:opacity-50 cursor-pointer"
             >
               {deleting ? 'Deleting...' : 'Delete'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-gray-100 text-gray-900 font-semibold py-2 rounded-lg hover:bg-gray-200 transition"
+              className="flex-1 bg-gray-100 text-gray-900 font-semibold py-2 rounded-lg hover:bg-gray-200 transition cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 btn font-semibold py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50"
+              className="flex-1 btn font-semibold py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50 cursor-pointer"
             >
               {loading ? 'Saving...' : 'Save'}
             </button>

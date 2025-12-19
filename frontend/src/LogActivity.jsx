@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { apiFetch } from './api';
+import { apiFetch, API_BASE } from './api';
 import ACTIVITY_TYPES from './activityTypes';
 import { theme } from './theme';
+import ModalClose from './ModalClose';
 
 export default function LogActivity({ petId, household, activity, onActivityLogged, onActivityDeleted, onClose, onFavouritesUpdated, step, setStep }) {
     // ...existing code...
@@ -23,6 +24,9 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   const [selectedType, setSelectedType] = useState(activity?.activityType?.name || '');
   const [timing, setTiming] = useState(''); // 'happened' or 'upcoming'
   const [notes, setNotes] = useState(activity?.notes || '');
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const photoInputRef = React.useRef(null);
 
   // Helper to format a Date into a `datetime-local` input value in local time
   const toLocalInputValue = (date) => {
@@ -128,11 +132,39 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           throw new Error('Please select at least one pet to apply this activity to.');
         }
 
+        // If a photo was chosen, upload it first and reuse the returned path for the created activity
+        let uploadedPhotoPath = null;
+        if (photoFile) {
+          try {
+            const token = localStorage.getItem('token');
+            const form = new FormData();
+            form.append('photo', photoFile);
+            // Upload to the first pet folder and reuse URL for all created activities
+            const uploadRes = await fetch(`${API_BASE}/api/pets/${petIdsToSend[0]}/activities/photo`, {
+              method: 'POST',
+              headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+              body: form
+            });
+            if (!uploadRes.ok) {
+              const errBody = await uploadRes.json().catch(() => ({}));
+              throw new Error(errBody.error || `Photo upload failed (${uploadRes.status})`);
+            }
+            const uploadJson = await uploadRes.json();
+            uploadedPhotoPath = uploadJson.photoPath || uploadJson.photoUrl || null;
+            console.log('[LogActivity] Photo uploaded, path:', uploadedPhotoPath);
+          } catch (err) {
+            console.error('Failed to upload photo before creating activity', err);
+            // continue without photo
+            uploadedPhotoPath = null;
+          }
+        }
+
         const promises = petIdsToSend.map((pid) => {
           const payload = {
             activityTypeId: selectedType,
             timestamp: new Date(timestamp).toISOString(),
             notes: notes || null,
+            photoUrl: uploadedPhotoPath || null,
             data: {}
           };
           console.log('[LogActivity] POST payload for pet', pid, payload);
@@ -188,6 +220,39 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
       setLoading(false);
     }
   };
+
+  const handlePhotoChange = (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    try {
+      const url = URL.createObjectURL(f);
+      setPhotoFile(f);
+      setPhotoPreview(url);
+    } catch (err) {
+      console.warn('Failed to create photo preview', err);
+    }
+  };
+
+  const triggerPhotoInput = () => {
+    if (photoInputRef.current) photoInputRef.current.click();
+  };
+
+  const removePhoto = () => {
+    if (photoPreview) {
+      try { URL.revokeObjectURL(photoPreview); } catch (e) {}
+    }
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    if (photoInputRef.current) photoInputRef.current.value = null;
+  };
+
+  React.useEffect(() => {
+    return () => {
+      if (photoPreview) {
+        try { URL.revokeObjectURL(photoPreview); } catch (e) {}
+      }
+    };
+  }, [photoPreview]);
 
   const handleDelete = async () => {
     if (!activity) return;
@@ -251,14 +316,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem', minWidth: '700px'}}>
-          <button
-            className="absolute top-3 right-3 text-2xl font-bold focus:outline-none cursor-pointer"
-            onClick={onClose}
-            aria-label="Close"
-            style={{ background: 'none', border: 'none', color: '#b0b0b0', padding: 0, boxShadow: 'none', lineHeight: 1, outline: 'none', cursor: 'pointer', zIndex: 10, fontWeight: 400, fontSize: '1.8rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
-          >
-            <span style={{ color: '#b0b0b0', fontWeight: 300 }}>×</span>
-          </button>
+          <ModalClose onClick={onClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none cursor-pointer" />
           <div className="flex flex-row items-center mb-6 justify-center w-full">
             <div className="flex flex-col items-center w-full">
               <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center w-full">Select Activity Type</h2>
@@ -351,14 +409,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem'}}>
-          <button
-            className="absolute top-3 right-3 text-2xl font-bold focus:outline-none"
-            onClick={onClose}
-            aria-label="Close"
-            style={{ background: 'none', border: 'none', color: '#b0b0b0', padding: 0, boxShadow: 'none', lineHeight: 1, outline: 'none', cursor: 'pointer', zIndex: 10, fontWeight: 400, fontSize: '1.8rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
-          >
-            <span style={{ color: '#b0b0b0', fontWeight: 300 }}>×</span>
-          </button>
+          <ModalClose onClick={onClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none" />
           <div className="flex flex-col items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">When?</h2>
             {(() => {
@@ -404,14 +455,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem'}}>
-          <button
-            className="absolute top-3 right-3 text-2xl font-bold focus:outline-none"
-            onClick={onClose}
-            aria-label="Close"
-            style={{ background: 'none', border: 'none', color: '#b0b0b0', padding: 0, boxShadow: 'none', lineHeight: 1, outline: 'none', cursor: 'pointer', zIndex: 10, fontWeight: 400, fontSize: '1.8rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
-          >
-            <span style={{ color: '#b0b0b0', fontWeight: 300 }}>×</span>
-          </button>
+          <ModalClose onClick={onClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none" />
           <div className="flex flex-col items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Schedule Activity</h2>
             {(() => {
@@ -474,14 +518,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem'}}>
-          <button
-            className="absolute top-3 right-3 text-2xl font-bold focus:outline-none"
-            onClick={onClose}
-            aria-label="Close"
-            style={{ background: 'none', border: 'none', color: '#b0b0b0', padding: 0, boxShadow: 'none', lineHeight: 1, outline: 'none', cursor: 'pointer', zIndex: 10, fontWeight: 400, fontSize: '1.8rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
-          >
-            <span style={{ color: '#b0b0b0', fontWeight: 300 }}>×</span>
-          </button>
+          <ModalClose onClick={onClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none" />
           <div className="flex flex-col items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">When did it happen?</h2>
             {(() => {
@@ -531,14 +568,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
-          <button
-            className="absolute top-3 right-3 text-2xl font-bold focus:outline-none"
-            onClick={onClose}
-            aria-label="Close"
-            style={{ background: 'none', backgroundColor: 'transparent', border: 'none', padding: 0, boxShadow: 'none', lineHeight: 1, color: '#d1d5db', outline: 'none', cursor: 'pointer', WebkitTextStroke: '0', textShadow: 'none', filter: 'none', zIndex: 10, fontWeight: 400, fontSize: '1.8rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
-          >
-            <span style={{ color: '#d1d5db', background: 'none', border: 'none', boxShadow: 'none', textShadow: 'none', WebkitTextStroke: 0, filter: 'none', fontWeight: 300 }}>×</span>
-          </button>
+          <ModalClose onClick={onClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none" />
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Set Reminder?</h2>
           </div>
@@ -550,6 +580,12 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
               return <img src={`/${imgName}`} alt={selectedActivity?.label} style={{ width: '192px', maxWidth: '100%', height: 'auto', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />;
             })()}
             <p className="text-xl font-semibold text-gray-900 mt-4">{selectedActivity?.label}</p>
+          </div>
+          {/* Notes only on Details slide; photo moved to its own slide */}
+
+          <div>
+            <label className="block text-lg font-medium text-gray-900 mb-3">Notes</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} placeholder="Add notes about this activity (optional)" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none" />
           </div>
           <div className="space-y-6">
             {/* Enable Reminder Toggle */}
@@ -649,24 +685,14 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
     );
   }
 
-  // Step 5: Details (notes, photo, etc.) OR Edit Mode
-  if (step === 'details' || step === 'edit') {
-    console.log('[LogActivity] Rendering details step', { step, timing });
-    // Log entry into details step for debugging
-    console.log('[LogActivity] Entered details step. Timing:', timing);
+  // Step 5: Details (notes, photo, etc.)
+  if (step === 'details') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
-          <button
-            className="absolute top-3 right-3 text-2xl font-bold focus:outline-none"
-            onClick={onClose}
-            aria-label="Close"
-            style={{ background: 'none', backgroundColor: 'transparent', border: 'none', padding: 0, boxShadow: 'none', lineHeight: 1, color: '#d1d5db', outline: 'none', cursor: 'pointer', WebkitTextStroke: '0', textShadow: 'none', filter: 'none', zIndex: 10, fontWeight: 400, fontSize: '1.8rem', position: 'absolute', right: '0.75rem', top: '0.75rem' }}
-          >
-            <span style={{ color: '#d1d5db', background: 'none', border: 'none', boxShadow: 'none', textShadow: 'none', WebkitTextStroke: 0, filter: 'none', fontWeight: 300 }}>×</span>
-          </button>
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">{isEditing ? 'Edit Activity' : 'Summary'}</h2>
+          <ModalClose onClick={onClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none" />
+          <div className="flex items-center justify-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 text-center">Details</h2>
           </div>
           <div className="text-center mb-8 flex flex-col items-center justify-center">
             {(() => {
@@ -677,37 +703,9 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
             })()}
             <p className="text-xl font-semibold text-gray-900 mt-4">{selectedActivity?.label}</p>
           </div>
-          <div className="mb-6">
-            <label className="block text-lg font-medium text-gray-900 mb-3">
-              Date & Time
-            </label>
-            <input
-              type="datetime-local"
-              value={timestamp}
-              onChange={(e) => setTimestamp(e.target.value)}
-              className="w-full px-4 py-4 rounded-xl border border-gray-200 focus:border-accent focus:outline-none text-lg"
-            />
-            <p className="text-sm text-gray-500 mt-2">
-              {timing === 'upcoming' ? `📅 Scheduled for ${new Date(timestamp).toLocaleString()}` : '✓ Logged as complete'}
-            </p>
-          </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Activity Type (Edit mode only) */}
-          {isEditing && (
-            <div>
-              <label className="block text-lg font-medium text-gray-900 mb-3">
-                Activity Type
-              </label>
-              <div className="px-4 py-3 bg-gray-100 rounded-xl text-gray-900 font-medium">
-                {activity.activityType?.name}
-              </div>
-            </div>
-          )}
-
-          {/* Timestamp (Edit mode only) */}
-          {isEditing && (
-            <div>
+          <div className="mb-6 flex flex-col md:flex-row items-start gap-6">
+            <div className="flex-1">
               <label className="block text-lg font-medium text-gray-900 mb-3">
                 Date & Time
               </label>
@@ -715,92 +713,268 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
                 type="datetime-local"
                 value={timestamp}
                 onChange={(e) => setTimestamp(e.target.value)}
-                className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-accent focus:outline-none"
+                className="w-full px-4 py-4 rounded-xl border border-gray-200 focus:border-accent focus:outline-none text-lg"
               />
+              <p className="text-sm text-gray-500 mt-2">
+                {timing === 'upcoming' ? `📅 Scheduled for ${new Date(timestamp).toLocaleString()}` : '✓ Logged as complete'}
+              </p>
             </div>
-          )}
 
-          {/* Apply To Pets - allow multi-select when creating */}
-          {!isEditing && (
-            <div>
-              <label className="block text-lg font-medium text-gray-900 mb-3">Apply to pets</label>
-              <div className="mb-3">
-                <label className="flex items-center gap-3 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    onChange={(e) => {
-                      if (e.target.checked) setSelectedPetIds(pets.map(p => p.id));
-                      else setSelectedPetIds(petId ? [parseInt(petId)] : []);
-                    }}
-                    className="w-4 h-4"
-                  />
-                  <span className="font-medium">Apply to all</span>
-                </label>
-              </div>
-              <div className="space-y-2">
-                {pets.length === 0 ? (
-                  <p className="text-sm text-gray-500">No other pets found in household.</p>
-                ) : (
-                  pets.map((p) => {
-                    const isCurrent = petId && parseInt(petId) === p.id;
-                    return (
-                      <label key={p.id} className={`flex items-center gap-3 ${isCurrent ? 'opacity-70' : ''}`}>
-                        <input
-                          type="checkbox"
-                          checked={selectedPetIds.includes(p.id)}
-                          disabled={isCurrent}
-                          onChange={(e) => {
-                            if (isCurrent) return;
-                            if (e.target.checked) setSelectedPetIds((s) => [...new Set([...(s||[]), p.id])]);
-                            else setSelectedPetIds((s) => (s || []).filter(id => id !== p.id));
-                          }}
-                          className="w-4 h-4"
-                        />
-                        <span className={`text-gray-700 ${isCurrent ? 'font-semibold' : ''}`}>{p.name}</span>
-                        <span className="text-sm text-gray-400">({p.species})</span>
-                      </label>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          )}
+            {/* photo UI moved to its own slide (step === 'photo') */}
+          </div>
 
-          {error && (
-            <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">
-              {error}
-            </div>
-          )}
+          <div>
+            <label className="block text-lg font-medium text-gray-900 mb-3">Notes</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} placeholder="Add notes about this activity (optional)" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none" />
+          </div>
 
-          <div className="flex gap-3 pt-4">
-            {isEditing && (
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleting}
-                className="bg-gray-100 text-red-600 font-semibold py-3 px-4 rounded-xl hover:bg-gray-200 transition disabled:opacity-50"
-              >
-                {deleting ? 'Deleting...' : 'Delete'}
-              </button>
-            )}
+          <div className="flex gap-3 mt-8">
             <button
-              type="button"
-              onClick={() => isEditing ? onClose() : setStep(timing === 'upcoming' ? 'reminder' : 'happened')}
-              className="flex-1 bg-gray-100 text-gray-900 font-semibold py-3 rounded-xl hover:bg-gray-200 transition cursor-pointer"
+              onClick={() => setStep(timing === 'upcoming' ? 'reminder' : 'happened')}
+              className="flex-1 py-3 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition cursor-pointer"
             >
-              {isEditing ? 'Cancel' : '← Back'}
+              ← Back
             </button>
             <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-accent text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 cursor-pointer"
+              onClick={() => setStep('photo')}
+              className="flex-1 py-3 bg-accent text-gray-900 font-semibold rounded-xl hover:opacity-90 transition cursor-pointer"
             >
-              {loading ? 'Saving...' : isEditing ? 'Save Changes' : 'Log Activity'}
+              Next
             </button>
           </div>
-        </form>
+        </div>
       </div>
-    </div>
-  );
-  }}
+    );
+  }
+
+  // Step 6: Photo (attach image)
+  if (step === 'photo') {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
+          <ModalClose onClick={onClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none" />
+          <div className="flex items-center justify-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Add Photo</h2>
+          </div>
+          <div className="flex items-center justify-center mb-4">
+            <img src={`/photo-activity.png`} alt="Add photo" style={{ width: 160, height: 'auto', objectFit: 'contain' }} />
+          </div>
+          <div className="mb-6">
+            <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" aria-label="Add photo" />
+            <div className="flex items-center gap-4">
+              {photoPreview ? (
+                <div className="w-40 h-28 rounded-md overflow-hidden border border-gray-200">
+                  <img src={photoPreview} alt="preview" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="w-40 h-28 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400">No photo</div>
+              )}
+              <div className="flex flex-col">
+                <div className="flex gap-2">
+                  <button type="button" onClick={triggerPhotoInput} className="px-3 py-2 bg-gray-100 rounded-md text-sm font-medium hover:bg-gray-200 transition cursor-pointer">Add photo</button>
+                  {photoPreview && <button type="button" onClick={removePhoto} className="px-3 py-2 bg-gray-100 rounded-md text-sm font-medium hover:bg-gray-200 transition cursor-pointer">Remove</button>}
+                </div>
+                <div className="text-xs text-gray-500 mt-2">Optional — attach a photo for this activity</div>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setStep('details')}
+              className="flex-1 py-3 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition cursor-pointer"
+            >
+              ← Back
+            </button>
+            <button
+              onClick={() => setStep('summary')}
+              className="flex-1 py-3 bg-accent text-gray-900 font-semibold rounded-xl hover:opacity-90 transition cursor-pointer"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 6: Summary (final review + submit)
+  if (step === 'summary') {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
+          <ModalClose onClick={onClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none" />
+          <div className="flex items-center justify-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 text-center">Summary</h2>
+          </div>
+          <div className="text-center mb-8 flex flex-col items-center justify-center">
+            {(() => {
+              let imgName = ((selectedActivity?.name || selectedActivity?.id || '').toLowerCase().replace(/\s+/g, '-') + '-activity.png');
+              if (selectedActivity?.id === 'feeding') imgName = 'food-activity.png';
+              if (selectedActivity?.id === 'chilling') imgName = 'chill-activity.png';
+              return <img src={`/${imgName}`} alt={selectedActivity?.label} style={{ width: '192px', maxWidth: '100%', height: 'auto', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />;
+            })()}
+            <p className="text-xl font-semibold text-gray-900 mt-4">{selectedActivity?.label}</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Apply To Pets - allow multi-select when creating */}
+            {!isEditing && (
+              <div>
+                <label className="block text-lg font-medium text-gray-900 mb-3">Apply to pets</label>
+                <div className="mb-3">
+                  <label className="flex items-center gap-3 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedPetIds(pets.map(p => p.id));
+                        else setSelectedPetIds(petId ? [parseInt(petId)] : []);
+                      }}
+                      className="w-4 h-4"
+                    />
+                    <span className="font-medium">Apply to all</span>
+                  </label>
+                </div>
+                <div className="space-y-2">
+                  {pets.length === 0 ? (
+                    <p className="text-sm text-gray-500">No other pets found in household.</p>
+                  ) : (
+                    pets.map((p) => {
+                      const isCurrent = petId && parseInt(petId) === p.id;
+                      return (
+                        <label key={p.id} className={`flex items-center gap-3 ${isCurrent ? 'opacity-70' : ''}`}>
+                          <input
+                            type="checkbox"
+                            checked={selectedPetIds.includes(p.id)}
+                            disabled={isCurrent}
+                            onChange={(e) => {
+                              if (isCurrent) return;
+                              if (e.target.checked) setSelectedPetIds((s) => [...new Set([...(s||[]), p.id])]);
+                              else setSelectedPetIds((s) => (s || []).filter(id => id !== p.id));
+                            }}
+                            className="w-4 h-4"
+                          />
+                          <span className={`text-gray-700 ${isCurrent ? 'font-semibold' : ''}`}>{p.name}</span>
+                          <span className="text-sm text-gray-400">({p.species})</span>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={() => setStep('details')}
+                className="flex-1 bg-gray-100 text-gray-900 font-semibold py-3 rounded-xl hover:bg-gray-200 transition cursor-pointer"
+              >
+                ← Back
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-accent text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 cursor-pointer"
+              >
+                {loading ? 'Saving...' : 'Log Activity'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Step: Edit (existing activity) — render edit form with delete
+  if (step === 'edit') {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
+          <ModalClose onClick={onClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none" />
+          <div className="flex items-center justify-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 text-center">Edit Activity</h2>
+          </div>
+          <div className="text-center mb-8 flex flex-col items-center justify-center">
+            {(() => {
+              let imgName = ((selectedActivity?.name || selectedActivity?.id || '').toLowerCase().replace(/\s+/g, '-') + '-activity.png');
+              if (selectedActivity?.id === 'feeding') imgName = 'food-activity.png';
+              if (selectedActivity?.id === 'chilling') imgName = 'chill-activity.png';
+              return <img src={`/${imgName}`} alt={selectedActivity?.label} style={{ width: '192px', maxWidth: '100%', height: 'auto', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />;
+            })()}
+            <p className="text-xl font-semibold text-gray-900 mt-4">{selectedActivity?.label}</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Activity Type (Edit mode only) */}
+            {isEditing && (
+              <div>
+                <label className="block text-lg font-medium text-gray-900 mb-3">
+                  Activity Type
+                </label>
+                <div className="px-4 py-3 bg-gray-100 rounded-xl text-gray-900 font-medium">
+                  {activity.activityType?.name}
+                </div>
+              </div>
+            )}
+
+            {/* Timestamp (Edit mode only) */}
+            {isEditing && (
+              <div>
+                <label className="block text-lg font-medium text-gray-900 mb-3">
+                  Date & Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={timestamp}
+                  onChange={(e) => setTimestamp(e.target.value)}
+                  className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-accent focus:outline-none"
+                />
+              </div>
+            )}
+
+            {error && (
+              <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-4">
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="bg-gray-100 text-red-600 font-semibold py-3 px-4 rounded-xl hover:bg-gray-200 transition disabled:opacity-50"
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => onClose()}
+                className="flex-1 bg-gray-100 text-gray-900 font-semibold py-3 rounded-xl hover:bg-gray-200 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-accent text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 cursor-pointer"
+              >
+                {loading ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+}

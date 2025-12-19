@@ -871,6 +871,45 @@ app.post('/api/pets/:petId/photo', authenticateToken, upload.single('photo'), as
   }
 });
 
+// Upload activity photo (returns a path that can be stored on the activity)
+app.post('/api/pets/:petId/activities/photo', authenticateToken, upload.single('photo'), async (req, res) => {
+  try {
+    const petId = parseInt(req.params.petId);
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Verify pet exists and user has permission
+    const pet = await prisma.pet.findUnique({ where: { id: petId }, include: { household: true } });
+    if (!pet) return res.status(404).json({ error: 'Pet not found' });
+
+    const householdMember = await prisma.householdMember.findFirst({ where: { householdId: pet.householdId, userId: req.user.id } });
+    if (!householdMember) return res.status(403).json({ error: 'Unauthorized' });
+
+    // Convert HEIC/HEIF to JPEG if needed
+    let finalFilename = req.file.filename;
+    const uploadedPath = req.file.path;
+    if (req.file.mimetype === 'image/heic' || req.file.mimetype === 'image/heif') {
+      const jpegFilename = 'photo.jpg';
+      const jpegPath = path.join(path.dirname(uploadedPath), jpegFilename);
+      const inputBuffer = await fs.promises.readFile(uploadedPath);
+      const outputBuffer = await heicConvert({ buffer: inputBuffer, format: 'JPEG', quality: 0.9 });
+      await fs.promises.writeFile(jpegPath, outputBuffer);
+      fs.unlinkSync(uploadedPath);
+      finalFilename = jpegFilename;
+    }
+
+    const photoPath = `/uploads/pets/${petId}/${finalFilename}`;
+    console.log(`✅ Activity photo uploaded: ${photoPath}`);
+
+    return res.json({ photoPath });
+  } catch (error) {
+    console.error('Activity photo upload error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload activity photo' });
+  }
+});
+
 // ============================================================================
 // ACTIVITY ROUTES
 // ============================================================================

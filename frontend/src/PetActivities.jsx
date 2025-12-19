@@ -5,6 +5,8 @@ import PetActivityGraph from './PetActivityGraph.jsx';
 import LogActivity from './LogActivity';
 import ActivityView from './ActivityView';
 import ACTIVITY_TYPES from './activityTypes';
+import ConfirmDialog from './ConfirmDialog';
+import ModalClose from './ModalClose';
 
 function FavouritesModal({ favourites, onLog, onDelete, onClose }) {
     console.log('[PetActivities] Render', { household, user });
@@ -12,7 +14,7 @@ function FavouritesModal({ favourites, onLog, onDelete, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 relative">
-        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold">×</button>
+        <ModalClose onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold" />
         <h2 className="text-2xl font-bold mb-4 text-gray-900">Repeat Favourite</h2>
         {(!favourites || favourites.length === 0) ? (
           <div className="text-center py-8"><p className="text-gray-500">No current Favourites</p></div>
@@ -32,7 +34,7 @@ function FavouritesModal({ favourites, onLog, onDelete, onClose }) {
                   <div className="flex items-center gap-2">
                     <button onClick={() => onLog(qa)} className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition">Log</button>
                   </div>
-                  <button onClick={() => onDelete(qa)} className="px-3 py-2 text-sm font-medium text-accent hover:bg-gray-100 rounded-lg transition no-global-accent no-accent-hover delete-btn" style={{ color: 'var(--color-accent)' }}>Delete</button>
+                  <button onClick={() => onDelete(qa)} className="px-3 py-2 text-sm font-medium text-accent hover:bg-gray-100 rounded-lg transition no-global-accent no-accent-hover delete-btn" style={{ color: 'var(--brand-red)' }}>Delete</button>
                 </div>
               </div>
             ))}
@@ -61,6 +63,7 @@ export default function PetActivities({ household, user, onSignOut }) {
   const [memberFilter, setMemberFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [favourites, setFavourites] = useState([]);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const favouritesRef = useRef(null);
   const favBtnRef = useRef(null);
   const [favHover, setFavHover] = useState(false);
@@ -72,7 +75,7 @@ export default function PetActivities({ household, user, onSignOut }) {
     const apply = () => {
       const dels = document.querySelectorAll('.delete-btn');
       dels.forEach(el => {
-        el.style.setProperty('color', 'var(--color-accent)', 'important');
+        el.style.setProperty('color', 'var(--brand-red)', 'important');
       });
     };
     apply();
@@ -143,6 +146,27 @@ export default function PetActivities({ household, user, onSignOut }) {
     return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
+  // Hover debounce for activity graph: delay opening modal to avoid flicker
+  const hoverTimer = useRef(null);
+  const HOVER_OPEN_DELAY = 200; // ms
+
+  const handleHoverActivity = (act) => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    hoverTimer.current = setTimeout(() => {
+      setViewingActivity(act);
+      hoverTimer.current = null;
+    }, HOVER_OPEN_DELAY);
+  };
+
+  const handleLeaveActivity = () => {
+    if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null; }
+    setViewingActivity(null);
+  };
+
+  useEffect(() => {
+    return () => { if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null; } };
+  }, []);
+
   const loadFavourites = async () => {
     try {
       if (!household?.id) return;
@@ -190,9 +214,22 @@ export default function PetActivities({ household, user, onSignOut }) {
     } catch (err) { console.error('Failed to create favourite activity', err); alert(err.message || 'Failed to create activity'); }
   };
 
-  const handleDeleteActivity = async (activityId) => {
-    if (!confirm('Delete this activity? This cannot be undone.')) return;
-    try { await apiFetch(`/api/activities/${activityId}`, { method: 'DELETE' }); setActivities((prev) => prev.filter(a => String(a.id) !== String(activityId))); if (viewingActivity && String(viewingActivity.id) === String(activityId)) setViewingActivity(null); } catch (err) { console.error('Failed to delete activity', err); alert(err.message || 'Failed to delete activity'); }
+  const handleDeleteActivity = (activityId) => {
+    // show confirm dialog (actual delete performed in confirm handler)
+    setConfirmDeleteId(activityId);
+  };
+
+  const performDeleteActivity = async (activityId) => {
+    try {
+      await apiFetch(`/api/activities/${activityId}`, { method: 'DELETE' });
+      setActivities((prev) => prev.filter(a => String(a.id) !== String(activityId)));
+      if (viewingActivity && String(viewingActivity.id) === String(activityId)) setViewingActivity(null);
+      setConfirmDeleteId(null);
+    } catch (err) {
+      console.error('Failed to delete activity', err);
+      alert(err.message || 'Failed to delete activity');
+      setConfirmDeleteId(null);
+    }
   };
 
   const handleDeleteFavourite = async (qa) => {
@@ -495,7 +532,16 @@ export default function PetActivities({ household, user, onSignOut }) {
         </div>
         {/* Activity scatter plot graph */}
         {activities && activities.length > 0 && (
-          <PetActivityGraph activities={activities} />
+          <PetActivityGraph
+            activities={activities}
+            onHoverActivity={handleHoverActivity}
+            onClickActivity={(act) => {
+              // Immediate open on click (cancel pending hover timers)
+              if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null; }
+              setViewingActivity(act);
+            }}
+            onLeaveActivity={handleLeaveActivity}
+          />
         )}
         <div className="flex justify-between items-center mb-8 mt-6 flex-wrap gap-2">
           <div className="flex gap-2 items-center flex-wrap">
@@ -519,7 +565,7 @@ export default function PetActivities({ household, user, onSignOut }) {
                   </div>
                   <div className="ml-4 flex items-center gap-2">
                     <button onClick={() => createFavourite(qa)} className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition">Log</button>
-                    <button onClick={() => handleDeleteFavourite(qa)} className="px-3 py-2 text-sm font-medium text-accent hover:bg-gray-100 rounded-lg transition no-global-accent no-accent-hover delete-btn" style={{ color: 'var(--color-accent)' }}>Delete</button>
+                    <button onClick={() => handleDeleteFavourite(qa)} className="px-3 py-2 text-sm font-medium text-accent hover:bg-gray-100 rounded-lg transition no-global-accent no-accent-hover delete-btn" style={{ color: 'var(--brand-red)' }}>Delete</button>
                   </div>
                 </div>
               ))}</div>
@@ -604,7 +650,7 @@ export default function PetActivities({ household, user, onSignOut }) {
                       <time className="text-sm text-gray-500 whitespace-nowrap">{when.toLocaleString()}</time>
                       <button onClick={() => setViewingActivity(activity)} className="px-2 py-1 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-md transition no-global-accent no-accent-hover cursor-pointer">View</button>
                       <button onClick={() => setEditingActivity(activity)} className="px-2 py-1 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-md transition no-global-accent no-accent-hover cursor-pointer">Edit</button>
-                      <button onClick={() => handleDeleteActivity(activity.id)} className="px-2 py-1 text-sm font-medium text-accent hover:bg-red-50 rounded-md transition no-global-accent no-accent-hover delete-btn cursor-pointer" style={{ color: 'var(--color-accent)' }}>Delete</button>
+                      <button onClick={() => handleDeleteActivity(activity.id)} className="px-2 py-1 text-sm font-medium text-accent hover:bg-red-50 rounded-md transition no-global-accent no-accent-hover delete-btn cursor-pointer" style={{ color: 'var(--brand-red)' }}>Delete</button>
                     </div>
                   </div>
                 </div>
@@ -645,6 +691,17 @@ export default function PetActivities({ household, user, onSignOut }) {
 
       {viewingActivity && (
         <ActivityView activity={viewingActivity} onClose={() => setViewingActivity(null)} onEdit={(act) => { setViewingActivity(null); setEditingActivity(act); }} onDelete={(id) => { setViewingActivity(null); setActivities(prev => prev.filter(a => String(a.id) !== String(id))); }} />
+      )}
+
+      {confirmDeleteId && (
+        <ConfirmDialog
+          title="Delete activity"
+          message={`Delete this activity? This cannot be undone.`}
+          onConfirm={() => performDeleteActivity(confirmDeleteId)}
+          onCancel={() => setConfirmDeleteId(null)}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+        />
       )}
 
         {showFavouritesModal && (
