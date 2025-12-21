@@ -56,7 +56,7 @@ export default function Login({ onLogin }) {
             style={{ width: 200, height: 200, objectFit: 'contain' }}
           />
           <h1 className="text-3xl font-medium text-gray-900 mb-2">
-            PetDaily
+            <span style={{ color: 'var(--brand-red)' }}>Pet</span>Daily
           </h1>
           <p className="text-gray-500 text-sm">Track pet care with your family</p>
         </div>

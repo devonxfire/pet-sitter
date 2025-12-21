@@ -4,7 +4,7 @@ function ActivityLogExampleImage() {
       <img
         src={"/activitylog-example.png"}
         alt="Example Activity Log"
-        className="rounded-xl border border-gray-200 shadow-sm max-w-full h-auto"
+        className="rounded-xl border border-gray-200 shadow-sm max-w-full h-auto transform transition-transform duration-200 ease-out hover:scale-105"
         style={{ background: '#f7f8fa' }}
         loading="lazy"
         decoding="async"
