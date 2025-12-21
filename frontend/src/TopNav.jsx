@@ -74,30 +74,29 @@ export default function TopNav({ user, household, onSignOut }) {
       <div className={user ? 'max-w-7xl mx-auto px-6 h-20 flex items-center' : 'max-w-6xl mx-auto px-6 h-20 flex items-center'}>
         {/* Left: logo */}
         <div className="flex items-center mr-4">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-md bg-accent flex items-center justify-center text-white font-bold">PS</div>
-            <h1 className="text-xl font-semibold">Pet-Sitter</h1>
+            <Link to="/" className="flex items-center gap-3">
+            <img src="/petdaily-logo-desktop.png" alt="PetDaily" className="h-12 md:h-14 object-contain block transform -translate-y-2 md:-translate-y-1" />
           </Link>
         </div>
 
         {/* Center: primary nav (centered) */}
-        <div className="flex-1 flex justify-center">
+          <div className="flex-1 flex justify-center items-center">
           <div className="flex items-center gap-6">
             {user && (
               <>
                 <Link
                   to="/dashboard"
-                  className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${location.pathname === '/dashboard' ? 'border-accent nav-link-active' : 'border-transparent'}`}
+                  className={`text-sm text-gray-600 hover:text-gray-900 py-1 border-b transition-all duration-150 ${location.pathname === '/dashboard' ? 'border-accent nav-link-active' : 'border-transparent'}`}
                 >My Pets</Link>
                 <Link
                   to={firstPetId ? `/pet/${firstPetId}/activities` : '/activities'}
-                  className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${(location.pathname.startsWith('/pet') || location.pathname === '/activities') ? 'border-accent nav-link-active' : 'border-transparent'}`}
+                  className={`text-sm text-gray-600 hover:text-gray-900 py-1 border-b transition-all duration-150 ${(location.pathname.startsWith('/pet') || location.pathname === '/activities') ? 'border-accent nav-link-active' : 'border-transparent'}`}
                 >Activities</Link>
               </>
             )}
             <Link
               to="/plans"
-              className={`text-sm text-gray-600 hover:text-gray-900 pb-1 border-b transition-all duration-150 ${location.pathname === '/plans' ? 'border-accent nav-link-active' : 'border-transparent'}`}
+              className={`text-sm text-gray-600 hover:text-gray-900 py-1 border-b transition-all duration-150 ${location.pathname === '/plans' ? 'border-accent nav-link-active' : 'border-transparent'}`}
             >Plans</Link>
           </div>
         </div>
@@ -108,17 +107,17 @@ export default function TopNav({ user, household, onSignOut }) {
             <div ref={menuRef} className="relative flex items-center gap-3">
               <button
                 onClick={() => setOpen((s) => !s)}
-                className="user-toggle no-global-accent cursor-pointer flex items-center gap-3 text-gray-900 focus:outline-none px-2 py-1"
+                className="user-toggle no-global-accent cursor-pointer flex items-center gap-3 text-gray-900 focus:outline-none px-3 py-2"
                 aria-haspopup="true"
                 aria-expanded={open}
                 type="button"
               >
                 {user?.photoUrl ? (
-                  <img src={user.photoUrl} alt={user.name || 'User'} className="w-9 h-9 rounded-full object-cover" />
+                  <img src={user.photoUrl} alt={user.name || 'User'} className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover" />
                 ) : (
-                  <div className="w-9 h-9 rounded-full bg-user-initials text-white flex items-center justify-center font-semibold">{initials(user?.name)}</div>
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-user-initials text-white flex items-center justify-center font-semibold">{initials(user?.name)}</div>
                 )}
-                <span className="text-gray-900 font-medium">Welcome{user?.name ? `, ${user.name.split(' ')[0]}!` : '!'}</span>
+                <span className="text-gray-900 font-medium leading-none">Welcome{user?.name ? `, ${user.name.split(' ')[0]}!` : '!'}</span>
                 <svg className="w-4 h-4 text-gray-500 ml-1" viewBox="0 0 20 20" fill="none" aria-hidden>
                   <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>

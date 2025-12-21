@@ -15,9 +15,12 @@ export default function HeroBlock({ user, onSignOut }) {
 
       <div className="relative z-20 max-w-7xl mx-auto px-6 pt-28 pb-24">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-          <div className="md:col-span-7">
-            <h1 className="hero-heading text-5xl md:text-6xl font-extrabold leading-tight">Make pet care simple, reliable, and beautiful</h1>
-            <p className="mt-8 text-white/90 text-lg max-w-xl">Coordinate feeding, walks, meds, and visits with your household. A clear timeline, handy reminders, and shared plans that keep everyone in sync.</p>
+            <div className="md:col-span-7">
+            <h1 className="hero-heading text-5xl md:text-6xl font-extrabold leading-tight text-center md:text-left">
+              <span className="block">Welcome to <span style={{ color: 'var(--brand-red)' }}>Pet</span>Daily.</span>
+              <span className="block text-3xl md:text-4xl font-light text-white mt-3">Making pet care simple, reliable and beautiful.</span>
+            </h1>
+            <p className="mt-4 md:mt-6 text-white/90 text-lg max-w-xl">Coordinate feeding, walks, meds, and visits with your household. A clear timeline, handy reminders, and shared plans that keep everyone in sync.</p>
           </div>
 
           {/* right-side decorative image removed - background is full-bleed now */}
