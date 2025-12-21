@@ -795,6 +795,8 @@ export default function PetActivities({ household, user, onSignOut }) {
           />
         )}
 
+        {/* Pet switcher removed — cleaned up leftover references */}
+
     </div>
   );
 }

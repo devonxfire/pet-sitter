@@ -155,7 +155,7 @@ export default function ActivityView({ activity, onClose, onEdit, onDelete }) {
           </div>
           <div className="w-full mb-4 flex items-center justify-center">
             <img
-              src={resolvedPhoto || fallbackImg}
+              src={fallbackImg}
               alt={typeLabel}
               className="w-[192px] h-auto rounded-lg object-contain"
               style={{ maxWidth: '100%', margin: '0 auto', borderRadius: 0, boxShadow: 'none' }}

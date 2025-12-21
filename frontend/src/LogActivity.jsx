@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiFetch } from './api';
+import { apiFetch, apiUrl } from './api';
 import ACTIVITY_TYPES from './activityTypes';
 import { theme } from './theme';
 import ModalClose from './ModalClose';
@@ -132,13 +132,49 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           throw new Error('Please select at least one pet to apply this activity to.');
         }
 
-        const promises = petIdsToSend.map((pid) => {
+        const promises = petIdsToSend.map(async (pid) => {
+          let photoUrlForThis = null;
+          if (photoFile) {
+            try {
+              const formData = new FormData();
+              formData.append('photo', photoFile);
+              // Use direct fetch so browser sets multipart boundaries correctly
+              const token = localStorage.getItem('token');
+              const uploadRes = await fetch(apiUrl(`/api/pets/${pid}/activities/photo`), {
+                method: 'POST',
+                body: formData,
+                headers: token ? { Authorization: `Bearer ${token}` } : undefined
+              });
+              const actualUploadUrl = apiUrl(`/api/pets/${pid}/activities/photo`);
+              console.log('[LogActivity] Uploading photo to', actualUploadUrl, { pid, fileName: formData.get('photo')?.name });
+              if (!uploadRes.ok) {
+                const txt = await uploadRes.text().catch(() => null);
+                console.warn('[LogActivity] Photo upload failed for pet', pid, uploadRes.status, txt);
+              } else {
+                const uploadJson = await uploadRes.json().catch(() => null);
+                // Confirm the response came from the activity upload endpoint
+                const finalUrl = (uploadRes && uploadRes.url) || '';
+                const cameFromActivityEndpoint = finalUrl.includes('/activities/photo');
+                if (!cameFromActivityEndpoint) {
+                  console.warn('[LogActivity] Photo upload returned from unexpected endpoint', finalUrl, '— ignoring as activity photo to avoid updating pet avatar. Response:', uploadJson);
+                } else {
+                  // Accept either { photoPath } (activity upload) or { photoUrl }
+                  photoUrlForThis = (uploadJson && (uploadJson.photoPath || uploadJson.photoUrl)) || null;
+                  console.log('[LogActivity] Photo upload response for pet', pid, uploadRes.status, uploadJson, ' -> using', photoUrlForThis);
+                }
+              }
+            } catch (err) {
+              console.warn('[LogActivity] Photo upload error for pet', pid, err);
+            }
+          }
+
           const payload = {
             activityTypeId: selectedType,
             timestamp: new Date(timestamp).toISOString(),
             notes: notes || null,
             data: {}
           };
+          if (photoUrlForThis) payload.photoUrl = photoUrlForThis;
           console.log('[LogActivity] POST payload for pet', pid, payload);
           return apiFetch(`/api/pets/${pid}/activities`, {
             method: 'POST',

@@ -100,15 +100,21 @@ if (!fs.existsSync(uploadsDir)) {
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const petId = req.params.petId || 'temp';
-    const petDir = path.join(__dirname, 'public', 'uploads', 'pets', petId);
+    // Save pet avatar uploads at /uploads/pets/:petId
+    // Save activity photos under /uploads/pets/:petId/activities to avoid overwriting the pet avatar
+    const isActivityUpload = (req.originalUrl || req.url || '').includes('/activities/photo');
+    const baseDir = path.join(__dirname, 'public', 'uploads', 'pets', petId);
+    const petDir = isActivityUpload ? path.join(baseDir, 'activities') : baseDir;
     if (!fs.existsSync(petDir)) {
       fs.mkdirSync(petDir, { recursive: true });
     }
     cb(null, petDir);
   },
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `photo${ext}`);
+    const ext = path.extname(file.originalname) || '';
+    // Use a unique filename to avoid collisions and accidental overwrites
+    const unique = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+    cb(null, `${unique}${ext}`);
   }
 });
 
@@ -828,26 +834,24 @@ app.post('/api/pets/:petId/photo', authenticateToken, upload.single('photo'), as
     // Convert HEIC/HEIF to JPEG for browser compatibility
     let finalFilename = req.file.filename;
     const uploadedPath = req.file.path;
-    
+
     if (req.file.mimetype === 'image/heic' || req.file.mimetype === 'image/heif') {
-      const jpegFilename = 'photo.jpg';
+      // Preserve generated base name but use .jpg extension
+      const base = path.basename(req.file.filename, path.extname(req.file.filename));
+      const jpegFilename = `${base}.jpg`;
       const jpegPath = path.join(path.dirname(uploadedPath), jpegFilename);
-      
+
       const inputBuffer = await fs.promises.readFile(uploadedPath);
-      const outputBuffer = await heicConvert({
-        buffer: inputBuffer,
-        format: 'JPEG',
-        quality: 0.9
-      });
-      
+      const outputBuffer = await heicConvert({ buffer: inputBuffer, format: 'JPEG', quality: 0.9 });
+
       await fs.promises.writeFile(jpegPath, outputBuffer);
-      
+
       // Delete original HEIC file
       fs.unlinkSync(uploadedPath);
       finalFilename = jpegFilename;
     }
 
-    // Save photo path to database
+    // Save photo path to database (pet avatar directory)
     const photoPath = `/uploads/pets/${petId}/${finalFilename}`;
     
     const updatedPet = await prisma.pet.update({
@@ -887,11 +891,12 @@ app.post('/api/pets/:petId/activities/photo', authenticateToken, upload.single('
     const householdMember = await prisma.householdMember.findFirst({ where: { householdId: pet.householdId, userId: req.user.id } });
     if (!householdMember) return res.status(403).json({ error: 'Unauthorized' });
 
-    // Convert HEIC/HEIF to JPEG if needed
+    // Convert HEIC/HEIF to JPEG if needed and preserve base name
     let finalFilename = req.file.filename;
     const uploadedPath = req.file.path;
     if (req.file.mimetype === 'image/heic' || req.file.mimetype === 'image/heif') {
-      const jpegFilename = 'photo.jpg';
+      const base = path.basename(req.file.filename, path.extname(req.file.filename));
+      const jpegFilename = `${base}.jpg`;
       const jpegPath = path.join(path.dirname(uploadedPath), jpegFilename);
       const inputBuffer = await fs.promises.readFile(uploadedPath);
       const outputBuffer = await heicConvert({ buffer: inputBuffer, format: 'JPEG', quality: 0.9 });
@@ -900,7 +905,8 @@ app.post('/api/pets/:petId/activities/photo', authenticateToken, upload.single('
       finalFilename = jpegFilename;
     }
 
-    const photoPath = `/uploads/pets/${petId}/${finalFilename}`;
+    // Activity photos are stored under the activities subfolder
+    const photoPath = `/uploads/pets/${petId}/activities/${finalFilename}`;
     console.log(`✅ Activity photo uploaded: ${photoPath}`);
 
     return res.json({ photoPath });
