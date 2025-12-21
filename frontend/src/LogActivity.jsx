@@ -20,13 +20,32 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
     document.head.appendChild(style);
     return () => { document.head.removeChild(style); };
   }, []);
-  console.log('[LogActivity] Render', { activity, petId, household, step });
+  console.log('[LogActivity] Render (mounting)', { activity, petId, household, step });
+
+  // If an activity prop is present we are editing; allow `step` to be controlled
+  // by parent or fall back to internal state which defaults to 'edit' for edits
+  const isEditing = !!activity;
+  const [internalStep, setInternalStep] = useState(step || (isEditing ? 'details' : 'selectType'));
+  const currentStep = (typeof step === 'string') ? step : internalStep;
+  const setStepLocal = (typeof setStep === 'function') ? setStep : setInternalStep;
+
   const [selectedType, setSelectedType] = useState(activity?.activityType?.name || '');
-  const [timing, setTiming] = useState(''); // 'happened' or 'upcoming'
+  const [timing, setTiming] = useState(activity ? (new Date(activity.timestamp) > new Date() ? 'upcoming' : 'happened') : ''); // 'happened' or 'upcoming'
   const [notes, setNotes] = useState(activity?.notes || '');
   const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
+  // Initialize preview from existing activity photo when editing
+  const initialPhotoPreview = activity && (activity.photoUrl || activity.data?.photoUrl || activity.photo)
+    ? (activity.photoUrl && activity.photoUrl.startsWith('http') ? activity.photoUrl : apiUrl(activity.photoUrl || activity.data?.photoUrl || activity.photo))
+    : null;
+  const [photoPreview, setPhotoPreview] = useState(initialPhotoPreview);
   const photoInputRef = React.useRef(null);
+
+  // When editing, start in the multi-step flow so users can navigate through slides
+  React.useEffect(() => {
+    if (isEditing && currentStep === 'edit') {
+      setStepLocal('details');
+    }
+  }, [isEditing, currentStep]);
 
   // Helper to format a Date into a `datetime-local` input value in local time
   const toLocalInputValue = (date) => {
@@ -45,48 +64,47 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
-  const isEditing = !!activity;
   const [addToFavourites, setAddToFavourites] = useState(false);
 
   const handleScheduleSubmit = () => {
-    console.log('[LogActivity] handleScheduleSubmit', { timing, step });
+    console.log('[LogActivity] handleScheduleSubmit', { timing, step: currentStep });
     if (timing === 'upcoming') {
-      setStep('reminder');
+      setStepLocal('reminder');
       console.log('[LogActivity] Set step to reminder');
     } else {
-      setStep('details');
+      setStepLocal('details');
       console.log('[LogActivity] Set step to details');
     }
   };
 
   const handleTypeSelect = (typeId) => {
     setSelectedType(typeId);
-    setStep('timing');
-    console.log('[LogActivity] handleTypeSelect', { typeId, step });
+    setStepLocal('timing');
+    console.log('[LogActivity] handleTypeSelect', { typeId, step: currentStep });
   };
 
   const [, forceRerender] = useState(0);
   const handleTimingSelect = (timingChoice) => {
-    console.log('[LogActivity] handleTimingSelect', { timingChoice, step });
+    console.log('[LogActivity] handleTimingSelect', { timingChoice, step: currentStep });
     setTiming(timingChoice);
     if (timingChoice === 'happened') {
       setTimestamp(toLocalInputValue(new Date()));
-      setStep('happened');
+      setStepLocal('happened');
       console.log('[LogActivity] Set step to happened');
     } else {
-      setStep('schedule');
+      setStepLocal('schedule');
       console.log('[LogActivity] Set step to schedule');
       setTimeout(() => forceRerender(n => n + 1), 0);
     }
   };
 
   const handleHappenedSubmit = () => {
-    setStep('details');
+    setStepLocal('details');
   };
 
   const handleReminderSubmit = () => {
     console.log('[LogActivity] handleReminderSubmit called');
-    setStep('details');
+    setStepLocal('details');
   };
 
   const handleSubmit = async (e) => {
@@ -107,15 +125,41 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
       const typeDef = ACTIVITY_TYPES.find(t => t.id === selectedType) || {};
 
       if (isEditing) {
-        // Update existing activity
+        // Update existing activity — support updating timestamp, notes, type and photo
+        let photoUrlForThis = null;
+        try {
+          if (photoFile) {
+            const formData = new FormData();
+            formData.append('photo', photoFile);
+            const token = localStorage.getItem('token');
+            const pid = activity.petId || activity.pet?.id || (selectedPetIds && selectedPetIds[0]) || petId;
+            const uploadRes = await fetch(apiUrl(`/api/pets/${pid}/activities/photo`), {
+              method: 'POST',
+              body: formData,
+              headers: token ? { Authorization: `Bearer ${token}` } : undefined
+            });
+            if (uploadRes.ok) {
+              const uploadJson = await uploadRes.json().catch(() => null);
+              photoUrlForThis = uploadJson && (uploadJson.photoPath || uploadJson.photoUrl) ? (uploadJson.photoPath || uploadJson.photoUrl) : null;
+            } else {
+              console.warn('Photo upload failed when editing activity', uploadRes.status);
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to upload photo while editing', err);
+        }
+
+        const patchPayload = {
+          timestamp: new Date(timestamp).toISOString(),
+          notes: notes || null
+        };
+        if (selectedType) patchPayload.activityTypeId = selectedType;
+        if (photoUrlForThis) patchPayload.photoUrl = photoUrlForThis;
+
         const data = await apiFetch(`/api/activities/${activity.id}`, {
           method: 'PATCH',
-          body: JSON.stringify({
-            timestamp: new Date(timestamp).toISOString(),
-            notes: notes || null
-          })
+          body: JSON.stringify(patchPayload)
         });
-        // attach client-side label if available
         const augmented = { ...data, _clientActionLabel: (data.activityType?.label || data.activityType?.name || typeDef.label || selectedType), _updatedActivity: true };
         if (typeof onActivityLogged === 'function') onActivityLogged(augmented);
         try { window.dispatchEvent(new CustomEvent('petSitter:updatedActivity', { detail: { activity: augmented } })); } catch (e) {}
@@ -288,7 +332,9 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   const selectedActivity = ACTIVITY_TYPES.find(t => t.id === selectedType);
   const [pets, setPets] = useState([]);
   // normalize to numbers so comparisons and paras work reliably
-  const [selectedPetIds, setSelectedPetIds] = useState(petId ? [parseInt(petId)] : []);
+  const [selectedPetIds, setSelectedPetIds] = useState(
+    activity ? [parseInt(activity.petId || activity.pet?.id || petId)] : (petId ? [parseInt(petId)] : [])
+  );
 
   const allSelected = pets.length > 0 && selectedPetIds.length === pets.length;
 
@@ -320,7 +366,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
 
   // Step 1: Select Activity Type
   const [hoveredType, setHoveredType] = React.useState(null);
-  if (step === 'selectType') {
+  if (currentStep === 'selectType') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem', minWidth: '700px'}}>
@@ -412,8 +458,8 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   }
 
   // Step 2: Timing - Happened or Upcoming
-  if (step === 'timing') {
-    console.log('[LogActivity] Rendering timing step', { step, timing });
+  if (currentStep === 'timing') {
+    console.log('[LogActivity] Rendering timing step', { step: currentStep, timing });
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem'}}>
@@ -447,7 +493,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
             </button>
           </div>
           <button
-            onClick={() => setStep('selectType')}
+            onClick={() => setStepLocal('selectType')}
             className="mt-6 w-full py-3 text-gray-600 hover:text-gray-900 font-medium cursor-pointer"
           >
             ← Back
@@ -458,8 +504,8 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   }
 
   // Step 3b: Schedule (for upcoming)
-  if (step === 'schedule') {
-    console.log('[LogActivity] Rendering schedule step', { step, timing });
+  if (currentStep === 'schedule') {
+    console.log('[LogActivity] Rendering schedule step', { step: currentStep, timing });
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem'}}>
@@ -503,7 +549,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           </div>
           <div className="flex gap-3">
             <button
-              onClick={() => setStep('timing')}
+              onClick={() => setStepLocal('timing')}
               className="flex-1 py-3 bg-white text-gray-900 font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition cursor-pointer"
             >
               ← Back
@@ -521,8 +567,8 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   }
 
   // Step 3a: When it Happened
-  if (step === 'happened') {
-    console.log('[LogActivity] Rendering happened step', { step, timing });
+  if (currentStep === 'happened') {
+    console.log('[LogActivity] Rendering happened step', { step: currentStep, timing });
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem'}}>
@@ -552,7 +598,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           </div>
           <div className="flex gap-3">
             <button
-              onClick={() => setStep('timing')}
+              onClick={() => setStepLocal('timing')}
               className="flex-1 py-3 bg-white text-gray-900 font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition cursor-pointer"
             >
               ← Back
@@ -570,8 +616,8 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   }
 
   // Step 4: Reminder Setup (if upcoming)
-  if (step === 'reminder') {
-    console.log('[LogActivity] Rendering reminder step', { step, timing });
+  if (currentStep === 'reminder') {
+    console.log('[LogActivity] Rendering reminder step', { step: currentStep, timing });
     console.log('[LogActivity] Rendering reminder step');
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -589,6 +635,19 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
             })()}
             <p className="text-xl font-semibold text-gray-900 mt-4">{selectedActivity?.label}</p>
           </div>
+
+          {/* Show attached photo preview in Summary if user added one (or existing activity has a photo) */}
+          {(photoPreview || (activity && activity.photoUrl)) && (
+            <div className="mb-6 flex items-center justify-center">
+              <div className="w-40 h-28 rounded-md overflow-hidden border border-gray-200">
+                <img
+                  src={photoPreview || (activity.photoUrl && (activity.photoUrl.startsWith('http') ? activity.photoUrl : apiUrl(activity.photoUrl)))}
+                  alt="Activity photo"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          )}
           {/* Notes only on Details slide; photo moved to its own slide */}
 
           <div>
@@ -676,7 +735,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           </div>
           <div className="flex gap-3 mt-8">
             <button
-              onClick={() => setStep('schedule')}
+              onClick={() => setStepLocal('schedule')}
               className="flex-1 py-3 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition cursor-pointer"
             >
               ← Back
@@ -694,7 +753,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   }
 
   // Step 5: Details (notes, photo, etc.)
-  if (step === 'details') {
+  if (currentStep === 'details') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
@@ -738,13 +797,13 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
 
           <div className="flex gap-3 mt-8">
             <button
-              onClick={() => setStep(timing === 'upcoming' ? 'reminder' : 'happened')}
+              onClick={() => setStepLocal(timing === 'upcoming' ? 'reminder' : 'happened')}
               className="flex-1 py-3 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition cursor-pointer"
             >
               ← Back
             </button>
             <button
-              onClick={() => setStep('photo')}
+              onClick={() => setStepLocal('photo')}
               className="flex-1 py-3 bg-accent text-gray-900 font-semibold rounded-xl hover:opacity-90 transition cursor-pointer"
             >
               Next
@@ -756,7 +815,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   }
 
   // Step 6: Photo (attach image)
-  if (step === 'photo') {
+  if (currentStep === 'photo') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
@@ -788,13 +847,13 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           </div>
           <div className="flex gap-3">
             <button
-              onClick={() => setStep('details')}
+              onClick={() => setStepLocal('details')}
               className="flex-1 py-3 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition cursor-pointer"
             >
               ← Back
             </button>
             <button
-              onClick={() => setStep('summary')}
+              onClick={() => setStepLocal('summary')}
               className="flex-1 py-3 bg-accent text-gray-900 font-semibold rounded-xl hover:opacity-90 transition cursor-pointer"
             >
               Next
@@ -806,7 +865,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
   }
 
   // Step 6: Summary (final review + submit)
-  if (step === 'summary') {
+  if (currentStep === 'summary') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
@@ -825,6 +884,36 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Show When, Photo, Notes, Reminder in summary for review */}
+            <div className="text-left">
+              <div className="text-xs text-gray-500">When</div>
+              <div className="font-medium mb-3">{timestamp ? new Date(timestamp).toLocaleString() : (activity && activity.timestamp ? new Date(activity.timestamp).toLocaleString() : '')}</div>
+
+              {(photoPreview || (activity && (activity.photoUrl || activity.data?.photoUrl))) && (
+                <div className="mb-3">
+                  <div className="text-xs text-gray-500">Photo</div>
+                  <div className="mt-2 w-full flex items-center justify-start">
+                    <div className="w-40 h-28 rounded-md overflow-hidden border border-gray-200">
+                      <img src={photoPreview || (activity.photoUrl && (activity.photoUrl.startsWith('http') ? activity.photoUrl : apiUrl(activity.photoUrl)))} alt="Activity photo" className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {notes && (
+                <div className="mb-3">
+                  <div className="text-xs text-gray-500">Notes</div>
+                  <div className="font-medium whitespace-pre-wrap">{notes}</div>
+                </div>
+              )}
+
+              {reminderEnabled && (
+                <div className="mb-3">
+                  <div className="text-xs text-gray-500">Reminder</div>
+                  <div className="font-medium">{`Send ${reminderTime} minutes before${addToGoogleCalendar ? ' · Add to Google Calendar' : ''}`}</div>
+                </div>
+              )}
+            </div>
             {/* Apply To Pets - allow multi-select when creating */}
             {!isEditing && (
               <div>
@@ -881,7 +970,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
             <div className="flex gap-3 pt-4">
               <button
                 type="button"
-                onClick={() => setStep('details')}
+                onClick={() => setStepLocal('details')}
                 className="flex-1 bg-gray-100 text-gray-900 font-semibold py-3 rounded-xl hover:bg-gray-200 transition cursor-pointer"
               >
                 ← Back
@@ -891,92 +980,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
                 disabled={loading}
                 className="flex-1 bg-accent text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 cursor-pointer"
               >
-                {loading ? 'Saving...' : 'Log Activity'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
-  // Step: Edit (existing activity) — render edit form with delete
-  if (step === 'edit') {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
-          <ModalClose onClick={onClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none" />
-          <div className="flex items-center justify-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 text-center">Edit Activity</h2>
-          </div>
-          <div className="text-center mb-8 flex flex-col items-center justify-center">
-            {(() => {
-              let imgName = ((selectedActivity?.name || selectedActivity?.id || '').toLowerCase().replace(/\s+/g, '-') + '-activity.png');
-              if (selectedActivity?.id === 'feeding') imgName = 'food-activity.png';
-              if (selectedActivity?.id === 'chilling') imgName = 'chill-activity.png';
-              return <img src={`/${imgName}`} alt={selectedActivity?.label} style={{ width: '192px', maxWidth: '100%', height: 'auto', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />;
-            })()}
-            <p className="text-xl font-semibold text-gray-900 mt-4">{selectedActivity?.label}</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Activity Type (Edit mode only) */}
-            {isEditing && (
-              <div>
-                <label className="block text-lg font-medium text-gray-900 mb-3">
-                  Activity Type
-                </label>
-                <div className="px-4 py-3 bg-gray-100 rounded-xl text-gray-900 font-medium">
-                  {activity.activityType?.name}
-                </div>
-              </div>
-            )}
-
-            {/* Timestamp (Edit mode only) */}
-            {isEditing && (
-              <div>
-                <label className="block text-lg font-medium text-gray-900 mb-3">
-                  Date & Time
-                </label>
-                <input
-                  type="datetime-local"
-                  value={timestamp}
-                  onChange={(e) => setTimestamp(e.target.value)}
-                  className="w-full px-4 py-4 rounded-xl border-2 border-gray-200 focus:border-accent focus:outline-none"
-                />
-              </div>
-            )}
-
-            {error && (
-              <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">
-                {error}
-              </div>
-            )}
-
-            <div className="flex gap-3 pt-4">
-              {isEditing && (
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="bg-gray-100 text-red-600 font-semibold py-3 px-4 rounded-xl hover:bg-gray-200 transition disabled:opacity-50"
-                >
-                  {deleting ? 'Deleting...' : 'Delete'}
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => onClose()}
-                className="flex-1 bg-gray-100 text-gray-900 font-semibold py-3 rounded-xl hover:bg-gray-200 transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-accent text-gray-900 font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 cursor-pointer"
-              >
-                {loading ? 'Saving...' : 'Save Changes'}
+                {loading ? 'Saving...' : (isEditing ? 'Update Activity' : 'Log Activity')}
               </button>
             </div>
           </form>

@@ -471,17 +471,39 @@ export default function NotificationBell({ navigate }) {
                 let subline = `at ${formatTime(n.timestamp)}`;
                 const isUpdated = n.id && String(n.id).startsWith('updated-');
                 if (isUpdated) {
-                  heading = n.body;
-                  // Only show time/user for updated notifications
+                  // For updated activities, show the same conversational heading as a new activity
+                  if (n.petName) {
+                    const tmpl = VERB_TEMPLATES[actionKey];
+                      if (tmpl) {
+                        if (isFuture) {
+                          heading = `Future ${actionLabel.toLowerCase()} organised for ${n.petName}`;
+                        } else {
+                          // e.g. "Lilly had a walk"
+                          heading = `${n.petName} ${tmpl.past}`;
+                        }
+                      } else {
+                        const lowerAct = actionLabel.toLowerCase();
+                        if (isFuture) {
+                          heading = `Future ${lowerAct} organised for ${n.petName}`;
+                        } else {
+                          const article = /^[aeiou]/.test(lowerAct) ? 'an' : 'a';
+                          heading = `${n.petName} had ${article} ${lowerAct}`;
+                        }
+                      }
+                    heading = `${heading} (updated)`;
+                  } else {
+                    heading = `${actionLabel} (updated)`;
+                  }
+                  // Only show time for updated notifications; user will be appended once later
                   subline = `at ${formatTime(n.timestamp)}`;
-                  if (n.userName) subline += `, by ${n.userName}`;
                 } else if (n.petName) {
                   const tmpl = VERB_TEMPLATES[actionKey];
                   if (tmpl) {
                     if (isFuture) {
                       heading = `Future ${actionLabel.toLowerCase()} organised for ${n.petName}`;
                     } else {
-                      heading = `${n.petName} — ${tmpl.past}`;
+                      // e.g. "Lilly had a walk"
+                      heading = `${n.petName} ${tmpl.past}`;
                     }
                   } else {
                     const lowerAct = actionLabel.toLowerCase();
@@ -489,7 +511,7 @@ export default function NotificationBell({ navigate }) {
                       heading = `Future ${lowerAct} organised for ${n.petName}`;
                     } else {
                       const article = /^[aeiou]/.test(lowerAct) ? 'an' : 'a';
-                      heading = `${n.petName} — Had ${article} ${lowerAct}`;
+                      heading = `${n.petName} had ${article} ${lowerAct}`;
                     }
                   }
                 } else {
@@ -502,7 +524,7 @@ export default function NotificationBell({ navigate }) {
                       <div className="pr-4 flex-1">
                         <div className="text-sm font-medium text-gray-900">{heading}</div>
                         <div className="text-xs text-gray-500 mt-1">
-                          {n.body && <span className="block truncate">{n.body}</span>}
+                          {(!isUpdated && n.body) && <span className="block truncate">{n.body}</span>}
                           <span className="block">{subline}</span>
                         </div>
                       </div>
