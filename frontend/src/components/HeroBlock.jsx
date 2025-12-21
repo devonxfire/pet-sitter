@@ -26,25 +26,31 @@ export default function HeroBlock({ user, onSignOut }) {
           {/* right-side decorative image removed - background is full-bleed now */}
         </div>
 
-        {/* Centered CTA buttons across the hero width */}
-        <div className="mt-8 cta-equal">
-          {user ? (
-            <>
-              <Link to="/dashboard" className="btn btn-red text-lg font-normal px-8 py-5 min-w-[220px]">My Pets</Link>
-              <Link
-                to="#"
-                className="btn btn-secondary text-lg font-normal px-8 py-5 min-w-[220px]"
-                onClick={e => { e.preventDefault(); onSignOut && onSignOut(); }}
-              >
-                Sign out
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link to="/create-household" className="btn btn-red text-lg font-normal px-8 py-5 min-w-[220px]">Get started — it's free</Link>
-              <Link to="/login" className="btn btn-secondary text-lg font-normal px-8 py-5 min-w-[220px]">Sign in</Link>
-            </>
-          )}
+        {/* CTA buttons placed under the heading and left-aligned with heading text */}
+        <div className="md:col-span-7 mt-8">
+            <div className="flex justify-start">
+              <div className="w-full max-w-xl">
+                <div className="flex flex-col sm:flex-row gap-4 w-full">
+                  {user ? (
+                    <>
+                      <Link to="/dashboard" className="btn btn-red text-lg font-normal px-8 py-5 flex-1">My Pets</Link>
+                      <Link
+                        to="#"
+                        className="btn btn-secondary text-lg font-normal px-8 py-5 flex-1"
+                        onClick={e => { e.preventDefault(); onSignOut && onSignOut(); }}
+                      >
+                        Sign out
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link to="/create-household" className="btn btn-red text-lg font-normal px-8 py-5 flex-1">Get started — it's free</Link>
+                      <Link to="/login" className="btn btn-secondary text-lg font-normal px-8 py-5 flex-1">Sign in</Link>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
         </div>
       </div>
     </section>

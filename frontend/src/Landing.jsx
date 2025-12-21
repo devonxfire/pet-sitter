@@ -69,8 +69,8 @@ export default function Landing({ user, onSignOut }) {
         </section>
       </main>
       <footer className="border-t border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between">
-          <div className="text-sm text-gray-500">© {new Date().getFullYear()} Pet-Sitter</div>
+          <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between">
+          <div className="text-sm text-gray-500">© {new Date().getFullYear()} PetDaily</div>
           <div className="mt-4 sm:mt-0 flex items-center gap-4 text-sm">
             <Link to="/privacy" className="text-gray-500 hover:text-gray-700">Privacy</Link>
             <Link to="/terms" className="text-gray-500 hover:text-gray-700">Terms</Link>
