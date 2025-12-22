@@ -10,6 +10,8 @@ export default function Login({ onLogin }) {
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isMainMember, setIsMainMember] = useState(true);
+  const [inviteRoles, setInviteRoles] = useState([]);
+  const [isMainMemberDisabled, setIsMainMemberDisabled] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -44,6 +46,45 @@ export default function Login({ onLogin }) {
       setLoading(false);
     }
   };
+
+  // When signing up, detect pending invitations for the entered email to adjust the "I'm the main household member" checkbox.
+  React.useEffect(() => {
+    let mounted = true;
+    let t = null;
+    const checkInvites = async (emailToCheck) => {
+      try {
+        if (!emailToCheck) {
+          if (mounted) { setInviteRoles([]); setIsMainMemberDisabled(false); }
+          return;
+        }
+        const q = `/api/invitations?email=${encodeURIComponent(emailToCheck)}`;
+        const res = await apiFetch(q);
+        if (!mounted) return;
+        if (Array.isArray(res) && res.length > 0) {
+          const roles = res.map(r => (r.role || '').toLowerCase());
+          setInviteRoles(roles);
+          // If any role is a non-household role, disable main member checkbox
+          const nonMainRoles = ['pet_sitter', 'dog_walker', 'groomer', 'sitter', 'other'];
+          const shouldDisable = roles.some(r => nonMainRoles.includes(r));
+          setIsMainMemberDisabled(shouldDisable);
+          if (shouldDisable) setIsMainMember(false);
+        } else {
+          setInviteRoles([]);
+          setIsMainMemberDisabled(false);
+        }
+      } catch (err) {
+        // ignore errors — leave default behavior
+      }
+    };
+
+    if (isSignup) {
+      t = setTimeout(() => checkInvites(email), 450);
+    } else {
+      setInviteRoles([]); setIsMainMemberDisabled(false);
+    }
+
+    return () => { mounted = false; if (t) clearTimeout(t); };
+  }, [email, isSignup]);
 
   return (
     <div className="min-h-screen flex items-start justify-center bg-white px-4 pt-10 md:pt-16">
@@ -135,14 +176,19 @@ export default function Login({ onLogin }) {
                   checked={isMainMember}
                   onChange={(e) => setIsMainMember(e.target.checked)}
                   className="mt-1 w-5 h-5 rounded border-gray-300 text-accent focus:ring-(--color-accent)"
+                  disabled={isMainMemberDisabled}
                 />
                 <div>
                   <div className="text-sm font-medium text-gray-900">I'm the main household member</div>
-                  {!isMainMember && (
+                  {isMainMemberDisabled ? (
+                    <div className="text-xs text-gray-500 mt-1">
+                      This account is associated with an invited role — you cannot be the main household member.
+                    </div>
+                  ) : (!isMainMember && (
                     <div className="text-xs text-gray-500 mt-1">
                       You'll be able to join a household when invited by the main member
                     </div>
-                  )}
+                  ))}
                 </div>
               </label>
             </div>

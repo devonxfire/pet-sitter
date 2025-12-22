@@ -6,7 +6,9 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
   const navigate = useNavigate();
   const [members, setMembers] = useState([]);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('member');
+  const [inviteRole, setInviteRole] = useState('household_member');
+  const [inviteMessage, setInviteMessage] = useState('');
+  const [inviteOtherDescription, setInviteOtherDescription] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -46,13 +48,17 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
         method: 'POST',
         body: JSON.stringify({
           email: inviteEmail,
-          role: inviteRole
+          role: inviteRole,
+          welcomeMessage: inviteMessage || null,
+          roleDescription: inviteRole === 'other' ? (inviteOtherDescription || null) : null
         })
       });
 
       setSuccessMessage(`Invitation sent to ${inviteEmail}`);
       setInviteEmail('');
-      setInviteRole('member');
+      setInviteRole('household_member');
+      setInviteMessage('');
+      setInviteOtherDescription('');
       fetchMembers();
     } catch (err) {
       setError(err.message || 'Failed to send invitation');
@@ -160,9 +166,15 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
         </section>
 
         {/* Invite Members */}
-        <section>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Invite Members</h2>
-          <form onSubmit={handleInvite} className="space-y-4">
+        {(() => {
+          const currentUserMember = members.find(m => m.userId === user.id);
+          const allowedRoles = ['owner', 'member', 'household_member', 'household_friend'];
+          const canInvite = !!(currentUserMember && allowedRoles.includes(currentUserMember.role));
+          if (!canInvite) return null;
+          return (
+            <section>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Invite Members</h2>
+              <form onSubmit={handleInvite} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Email Address
@@ -185,9 +197,37 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
                 onChange={(e) => setInviteRole(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--color-accent)"
               >
-                <option value="member">Member</option>
-                <option value="sitter">Sitter</option>
+                <option value="household_member">Household Member</option>
+                <option value="household_friend">Household Friend</option>
+                <option value="pet_sitter">Pet Sitter</option>
+                <option value="dog_walker">Dog Walker</option>
+                <option value="groomer">Groomer</option>
+                <option value="other">Other</option>
               </select>
+            </div>
+
+            {inviteRole === 'other' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Please describe the role</label>
+                <input
+                  type="text"
+                  value={inviteOtherDescription}
+                  onChange={(e) => setInviteOtherDescription(e.target.value)}
+                  placeholder="e.g. 'Neighbour who helps with feeding and check-ins'"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--color-accent)"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Welcome message (optional)</label>
+              <textarea
+                value={inviteMessage}
+                onChange={(e) => setInviteMessage(e.target.value)}
+                placeholder="Optional: add a short welcome message that will be included with the invitation (e.g. 'Hi — I'm Alex, welcome to our household! You'll be able to add activities and receive notifications.')"
+                rows={4}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--color-accent)"
+              />
             </div>
 
             <button
@@ -196,8 +236,10 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
             >
               Send Invitation
             </button>
-          </form>
-        </section>
+              </form>
+            </section>
+          );
+        })()}
       </div>
       </main>
     </div>

@@ -125,7 +125,49 @@ export default function PetActivities({ household, user, onSignOut }) {
       } catch (err) { console.error('Failed to load activities page', err); } finally { if (!cancelled) setLoading(false); }
     };
     if (petId) load();
-    return () => { cancelled = true; };
+
+    // Listen for cross-window/socket events so remote activity changes update instantly
+    const handleNew = (e) => {
+      try {
+        const activity = e?.detail?.activity;
+        if (!activity) return;
+        const targetPetId = petId ? parseInt(petId) : null;
+        const activityPetId = activity.petId || (activity.pet && activity.pet.id) || activity.pet?.id || null;
+        if (targetPetId && activityPetId && parseInt(activityPetId) !== targetPetId) return;
+        setActivities((prev = []) => {
+          const found = prev.some(a => String(a.id) === String(activity.id));
+          if (found) return prev.map(a => String(a.id) === String(activity.id) ? activity : a);
+          return [activity, ...prev];
+        });
+      } catch (err) {}
+    };
+
+    const handleUpdated = (e) => {
+      try {
+        const activity = e?.detail?.activity;
+        if (!activity) return;
+        const targetPetId = petId ? parseInt(petId) : null;
+        const activityPetId = activity.petId || (activity.pet && activity.pet.id) || activity.pet?.id || null;
+        if (targetPetId && activityPetId && parseInt(activityPetId) !== targetPetId) return;
+        // prefer editedBy for display when provided
+        if (activity.editedBy) activity.user = activity.editedBy;
+        setActivities((prev = []) => prev.map(a => String(a.id) === String(activity.id) ? activity : a));
+      } catch (err) {}
+    };
+
+    const handleDeleted = (e) => {
+      try {
+        const activityId = e?.detail?.activityId;
+        if (!activityId) return;
+        setActivities((prev = []) => prev.filter(a => String(a.id) !== String(activityId)));
+      } catch (err) {}
+    };
+
+    window.addEventListener('petSitter:newActivity', handleNew);
+    window.addEventListener('petSitter:updatedActivity', handleUpdated);
+    window.addEventListener('petSitter:deletedActivity', handleDeleted);
+
+    return () => { cancelled = true; window.removeEventListener('petSitter:newActivity', handleNew); window.removeEventListener('petSitter:updatedActivity', handleUpdated); window.removeEventListener('petSitter:deletedActivity', handleDeleted); };
   }, [petId]);
 
   // Flower mapping for household pets (so flowers are unique in a household)
@@ -755,9 +797,21 @@ export default function PetActivities({ household, user, onSignOut }) {
         <LogActivity
           petId={petId}
           household={household}
+          user={user}
           step={logStep}
           setStep={setLogStep}
-          onActivityLogged={(newActivity) => { setActivities(prev => [newActivity, ...prev]); setShowLogActivity(false); setLogStep('selectType'); }}
+          onActivityLogged={(newActivity) => {
+            try {
+              const normalized = { ...newActivity };
+              // prefer server-provided user, then editedBy, then current user prop
+              if (!normalized.user) normalized.user = normalized.editedBy || user || null;
+              setActivities(prev => [normalized, ...prev]);
+            } catch (e) {
+              setActivities(prev => [newActivity, ...prev]);
+            }
+            setShowLogActivity(false);
+            setLogStep('selectType');
+          }}
           onClose={() => {
             console.log('[PetActivities] LogActivity onClose called');
             setShowLogActivity(false);
@@ -768,7 +822,25 @@ export default function PetActivities({ household, user, onSignOut }) {
       )}
 
       {editingActivity && (
-        <LogActivity petId={petId} household={household} activity={editingActivity} onActivityLogged={(updatedActivity) => { setActivities(prev => prev.map(a => String(a.id) === String(updatedActivity.id) ? updatedActivity : a)); setEditingActivity(null); }} onActivityDeleted={(activityId) => { setActivities(prev => prev.filter(a => String(a.id) !== String(activityId))); setEditingActivity(null); }} onClose={() => setEditingActivity(null)} onFavouritesUpdated={loadFavourites} />
+        <LogActivity
+          petId={petId}
+          household={household}
+          user={user}
+          activity={editingActivity}
+          onActivityLogged={(updatedActivity) => {
+            try {
+              const normalized = { ...updatedActivity };
+              if (!normalized.user) normalized.user = normalized.editedBy || user || null;
+              setActivities(prev => prev.map(a => String(a.id) === String(normalized.id) ? normalized : a));
+            } catch (e) {
+              setActivities(prev => prev.map(a => String(a.id) === String(updatedActivity.id) ? updatedActivity : a));
+            }
+            setEditingActivity(null);
+          }}
+          onActivityDeleted={(activityId) => { setActivities(prev => prev.filter(a => String(a.id) !== String(activityId))); setEditingActivity(null); }}
+          onClose={() => setEditingActivity(null)}
+          onFavouritesUpdated={loadFavourites}
+        />
       )}
 
       {viewingActivity && (

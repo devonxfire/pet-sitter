@@ -89,9 +89,9 @@ export default function TopNav({ user, household, onSignOut }) {
                   className={`text-sm text-gray-600 hover:text-gray-900 py-1 border-b transition-all duration-150 ${location.pathname === '/dashboard' ? 'border-accent nav-link-active' : 'border-transparent'}`}
                 >My Pets</Link>
                 <Link
-                  to={firstPetId ? `/pet/${firstPetId}/activities` : '/activities'}
-                  className={`text-sm text-gray-600 hover:text-gray-900 py-1 border-b transition-all duration-150 ${(location.pathname.startsWith('/pet') || location.pathname === '/activities') ? 'border-accent nav-link-active' : 'border-transparent'}`}
-                >Activities</Link>
+                  to="/household-settings"
+                  className={`text-sm text-gray-600 hover:text-gray-900 py-1 border-b transition-all duration-150 ${location.pathname === '/household-settings' ? 'border-accent nav-link-active' : 'border-transparent'}`}
+                >Settings</Link>
               </>
             )}
             <Link
@@ -130,7 +130,6 @@ export default function TopNav({ user, household, onSignOut }) {
                   onClick={e => e.stopPropagation()}
                 >
                   <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dropdown-item" onClick={() => setOpen(false)}>My Profile</Link>
-                  <Link to="/household-settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dropdown-item" onClick={() => setOpen(false)}>Settings</Link>
                   <button
                     onClick={() => { setOpen(false); onSignOut && onSignOut(); }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dropdown-item"

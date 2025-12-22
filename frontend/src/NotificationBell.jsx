@@ -229,10 +229,10 @@ export default function NotificationBell({ navigate }) {
     window.addEventListener('petSitter:updatedActivity', (e) => {
       const activity = e?.detail?.activity;
       if (!activity) return;
-      // Compose a notification for updated activity
+      // Prefer editor name when present
       const label = activity._clientActionLabel || activity.activityType?.label || activity.activityType?.name || activity.type || 'Activity';
       const petName = activity.pet?.name || activity.petName || '';
-      const userName = activity.user?.name || activity.createdBy || null;
+      const userName = activity.editedBy?.name || activity.user?.name || activity.createdBy || null;
       // If future, use 'updated' phrasing
       const when = new Date(activity.timestamp);
       const now = new Date();

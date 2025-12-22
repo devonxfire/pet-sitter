@@ -4,7 +4,7 @@ import ACTIVITY_TYPES from './activityTypes';
 import { theme } from './theme';
 import ModalClose from './ModalClose';
 
-export default function LogActivity({ petId, household, activity, onActivityLogged, onActivityDeleted, onClose, onFavouritesUpdated, step, setStep }) {
+export default function LogActivity({ petId, household, user, activity, onActivityLogged, onActivityDeleted, onClose, onFavouritesUpdated, step, setStep }) {
     // ...existing code...
   // Ref for the date/time input (for schedule activity slide)
   const dateTimeInputRef = React.useRef(null);
@@ -161,6 +161,12 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           body: JSON.stringify(patchPayload)
         });
         const augmented = { ...data, _clientActionLabel: (data.activityType?.label || data.activityType?.name || typeDef.label || selectedType), _updatedActivity: true };
+        // Attach local editor info if available so UI can show editor immediately
+        try {
+          if (!augmented.editedBy && user) {
+            augmented.editedBy = { id: user.id, name: user.name || ((user.firstName || '') + ' ' + (user.lastName || '')).trim() };
+          }
+        } catch (e) {}
         if (typeof onActivityLogged === 'function') onActivityLogged(augmented);
         try { window.dispatchEvent(new CustomEvent('petSitter:updatedActivity', { detail: { activity: augmented } })); } catch (e) {}
         try {
@@ -231,6 +237,7 @@ export default function LogActivity({ petId, household, activity, onActivityLogg
           // augment with client-side action label so notifications display correctly immediately
           const clientLabel = typeDef.label || selectedType;
           const augmented = { ...res, _clientActionLabel: clientLabel };
+          try { if (!augmented.user && user) augmented.user = user; } catch (e) {}
           try { if (typeof onActivityLogged === 'function') onActivityLogged(augmented); } catch (e) {}
           try { window.dispatchEvent(new CustomEvent('petSitter:newActivity', { detail: { activity: augmented } })); } catch (e) {}
           try {

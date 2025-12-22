@@ -479,6 +479,8 @@ export default function PetDetail({ household, user, onSignOut }) {
         const targetPetId = petId ? parseInt(petId) : null;
         const activityPetId = activity.petId || (activity.pet && activity.pet.id) || activity.pet?.id || null;
         if (targetPetId && activityPetId && parseInt(activityPetId) !== targetPetId) return;
+        // If an editor is present, prefer showing editor as the 'user' for updated events so logs/notifications read correctly
+        if (activity.editedBy) activity.user = activity.editedBy;
         setActivities((prev = []) => prev.map(a => String(a.id) === String(activity.id) ? activity : a));
       } catch (err) {}
     };

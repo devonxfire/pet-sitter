@@ -199,6 +199,23 @@ app.post('/api/auth/signup', async (req, res) => {
       }
     });
 
+    // After creating a new user, auto-accept any pending household invitations
+    try {
+      const pendingInvitations = await prisma.householdMember.findMany({
+        where: { invitedEmail: user.email.toLowerCase() }
+      });
+
+      for (const invitation of pendingInvitations) {
+        await prisma.householdMember.update({
+          where: { id: invitation.id },
+          data: { userId: user.id, invitedEmail: null }
+        });
+        console.log(`✅ Auto-accepted invitation to household ${invitation.householdId} for new user ${user.email}`);
+      }
+    } catch (e) {
+      console.warn('Failed to auto-accept invitations on signup', e);
+    }
+
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       JWT_SECRET,
@@ -1148,10 +1165,14 @@ app.patch('/api/activities/:activityId', authenticateToken, async (req, res) => 
     try {
       const householdId = updatedActivity.pet && (updatedActivity.pet.household?.id || updatedActivity.pet.householdId);
       if (typeof io !== 'undefined' && householdId) {
-        io.to(`household:${householdId}`).emit('updatedActivity', { activity: updatedActivity });
+        // include editor info so clients can show who performed the update
+        const editor = await prisma.user.findUnique({ where: { id: req.user.userId }, select: { id: true, name: true } });
+        const payloadActivity = { ...updatedActivity, editedBy: editor || null };
+
+        io.to(`household:${householdId}`).emit('updatedActivity', { activity: payloadActivity });
         const members = await prisma.householdMember.findMany({ where: { householdId: parseInt(householdId), userId: { not: null } }, select: { userId: true } });
         members.forEach(m => {
-          try { io.to(`user:${m.userId}`).emit('updatedActivity', { activity: updatedActivity }); } catch (e) {}
+          try { io.to(`user:${m.userId}`).emit('updatedActivity', { activity: payloadActivity }); } catch (e) {}
         });
       }
     } catch (err) {
@@ -1357,6 +1378,24 @@ app.post('/api/households/:householdId/members/accept-invitation', authenticateT
     res.json(updated);
   } catch (error) {
     console.error('Accept invitation error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Public: check pending invitations for an email (used by signup flow)
+app.get('/api/invitations', async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ error: 'Email query param is required' });
+
+    const invitations = await prisma.householdMember.findMany({
+      where: { invitedEmail: email.toLowerCase() },
+      select: { id: true, householdId: true, invitedEmail: true, role: true }
+    });
+
+    res.json(invitations || []);
+  } catch (err) {
+    console.error('GET /api/invitations error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

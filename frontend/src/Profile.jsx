@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { apiFetch } from './api';
+import React, { useState, useEffect, useRef } from 'react';
+import { apiFetch, apiUrl, API_BASE } from './api';
 
 export default function Profile({ user, household, onSignOut }) {
   const [loading, setLoading] = useState(true);
@@ -115,28 +115,65 @@ export default function Profile({ user, household, onSignOut }) {
     <div className="min-h-screen bg-white">
       <main className="flex justify-center py-12">
         <div className="max-w-3xl w-full px-6">
-          <div className="flex flex-row gap-3 mb-6">
-            <button
-              className={`flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer border-b-2 ${window.location.pathname === '/profile' ? 'border-gray-400 border-b-2' : 'border-transparent'} text-white bg-[#C3001F] ${window.location.pathname === '/profile' ? '' : 'hover:bg-[#ED1C24]'}`}
-              onClick={() => window.location.pathname !== '/profile' && (window.location.href = '/profile')}
-              type="button"
-            >
-              <span>Profile</span>
-            </button>
-            <button
-              className={`flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer border-b-2 ${window.location.pathname === '/activities' ? 'border-gray-400 border-b-2' : 'border-transparent'} text-white bg-[#C3001F] ${window.location.pathname === '/activities' ? '' : 'hover:bg-[#ED1C24]'}`}
-              onClick={() => window.location.pathname !== '/activities' && (window.location.href = '/activities')}
-              type="button"
-            >
-              <span>Activities</span>
-            </button>
-            <button
-              className={`flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer border-b-2 ${window.location.pathname === '/calendar' ? 'border-gray-400 border-b-2' : 'border-transparent'} text-white bg-[#C3001F] ${window.location.pathname === '/calendar' ? '' : 'hover:bg-[#ED1C24]'}`}
-              onClick={() => window.location.pathname !== '/calendar' && (window.location.href = '/calendar')}
-              type="button"
-            >
-              <span>Calendar</span>
-            </button>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="shrink-0">
+              <input ref={fileInputRef => { window.__profileFileRef = fileInputRef; }} type="file" accept="image/*" style={{ display: 'none' }} onChange={async (e) => {
+                try {
+                  const f = e.target.files && e.target.files[0];
+                  if (!f) return;
+                  const form = new FormData();
+                  form.append('photo', f);
+                  const token = localStorage.getItem('token');
+                  const resp = await fetch(apiUrl('/api/me/photo'), {
+                    method: 'POST',
+                    body: form,
+                    headers: token ? { Authorization: `Bearer ${token}` } : undefined
+                  });
+                  if (!resp.ok) {
+                    const txt = await resp.text().catch(() => null);
+                    alert('Failed to upload avatar: ' + (txt || resp.status));
+                    return;
+                  }
+                  const j = await resp.json().catch(() => null);
+                  // update local values and storage
+                  if (j) {
+                    try {
+                      const stored = JSON.parse(localStorage.getItem('user') || '{}');
+                      const merged = { ...stored, ...j };
+                      localStorage.setItem('user', JSON.stringify(merged));
+                    } catch (e) {}
+                    setValues(prev => ({ ...prev }));
+                    window.location.reload();
+                  }
+                } catch (err) { console.error('Upload avatar failed', err); alert('Upload failed'); }
+              }} />
+              <button type="button" onClick={() => { try { (window.__profileFileRef || document.querySelector('input[type=file]')).click(); } catch (e) {} }} className="rounded-2xl bg-gray-100 p-1" style={{ width: 96, height: 96, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                {user?.photoUrl || user?.photo ? (
+                  <img src={(user.photoUrl && (user.photoUrl.startsWith('http') ? user.photoUrl : `${API_BASE}${user.photoUrl}`)) || user.photo} alt={user?.name || 'Profile'} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-gray-400 text-4xl">👤</div>
+                )}
+              </button>
+            </div>
+            <div>
+              <h1 className="text-2xl font-semibold">Hi, {user?.name || user?.firstName || 'there'}!</h1>
+              <div className="text-sm text-gray-600 mt-1">Current Role: {(() => {
+                const prettify = (r) => {
+                  if (!r) return 'Household Member';
+                  const s = String(r).replace(/_/g, ' ').trim();
+                  return s.split(' ').map(w => w ? (w[0].toUpperCase() + w.slice(1)) : '').join(' ');
+                };
+                try {
+                  if (!household) return 'Household Member';
+                  const members = household.members || household.users || [];
+                  if (!Array.isArray(members) || members.length === 0) return 'Household Member';
+                  const me = members.find(m => (m.user && String(m.user.id) === String(user?.id)) || String(m.id) === String(user?.id) || (m.user && String(m.user.email) === String(user?.email)));
+                  if (!me) return 'Household Member';
+                  const raw = me.role || me.type || (me.isOwner ? 'owner' : me.title) || 'household_member';
+                  return prettify(raw);
+                } catch (e) { return 'Household Member'; }
+              })()}</div>
+            </div>
           </div>
 
           {error && <div className="text-red-500 mb-4">{error}</div>}
