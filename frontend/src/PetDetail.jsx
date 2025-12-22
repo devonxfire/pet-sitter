@@ -424,12 +424,13 @@ export default function PetDetail({ household, user, onSignOut }) {
     return templates[sum % templates.length];
   };
 
+  // Only fetch if not provided as props (for deduplication)
   useEffect(() => {
+    if (propsPet && propsActivities) return;
     const fetchPetDetails = async () => {
       try {
         const petData = await apiFetch(`/api/pets/${petId}`);
         setPet(petData);
-
         const activitiesData = await apiFetch(`/api/pets/${petId}/activities`);
         setActivities(activitiesData);
       } catch (err) {
@@ -439,14 +440,10 @@ export default function PetDetail({ household, user, onSignOut }) {
         setLoading(false);
       }
     };
-
     if (petId) {
       fetchPetDetails();
     }
-
-    return () => {
-      // no-op cleanup
-    };
+    return () => {};
   }, [petId]);
 
   // Load favourites from server; fall back to localStorage
@@ -1405,14 +1402,15 @@ export default function PetDetail({ household, user, onSignOut }) {
         <LogActivity
           petId={petId}
           household={household}
+          pet={pet}
+          activities={activities}
+          disableInternalFetch={true}
           onActivityLogged={(newActivity) => {
             setActivities(prev => {
-              const existingIds = new Set(prev.map(a => String(a.id)));
-              if (existingIds.has(String(newActivity.id))) {
-                // replace existing entry with fresh data
-                return prev.map(a => String(a.id) === String(newActivity.id) ? newActivity : a);
-              }
-              return [newActivity, ...prev];
+              // Always deduplicate by id
+              const idStr = String(newActivity.id);
+              const filtered = prev.filter(a => String(a.id) !== idStr);
+              return [newActivity, ...filtered];
             });
             setShowLogActivity(false);
           }}

@@ -10,13 +10,12 @@ import ConfirmDialog from './ConfirmDialog';
 import ModalClose from './ModalClose';
 
 function FavouritesModal({ favourites, onLog, onDelete, onClose }) {
-    console.log('[PetActivities] Render', { household, user });
-    console.log('[PetActivities] Render body', { showLogActivity, editingActivity, viewingActivity });
+    // Removed invalid references to household, user, showLogActivity, editingActivity, viewingActivity
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 relative">
         <ModalClose onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold" />
-        <h2 className="text-2xl font-bold mb-4 text-gray-900">Repeat Favourite</h2>
+          <h2 className="text-2xl font-bold mb-4 text-gray-900">Favourites</h2>
         {(!favourites || favourites.length === 0) ? (
           <div className="text-center py-8"><p className="text-gray-500">No current Favourites</p></div>
         ) : (
@@ -46,11 +45,11 @@ function FavouritesModal({ favourites, onLog, onDelete, onClose }) {
   );
 }
 
-export default function PetActivities({ household, user, onSignOut }) {
+export default function PetActivities({ household, user, onSignOut, pet: propPet, activities: propActivities, disableInternalFetch }) {
   const navigate = useNavigate();
   const { petId } = useParams();
-  const [pet, setPet] = useState(null);
-  const [activities, setActivities] = useState([]);
+  const [pet, setPet] = useState(propPet || null);
+  const [activities, setActivities] = useState(propActivities || []);
   const [loading, setLoading] = useState(true);
   const [showLogActivity, setShowLogActivity] = useState(false);
   const [logStep, setLogStep] = useState('selectType');
@@ -115,6 +114,7 @@ export default function PetActivities({ household, user, onSignOut }) {
   };
 
   useEffect(() => {
+    if (disableInternalFetch) return;
     let cancelled = false;
     const load = async () => {
       setLoading(true);
@@ -135,9 +135,10 @@ export default function PetActivities({ household, user, onSignOut }) {
         const activityPetId = activity.petId || (activity.pet && activity.pet.id) || activity.pet?.id || null;
         if (targetPetId && activityPetId && parseInt(activityPetId) !== targetPetId) return;
         setActivities((prev = []) => {
-          const found = prev.some(a => String(a.id) === String(activity.id));
-          if (found) return prev.map(a => String(a.id) === String(activity.id) ? activity : a);
-          return [activity, ...prev];
+          // Always deduplicate by id
+          const idStr = String(activity.id);
+          const filtered = prev.filter(a => String(a.id) !== idStr);
+          return [activity, ...filtered];
         });
       } catch (err) {}
     };
@@ -168,7 +169,7 @@ export default function PetActivities({ household, user, onSignOut }) {
     window.addEventListener('petSitter:deletedActivity', handleDeleted);
 
     return () => { cancelled = true; window.removeEventListener('petSitter:newActivity', handleNew); window.removeEventListener('petSitter:updatedActivity', handleUpdated); window.removeEventListener('petSitter:deletedActivity', handleDeleted); };
-  }, [petId]);
+  }, [petId, disableInternalFetch]);
 
   // Flower mapping for household pets (so flowers are unique in a household)
   const [flowerMap, setFlowerMap] = useState({});
@@ -650,7 +651,7 @@ export default function PetActivities({ household, user, onSignOut }) {
               }}
             >
               <svg className="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#C3001F" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6.01 4.01 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 17.99 4 20 6.01 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
-              <span>Repeat Favourite</span>
+              <span>Favourites</span>
             </button>
           </div>
         </div>

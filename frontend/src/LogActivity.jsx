@@ -175,8 +175,9 @@ export default function LogActivity({ petId, household, user, activity, onActivi
         } catch (e) {}
       } else {
         // Create new activity(s) for selected pet(s)
+        // Deduplicate pet IDs to avoid double-logging
         const petIdsToSend = (selectedPetIds && selectedPetIds.length > 0)
-          ? selectedPetIds.map(id => parseInt(id))
+          ? Array.from(new Set(selectedPetIds.map(id => parseInt(id))))
           : (petId ? [parseInt(petId)] : []);
         if (petIdsToSend.length === 0) {
           throw new Error('Please select at least one pet to apply this activity to.');
@@ -339,9 +340,11 @@ export default function LogActivity({ petId, household, user, activity, onActivi
   const selectedActivity = ACTIVITY_TYPES.find(t => t.id === selectedType);
   const [pets, setPets] = useState([]);
   // normalize to numbers so comparisons and paras work reliably
-  const [selectedPetIds, setSelectedPetIds] = useState(
-    activity ? [parseInt(activity.petId || activity.pet?.id || petId)] : (petId ? [parseInt(petId)] : [])
-  );
+  // Always deduplicate and avoid double-inclusion of current pet
+  const initialPetIds = activity
+    ? [parseInt(activity.petId || activity.pet?.id || petId)]
+    : (petId ? [parseInt(petId)] : []);
+  const [selectedPetIds, setSelectedPetIds] = useState(Array.from(new Set(initialPetIds)));
 
   const allSelected = pets.length > 0 && selectedPetIds.length === pets.length;
 
@@ -354,9 +357,9 @@ export default function LogActivity({ petId, household, user, activity, onActivi
           const data = await apiFetch(`/api/households/${household.id}/pets`);
           if (!mounted) return;
           setPets(data || []);
-          // If no selectedPetIds yet, default to the current pet page (as a number)
+          // If no selectedPetIds yet, default to the current pet page (as a number), deduplicated
           setSelectedPetIds((current) => {
-            if (current && current.length > 0) return current;
+            if (current && current.length > 0) return Array.from(new Set(current));
             return petId ? [parseInt(petId)] : [];
           });
         } catch (err) {
@@ -888,6 +891,14 @@ export default function LogActivity({ petId, household, user, activity, onActivi
               return <img src={`/${imgName}`} alt={selectedActivity?.label} style={{ width: '192px', maxWidth: '100%', height: 'auto', objectFit: 'contain', margin: '0 0 1.5rem 0', borderRadius: 0, boxShadow: 'none' }} />;
             })()}
             <p className="text-xl font-semibold text-gray-900 mt-4">{selectedActivity?.label}</p>
+            <button
+              type="button"
+              className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-white ${addToFavourites ? 'bg-green-500' : 'bg-accent'} transition`}
+              onClick={() => setAddToFavourites((v) => !v)}
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6.01 4.01 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 17.99 4 20 6.01 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+              {addToFavourites ? 'Added to Favourites' : 'Add to Favourites'}
+            </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -922,51 +933,57 @@ export default function LogActivity({ petId, household, user, activity, onActivi
               )}
             </div>
             {/* Apply To Pets - allow multi-select when creating */}
-            {!isEditing && (
-              <div>
-                <label className="block text-lg font-medium text-gray-900 mb-3">Apply to pets</label>
-                <div className="mb-3">
-                  <label className="flex items-center gap-3 text-sm text-gray-700">
-                    <input
-                      type="checkbox"
-                      checked={allSelected}
-                      onChange={(e) => {
-                        if (e.target.checked) setSelectedPetIds(pets.map(p => p.id));
-                        else setSelectedPetIds(petId ? [parseInt(petId)] : []);
-                      }}
-                      className="w-4 h-4"
-                    />
-                    <span className="font-medium">Apply to all</span>
-                  </label>
-                </div>
-                <div className="space-y-2">
-                  {pets.length === 0 ? (
-                    <p className="text-sm text-gray-500">No other pets found in household.</p>
-                  ) : (
-                    pets.map((p) => {
-                      const isCurrent = petId && parseInt(petId) === p.id;
-                      return (
-                        <label key={p.id} className={`flex items-center gap-3 ${isCurrent ? 'opacity-70' : ''}`}>
-                          <input
-                            type="checkbox"
-                            checked={selectedPetIds.includes(p.id)}
-                            disabled={isCurrent}
-                            onChange={(e) => {
-                              if (isCurrent) return;
-                              if (e.target.checked) setSelectedPetIds((s) => [...new Set([...(s||[]), p.id])]);
-                              else setSelectedPetIds((s) => (s || []).filter(id => id !== p.id));
-                            }}
-                            className="w-4 h-4"
-                          />
-                          <span className={`text-gray-700 ${isCurrent ? 'font-semibold' : ''}`}>{p.name}</span>
-                          <span className="text-sm text-gray-400">({p.species})</span>
-                        </label>
-                      );
-                    })
-                  )}
-                </div>
+            {/* Show for both new and editing activities */}
+            <div>
+              <label className="block text-lg font-medium text-gray-900 mb-3">Apply to pets</label>
+              <div className="mb-3">
+                <label className="flex items-center gap-3 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        // Only unique pet IDs
+                        setSelectedPetIds(Array.from(new Set(pets.map(p => p.id))));
+                      } else {
+                        setSelectedPetIds(petId ? [parseInt(petId)] : []);
+                      }
+                    }}
+                    className="w-4 h-4"
+                  />
+                  <span className="font-medium">Apply to all</span>
+                </label>
               </div>
-            )}
+              <div className="space-y-2">
+                {pets.length === 0 ? (
+                  <p className="text-sm text-gray-500">No other pets found in household.</p>
+                ) : (
+                  pets.map((p) => {
+                    const isCurrent = petId && parseInt(petId) === p.id;
+                    return (
+                      <label key={p.id} className={`flex items-center gap-3 ${isCurrent ? 'opacity-70' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={selectedPetIds.includes(p.id)}
+                          disabled={isCurrent}
+                          onChange={(e) => {
+                            if (isCurrent) return;
+                            if (e.target.checked) {
+                              setSelectedPetIds((s) => Array.from(new Set([...(s||[]), p.id])));
+                            } else {
+                              setSelectedPetIds((s) => (s || []).filter(id => id !== p.id));
+                            }
+                          }}
+                          className="w-4 h-4"
+                        />
+                        <span className={`text-gray-700 ${isCurrent ? 'font-semibold' : ''}`}>{p.name}</span>
+                        <span className="text-sm text-gray-400">({p.species})</span>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+            </div>
 
             {error && (
               <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">
