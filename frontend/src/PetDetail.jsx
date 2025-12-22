@@ -162,6 +162,27 @@ export default function PetDetail({ household, user, onSignOut }) {
   // Collapsible section state: controls whether each section is collapsed
   const [collapsedSections, setCollapsedSections] = useState({ general: false, vet: false, food: false });
 
+  // Determine whether current user may edit pet details.
+  // Only owners/main household members should be allowed — exclude roles like 'pet_sitter', 'groomer', etc.
+  const isHouseholdMember = (() => {
+    try {
+      if (!household) return false;
+      const members = household.members || household.users || [];
+      if (!Array.isArray(members)) return false;
+      const me = members.find(m => (
+        (m.user && String(m.user.id) === String(user?.id)) ||
+        String(m.id) === String(user?.id) ||
+        (m.user && String(m.user.email) === String(user?.email))
+      ));
+      if (!me) return false;
+      if (me.isOwner) return true;
+      const raw = String(me.role || me.type || me.title || '').replace(/_/g, ' ').toLowerCase();
+      // Allow editing for roles that include owner/member/main/admin
+      if (/owner|member|main|admin/.test(raw)) return true;
+      return false;
+    } catch (e) { return false; }
+  })();
+
   // Flower mapping for household pets (so flowers are unique in a household)
   const [flowerMap, setFlowerMap] = useState({});
   useEffect(() => {
@@ -814,10 +835,12 @@ export default function PetDetail({ household, user, onSignOut }) {
                       )}
                     </div>
                     <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="absolute -bottom-3 -right-3 md:-bottom-2 md:-right-2 btn rounded-full w-9 h-9 md:w-12 md:h-12 flex items-center justify-center cursor-pointer transition transform hover:scale-105 text-sm avatar-action z-20 ring-2 ring-white shadow"
+                      onClick={() => { if (isHouseholdMember) fileInputRef.current?.click(); }}
+                      className={`absolute -bottom-3 -right-3 md:-bottom-2 md:-right-2 btn rounded-full w-9 h-9 md:w-12 md:h-12 flex items-center justify-center transition transform opacity-50 ${isHouseholdMember ? 'hover:scale-105 cursor-pointer' : 'cursor-not-allowed'} text-sm avatar-action z-20 ring-2 ring-white shadow`}
                       type="button"
                       aria-label="Change photo"
+                      aria-disabled={!isHouseholdMember}
+                      disabled={!isHouseholdMember}
                     >
                       +
                     </button>
@@ -1017,9 +1040,10 @@ export default function PetDetail({ household, user, onSignOut }) {
               )}
               {editingSection !== 'general' && (
                 <button
-                  onClick={() => startEditingSection('general')}
-                  className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover cursor-pointer"
-                  style={{ cursor: 'pointer' }}
+                  onClick={() => { if (isHouseholdMember) startEditingSection('general'); }}
+                  disabled={!isHouseholdMember}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover ${isHouseholdMember ? 'text-gray-600 hover:bg-gray-100 cursor-pointer' : 'text-gray-400 opacity-50 cursor-not-allowed'}`}
+                  style={{ cursor: isHouseholdMember ? 'pointer' : 'not-allowed' }}
                 >
                   Edit
                 </button>
@@ -1221,9 +1245,10 @@ export default function PetDetail({ household, user, onSignOut }) {
                   </>
                 ) : (
                   <button
-                    onClick={() => startEditingSection('vet')}
-                    className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover cursor-pointer"
-                    style={{ cursor: 'pointer' }}
+                    onClick={() => { if (isHouseholdMember) startEditingSection('vet'); }}
+                    disabled={!isHouseholdMember}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover ${isHouseholdMember ? 'text-gray-600 hover:bg-gray-100 cursor-pointer' : 'text-gray-400 opacity-50 cursor-not-allowed'}`}
+                    style={{ cursor: isHouseholdMember ? 'pointer' : 'not-allowed' }}
                   >
                     Edit
                   </button>
@@ -1339,9 +1364,10 @@ export default function PetDetail({ household, user, onSignOut }) {
                   </>
                 ) : (
                   <button
-                    onClick={() => startEditingSection('food')}
-                    className="text-gray-600 hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover cursor-pointer"
-                    style={{ cursor: 'pointer' }}
+                    onClick={() => { if (isHouseholdMember) startEditingSection('food'); }}
+                    disabled={!isHouseholdMember}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover ${isHouseholdMember ? 'text-gray-600 hover:bg-gray-100 cursor-pointer' : 'text-gray-400 opacity-50 cursor-not-allowed'}`}
+                    style={{ cursor: isHouseholdMember ? 'pointer' : 'not-allowed' }}
                   >
                     Edit
                   </button>

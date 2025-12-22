@@ -26,8 +26,8 @@ export default function Landing({ user, onSignOut }) {
         <HeroBlock user={user} onSignOut={onSignOut} />
         <FeaturesBlock />
         <section className="py-8 bg-white">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div className="max-w-7xl mx-auto px-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
               <div>
                 <h3 className="text-3xl md:text-4xl font-extrabold leading-tight mb-4">Activity Timeline Example</h3>
                 <p className="text-gray-600 mb-6 max-w-xl">See how a household uses the timeline to coordinate daily care — meals, walks, meds and sitter notes. Receive instant notifications of activities from your household about each pet.</p>
@@ -42,8 +42,8 @@ export default function Landing({ user, onSignOut }) {
         </section>
 
         <section className="py-8 bg-white">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div className="max-w-7xl mx-auto px-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
               <div className="flex items-center justify-center md:justify-start order-1 md:order-none">
                 <div className="w-full max-w-2xl">
                   <ActivityLogExampleImage />
@@ -60,7 +60,7 @@ export default function Landing({ user, onSignOut }) {
         <section className="py-8 bg-white">
           <div className="max-w-7xl mx-auto px-6">
             <h3 className="text-2xl font-semibold text-center mb-6">Loved by households and sitters</h3>
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-8">
               <div className="p-6 bg-gray-50 rounded-xl text-center">"Makes pet care easy." — Alex</div>
               <div className="p-6 bg-gray-50 rounded-xl text-center">"Love the reminders." — Priya</div>
               <div className="p-6 bg-gray-50 rounded-xl text-center">"My sitters use it daily." — Jordan</div>

@@ -2,6 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch, apiUrl } from './api';
 
+// Convert role keys into user-friendly English labels
+const prettifyRole = (role, description) => {
+  if (!role) return '';
+  const map = {
+    owner: 'Owner',
+    member: 'Member',
+    household_member: 'Household Member',
+    household_friend: 'Household Friend',
+    pet_sitter: 'Pet Sitter',
+    dog_walker: 'Dog Walker',
+    groomer: 'Groomer',
+    other: description || 'Other'
+  };
+  if (map[role]) return map[role];
+  // Fallback: replace underscores with spaces and Title Case
+  const s = String(role).replace(/_/g, ' ').trim();
+  return s.split(' ').map(w => w ? (w[0].toUpperCase() + w.slice(1)) : '').join(' ');
+};
+
 export default function HouseholdSettings({ household, user, onSignOut }) {
   const navigate = useNavigate();
   const [members, setMembers] = useState([]);
@@ -144,8 +163,8 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
                     <p className="text-sm text-gray-500">
                       {member.user ? member.user.email : `Pending invitation to ${member.invitedEmail}`}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1 capitalize">
-                      Role: {member.role}
+                    <p className="text-xs text-gray-400 mt-1">
+                      Role: {prettifyRole(member.role, member.roleDescription)}
                       {!member.user && ' • Not yet joined'}
                     </p>
                   </div>
@@ -230,12 +249,17 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
               />
             </div>
 
-            <button
-              type="submit"
-              className="w-full bg-accent text-gray-900 font-semibold py-3 rounded-lg hover:opacity-90 transition"
-            >
-              Send Invitation
-            </button>
+            <div className="flex">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 bg-accent text-gray-900 font-semibold py-2 px-4 rounded-lg hover:opacity-90 transition cursor-pointer"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4" aria-hidden="true" focusable="false" style={{ flex: '0 0 auto' }}>
+                  <path fill="white" d="M2 21l21-9L2 3v7l15 2-15 2v7z" />
+                </svg>
+                <span>Send Invitation</span>
+              </button>
+            </div>
               </form>
             </section>
           );

@@ -67,6 +67,8 @@ export default function Dashboard({ user, household, onSignOut }) {
     fetchPets();
   }, [household?.id, location.state?.petAdded]);
 
+  
+
   // Pre-compute household flower mapping so JSX is simpler and deterministic
   const mapping = assignHouseholdFlowers(pets || []);
 
@@ -216,7 +218,7 @@ export default function Dashboard({ user, household, onSignOut }) {
                 return (
                   <React.Fragment key={pet.id}>
                     <div
-                      className={`bg-gray-50 rounded-2xl p-6 border border-gray-200 transition-transform duration-300 ease-in-out transform-gpu hover:scale-105 hover:shadow-xl flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4 relative group cursor-pointer pet-card-fix ${borderClass}`}
+                      className={`bg-gray-50 rounded-2xl p-6 border border-gray-200 transition-transform duration-300 ease-in-out transform-gpu hover:scale-102 hover:shadow-lg flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4 relative group cursor-pointer pet-card-fix ${borderClass} max-w-sm`}
                       onMouseEnter={() => setHoveredPetIdx(idx)}
                       onMouseLeave={() => setHoveredPetIdx(null)}
                       onClick={() => {
@@ -228,13 +230,26 @@ export default function Dashboard({ user, household, onSignOut }) {
                         }
                       }}
                     >
+                      {/* Rounded-square Photo (moved to left) */}
+                      <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-gray-200 border-2 border-gray-200 shrink-0 flex items-center justify-center overflow-hidden shadow-sm">
+                        {pet.photoUrl ? (
+                          <img
+                            src={resolvePhotoUrl(pet.photoUrl)}
+                            alt={pet.name}
+                            className="w-full h-full object-cover select-none"
+                            draggable={false}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">📷</div>
+                        )}
+                      </div>
                       {/* Text content next to avatar (match avatar height) */}
-                      <div className="flex-1 h-28 md:h-32 flex flex-col justify-between">
+                      <div className="flex-1 h-24 md:h-28 flex flex-col justify-between">
                         <div>
-                          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                          <h2 className="text-xl md:text-2xl font-bold text-gray-900">
                             {pet.name}
                           </h2>
-                          <p className="text-sm md:text-base text-gray-600 mt-1">
+                          <p className="text-sm md:text-sm text-gray-600 mt-1">
                             {(pet.species || '').charAt(0).toUpperCase() + (pet.species || '').slice(1)}{pet.breed ? ` • ${pet.breed}` : ''}
                           </p>
                         </div>
@@ -243,6 +258,7 @@ export default function Dashboard({ user, household, onSignOut }) {
                           {pet.weight && <div>Weight: {pet.weight} {pet.weightUnit || 'lbs'}</div>}
                         </div>
                       </div>
+                      {/* (activity summary moved below card to reduce visual noise) */}
                       {/* Red border effect for first or hovered card */}
                       <style>{`
                         .pet-card-fix {
@@ -274,20 +290,9 @@ export default function Dashboard({ user, household, onSignOut }) {
                       {pet.draft && (
                         <span className="absolute top-2 right-2 bg-yellow-400 text-xs font-bold px-2 py-1 rounded shadow text-gray-900">Draft</span>
                       )}
-                      {/* Rounded-square Photo */}
-                      <div className="w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-gray-200 border-2 border-gray-200 shrink-0 flex items-center justify-center overflow-hidden shadow-sm">
-                        {pet.photoUrl ? (
-                          <img
-                            src={resolvePhotoUrl(pet.photoUrl)}
-                            alt={pet.name}
-                            className="w-full h-full object-cover select-none"
-                            draggable={false}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">📷</div>
-                        )}
-                      </div>
+                      {/* (avatar moved above) */}
                     </div>
+                    
                   </React.Fragment>
                 );
               })}
@@ -302,6 +307,7 @@ export default function Dashboard({ user, household, onSignOut }) {
                     <button className="btn px-4 py-2 bg-gray-100 text-gray-700" onClick={cancelDeletePet}>Cancel</button>
                     <button className="btn btn-red px-4 py-2" onClick={confirmDeletePet}>Delete</button>
                   </div>
+                  
                 </div>
               </div>
             )}

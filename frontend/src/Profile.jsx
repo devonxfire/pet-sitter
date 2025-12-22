@@ -147,12 +147,18 @@ export default function Profile({ user, household, onSignOut }) {
                   }
                 } catch (err) { console.error('Upload avatar failed', err); alert('Upload failed'); }
               }} />
-              <button type="button" onClick={() => { try { (window.__profileFileRef || document.querySelector('input[type=file]')).click(); } catch (e) {} }} className="rounded-2xl bg-gray-100 p-1" style={{ width: 96, height: 96, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              <button
+                type="button"
+                onClick={() => { try { (window.__profileFileRef || document.querySelector('input[type=file]')).click(); } catch (e) {} }}
+                className="rounded-2xl bg-gray-100 p-1 relative opacity-50"
+                style={{ width: 96, height: 96, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: 'pointer' }}
+              >
                 {user?.photoUrl || user?.photo ? (
                   <img src={(user.photoUrl && (user.photoUrl.startsWith('http') ? user.photoUrl : `${API_BASE}${user.photoUrl}`)) || user.photo} alt={user?.name || 'Profile'} className="w-full h-full object-cover" />
                 ) : (
                   <div className="text-gray-400 text-4xl">👤</div>
                 )}
+                <span style={{ position: 'absolute', right: 6, bottom: 6, width: 22, height: 22, borderRadius: 9999, background: '#C3001F', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, boxShadow: '0 2px 6px rgba(0,0,0,0.2)' }} aria-hidden>+</span>
               </button>
             </div>
             <div>
