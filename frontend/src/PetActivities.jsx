@@ -55,9 +55,18 @@ function FavouritesModal({ favourites, onLog, onDelete, onClose }) {
   );
 }
 
+
 export default function PetActivities({ household, user, onSignOut, pet: propPet, activities: propActivities, disableInternalFetch }) {
   const navigate = useNavigate();
   const { petId } = useParams();
+  const [householdPets, setHouseholdPets] = useState([]);
+  // Keep a local pets array in sync with householdPets for reliable pet name lookups
+  const [pets, setPets] = useState([]);
+  useEffect(() => {
+    if (Array.isArray(householdPets) && householdPets.length > 0) {
+      setPets(householdPets);
+    }
+  }, [householdPets]);
   const [pet, setPet] = useState(propPet || null);
   const [activities, setActivities] = useState(propActivities || []);
   const [loading, setLoading] = useState(true);
@@ -73,7 +82,6 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
   const [memberFilter, setMemberFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [favourites, setFavourites] = useState([]);
-  const [householdPets, setHouseholdPets] = useState([]);
   const [showPetMenu, setShowPetMenu] = useState(false);
   const petMenuRef = useRef(null);
   const changePetBtnRef = useRef(null);
@@ -272,29 +280,98 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
 
   const createFavourite = async (action) => {
     try {
+      console.log('[createFavourite] action:', action);
       if (!household?.id) { alert('No household context available. Favourites require a household.'); return; }
       if (!action?.id) { console.error('Favourite missing id', { action }); alert('Favourite is missing an id. Try refreshing the Favourites list.'); return; }
       if (action.id && household?.id) {
         const token = localStorage.getItem('token');
         const replayUrl = apiUrl(`/api/households/${household.id}/favourites/${action.id}/replay`);
-        // Always use current timestamp when repeating a favourite
-        const resp = await fetch(replayUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-          body: JSON.stringify({
-            petId: petId ? parseInt(petId) : undefined,
-            timestamp: new Date().toISOString() // always now
-          })
-        });
-        let body = null; try { body = await resp.json(); } catch (e) { body = null; }
-        if (!resp.ok) { const msg = body?.error || (body?.message) || `HTTP ${resp.status}`; alert(`Failed to apply Favourite: ${msg}`); return; }
-        const created = body;
+        const petIds = Array.isArray(action.data?.petIds) && action.data.petIds.length > 0
+          ? action.data.petIds
+          : [petId ? parseInt(petId) : undefined];
+        let created = [];
+        let allPetNames = [];
+        if (Array.isArray(pets) && pets.length > 0) {
+          allPetNames = pets.filter(p => petIds.includes(p.id)).map(p => p.name);
+        } else if (Array.isArray(householdPets) && householdPets.length > 0) {
+          allPetNames = householdPets.filter(p => petIds.includes(p.id)).map(p => p.name);
+        } else if (pet && petIds.length === 1 && petIds[0] === pet.id) {
+          allPetNames = [pet.name];
+        }
+        // Fallback: if allPetNames is empty but action.data.petNames exists, use it
+        if ((!allPetNames || allPetNames.length === 0) && Array.isArray(action.data?.petNames) && action.data.petNames.length > 0) {
+          allPetNames = action.data.petNames;
+        }
+        console.log('[createFavourite] petIds:', petIds, 'allPetNames:', allPetNames, 'action.data:', action.data);
+        if (petIds.length > 1) {
+          const results = await Promise.all(petIds.map(async pid => {
+            const payload = {
+              activityTypeId: action.key,
+              timestamp: new Date().toISOString(),
+              notes: action.data?.notes || '',
+              data: { petNames: allPetNames, petIds },
+            };
+            console.log(`[createFavourite] POST /api/pets/${pid}/activities payload:`, payload);
+            const resp = await fetch(apiUrl(`/api/pets/${pid}/activities`), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+              body: JSON.stringify(payload)
+            });
+            let body = null; try { body = await resp.json(); } catch (e) { body = null; }
+            if (!resp.ok) { const msg = body?.error || (body?.message) || `HTTP ${resp.status}`; alert(`Failed to apply Favourite: ${msg}`); return null; }
+            console.log(`[createFavourite] Response for pet ${pid}:`, body);
+            return body;
+          }));
+          created = results.flat().filter(Boolean);
+        } else {
+          const payload = {
+            petId: petIds[0],
+            timestamp: new Date().toISOString()
+          };
+          console.log('[createFavourite] POST (single pet) to', replayUrl, 'payload:', payload);
+          const resp = await fetch(replayUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+            body: JSON.stringify(payload)
+          });
+          let body = null; try { body = await resp.json(); } catch (e) { body = null; }
+          if (!resp.ok) { const msg = body?.error || (body?.message) || `HTTP ${resp.status}`; alert(`Failed to apply Favourite: ${msg}`); return; }
+          console.log('[createFavourite] Response (single pet):', body);
+          created = Array.isArray(body) ? body : [body];
+        }
         if (Array.isArray(created) && created.length > 0) {
+          const groupKey = (a) => `${a.activityTypeId || a.activityType?.id || ''}|${(a.timestamp || '').slice(0,16)}`;
+          const grouped = {};
+          created.forEach(a => {
+            const key = groupKey(a);
+            if (!grouped[key]) grouped[key] = [];
+            grouped[key].push(a);
+          });
+          const merged = Object.values(grouped).map(group => {
+            if (group.length === 1) return group[0];
+            const base = { ...group[0] };
+            base.data = { ...base.data, petNames: group.map(g => g.pet?.name || g.petName || ''), petIds: group.map(g => g.petId || g.pet?.id) };
+            delete base.pet;
+            delete base.petId;
+            base._isMergedMultiPet = true;
+            return base;
+          });
+          console.log('[createFavourite] merged activities:', merged);
           setActivities((prev = []) => {
-            const existingIds = new Set(prev.map(a => String(a.id)));
-            const toAdd = created.filter(c => !existingIds.has(String(c.id)));
-            if (toAdd.length === 0) return prev;
-            return [...toAdd, ...prev];
+            let filtered = prev;
+            merged.forEach(m => {
+              if (!Array.isArray(m.data?.petIds)) return;
+              filtered = filtered.filter(a => {
+                const sameType = (a.activityTypeId || a.activityType?.id) === (m.activityTypeId || m.activityType?.id);
+                const sameTime = (a.timestamp || '').slice(0,16) === (m.timestamp || '').slice(0,16);
+                const isSinglePet = (a.petId || a.pet?.id) && (!a.data?.petIds || a.data.petIds.length <= 1);
+                const inMerged = m.data.petIds.includes(a.petId || a.pet?.id);
+                return !(sameType && sameTime && isSinglePet && inMerged);
+              });
+            });
+            const existingIds = new Set(filtered.map(a => String(a.id)));
+            const toAdd = merged.filter(c => !existingIds.has(String(c.id)));
+            return [...toAdd, ...filtered];
           });
         }
         try { await loadFavourites(); } catch (e) {}
@@ -302,7 +379,10 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
         return;
       }
       alert('This Favourite is not available. Favourites are server-backed only.');
-    } catch (err) { console.error('Failed to create favourite activity', err); alert(err.message || 'Failed to create activity'); }
+    } catch (err) {
+      console.error('Failed to create favourite activity', err);
+      alert(err.message || 'Failed to create activity');
+    }
   };
 
   const handleDeleteActivity = (activityId) => {
@@ -431,7 +511,32 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
   }, []);
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const clampedPage = Math.min(Math.max(1, page), totalPages);
-  const visibleActivities = sortedActivities.slice((clampedPage - 1) * pageSize, clampedPage * pageSize);
+  // Deduplicate multi-pet activities for display: group by timestamp+type+petIds
+  function dedupeMultiPetActivities(activities) {
+    const groups = {};
+    activities.forEach(a => {
+      // Use petNames as the grouping key for multi-pet activities
+      let petNamesKey = '';
+      if (Array.isArray(a.data?.petNames)) {
+        petNamesKey = [...a.data.petNames].sort().join(',');
+      }
+      const key = `${a.activityTypeId || a.activityType?.id || ''}|${(a.timestamp || '').slice(0,16)}|${petNamesKey}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(a);
+    });
+    return Object.values(groups).map(group => {
+      if (group.length === 1) return group[0];
+      // Merge into one activity with all petIds and all petNames
+      const merged = { ...group[0] };
+      merged.data = {
+        ...merged.data,
+        petNames: Array.from(new Set(group.flatMap(g => Array.isArray(g.data?.petNames) ? g.data.petNames : []))),
+        petIds: Array.from(new Set(group.flatMap(g => Array.isArray(g.data?.petIds) ? g.data.petIds : (g.petId ? [g.petId] : []))))
+      };
+      return merged;
+    });
+  }
+  const visibleActivities = dedupeMultiPetActivities(sortedActivities).slice((clampedPage - 1) * pageSize, clampedPage * pageSize);
 
   if (loading) return (
     <div className="min-h-screen bg-white">

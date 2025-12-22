@@ -284,11 +284,22 @@ export default function LogActivity({ petId, household, user, activity, onActivi
         if (addToFavourites && selectedType) {
           if (household?.id) {
             const typeDef = ACTIVITY_TYPES.find(t => t.id === selectedType) || {};
+            // Get all pet names for the selectedPetIds
+            let allPetNames = [];
+            if (Array.isArray(pets) && pets.length > 0 && Array.isArray(selectedPetIds)) {
+              allPetNames = pets.filter(p => selectedPetIds.includes(p.id)).map(p => p.name);
+            }
             const snapshot = {
               key: selectedType,
               label: typeDef.label || selectedType,
               icon: typeDef.icon || null,
-              data: { petIds: selectedPetIds, applyToAll: allSelected, notes: notes || '', data: {} }
+              data: {
+                petIds: selectedPetIds,
+                petNames: allPetNames,
+                applyToAll: allSelected,
+                notes: notes || '',
+                data: {}
+              }
             };
             try {
               await apiFetch(`/api/households/${household.id}/favourites`, {
