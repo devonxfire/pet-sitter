@@ -125,7 +125,7 @@ export default function LogActivity({ petId, household, user, activity, onActivi
       const typeDef = ACTIVITY_TYPES.find(t => t.id === selectedType) || {};
 
       if (isEditing) {
-        // Update existing activity — support updating timestamp, notes, type and photo
+        // PATCH the original activity, POST new activities for other selected pets
         let photoUrlForThis = null;
         try {
           if (photoFile) {
@@ -156,12 +156,12 @@ export default function LogActivity({ petId, household, user, activity, onActivi
         if (selectedType) patchPayload.activityTypeId = selectedType;
         if (photoUrlForThis) patchPayload.photoUrl = photoUrlForThis;
 
+        // PATCH the original activity
         const data = await apiFetch(`/api/activities/${activity.id}`, {
           method: 'PATCH',
           body: JSON.stringify(patchPayload)
         });
         const augmented = { ...data, _clientActionLabel: (data.activityType?.label || data.activityType?.name || typeDef.label || selectedType), _updatedActivity: true };
-        // Attach local editor info if available so UI can show editor immediately
         try {
           if (!augmented.editedBy && user) {
             augmented.editedBy = { id: user.id, name: user.name || ((user.firstName || '') + ' ' + (user.lastName || '')).trim() };
@@ -173,6 +173,39 @@ export default function LogActivity({ petId, household, user, activity, onActivi
           const payload = { householdId: household?.id, activity: augmented, ts: Date.now() };
           localStorage.setItem('petSitter:latestActivity', JSON.stringify(payload));
         } catch (e) {}
+
+        // POST new activities for other selected pets
+        const originalPetId = activity.petId || activity.pet?.id || petId;
+        const otherPetIds = Array.from(new Set(selectedPetIds.map(id => parseInt(id)))).filter(pid => pid !== originalPetId);
+        if (otherPetIds.length > 0) {
+          const promises = otherPetIds.map(async (pid) => {
+            let photoUrlForThisOther = photoUrlForThis;
+            // Optionally upload photo for each pet (skip for now, reuse)
+            const payload = {
+              activityTypeId: selectedType,
+              timestamp: new Date(timestamp).toISOString(),
+              notes: notes || null,
+              data: { petNames: pets.filter(p => selectedPetIds.includes(p.id)).map(p => p.name) }
+            };
+            if (photoUrlForThisOther) payload.photoUrl = photoUrlForThisOther;
+            return apiFetch(`/api/pets/${pid}/activities`, {
+              method: 'POST',
+              body: JSON.stringify(payload)
+            });
+          });
+          const results = await Promise.all(promises);
+          results.forEach((res) => {
+            const clientLabel = typeDef.label || selectedType;
+            const augmentedOther = { ...res, _clientActionLabel: clientLabel };
+            try { if (!augmentedOther.user && user) augmentedOther.user = user; } catch (e) {}
+            try { if (typeof onActivityLogged === 'function') onActivityLogged(augmentedOther); } catch (e) {}
+            try { window.dispatchEvent(new CustomEvent('petSitter:newActivity', { detail: { activity: augmentedOther } })); } catch (e) {}
+            try {
+              const payload = { householdId: household?.id, activity: augmentedOther, ts: Date.now() };
+              localStorage.setItem('petSitter:latestActivity', JSON.stringify(payload));
+            } catch (e) {}
+          });
+        }
       } else {
         // Create new activity(s) for selected pet(s)
         // Deduplicate pet IDs to avoid double-logging
@@ -223,7 +256,7 @@ export default function LogActivity({ petId, household, user, activity, onActivi
             activityTypeId: selectedType,
             timestamp: new Date(timestamp).toISOString(),
             notes: notes || null,
-            data: {}
+            data: { petNames: pets.filter(p => petIdsToSend.includes(p.id)).map(p => p.name) }
           };
           if (photoUrlForThis) payload.photoUrl = photoUrlForThis;
           console.log('[LogActivity] POST payload for pet', pid, payload);
@@ -239,7 +272,7 @@ export default function LogActivity({ petId, household, user, activity, onActivi
           const clientLabel = typeDef.label || selectedType;
           const augmented = { ...res, _clientActionLabel: clientLabel };
           try { if (!augmented.user && user) augmented.user = user; } catch (e) {}
-          try { if (typeof onActivityLogged === 'function') onActivityLogged(augmented); } catch (e) {}
+          // Only dispatch event, do not call onActivityLogged directly (prevents duplicate)
           try { window.dispatchEvent(new CustomEvent('petSitter:newActivity', { detail: { activity: augmented } })); } catch (e) {}
           try {
             const payload = { householdId: household?.id, activity: augmented, ts: Date.now() };

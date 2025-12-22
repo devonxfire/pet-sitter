@@ -31,10 +31,20 @@ function FavouritesModal({ favourites, onLog, onDelete, onClose }) {
                   <p className="text-xs text-gray-500 mt-2">Favourite</p>
                 </div>
                 <div className="ml-4 flex flex-col items-end gap-2">
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => onLog(qa)} className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition">Log</button>
-                  </div>
-                  <button onClick={() => onDelete(qa)} className="px-3 py-2 text-sm font-medium text-accent hover:bg-gray-100 rounded-lg transition no-global-accent no-accent-hover delete-btn" style={{ color: 'var(--brand-red)' }}>Delete</button>
+                  <button
+                    onClick={() => onLog(qa)}
+                    className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition"
+                    style={{ cursor: 'pointer', width: '100%' }}
+                  >
+                    Log
+                  </button>
+                  <button
+                    onClick={() => onDelete(qa)}
+                    className="px-3 py-2 text-sm font-medium text-accent hover:bg-gray-100 rounded-lg transition no-global-accent no-accent-hover delete-btn"
+                    style={{ color: 'var(--brand-red)', cursor: 'pointer', width: '100%' }}
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}
@@ -718,33 +728,63 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
               const when = parseTimestamp(activity.timestamp);
               const isFuture = when > now;
               const petName = pet?.name || activity.pet?.name || '';
+              let petNames = petName;
+              if (Array.isArray(activity.data?.petNames) && activity.data.petNames.length > 1) {
+                let names = [...activity.data.petNames];
+                // Move current pet's name to the front if present
+                if (petName && names.includes(petName)) {
+                  names = [petName, ...names.filter(n => n !== petName)];
+                }
+                if (names.length === 2) {
+                  petNames = names.join(' and ');
+                } else {
+                  petNames = names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+                }
+              } else if (Array.isArray(activity.data?.petNames) && activity.data.petNames.length === 1) {
+                petNames = activity.data.petNames[0];
+              }
               const rawLabel = (activity._clientActionLabel || activity.activityType?.name || activity.activityType?.label || activity.type || 'Activity');
               const actionKey = String(rawLabel).toLowerCase().trim();
               const tmpl = VERB_TEMPLATES[actionKey] || VERB_TEMPLATES[Object.keys(VERB_TEMPLATES).find(k => actionKey.includes(k))] || null;
               let heading = rawLabel;
               const isUpdated = activity._updatedActivity === true;
-              if (petName) {
-                if (tmpl) {
+              // Pluralize all verbs for multi-pet activities
+              let pluralPast = null;
+              if (Array.isArray(activity.data?.petNames) && activity.data.petNames.length > 1 && tmpl && tmpl.past) {
+                // crude pluralization: 'was' -> 'were', 'had' -> 'had', 'played' -> 'played', etc.
+                if (tmpl.past.startsWith('was ')) {
+                  pluralPast = 'were ' + tmpl.past.slice(4);
+                } else if (tmpl.past.startsWith('is ')) {
+                  pluralPast = 'are ' + tmpl.past.slice(3);
+                } else if (tmpl.past.startsWith('has ')) {
+                  pluralPast = 'have ' + tmpl.past.slice(4);
+                } else {
+                  pluralPast = tmpl.past; // fallback: unchanged
+                }
+              }
+              if (petNames) {
+                if (tmpl || pluralPast) {
+                  const pastVerb = pluralPast || tmpl.past;
                   if (isUpdated) {
                     heading = isFuture
-                      ? `Future ${rawLabel.toLowerCase()} updated for ${petName}`
-                      : `${petName} ${tmpl.past} (updated)`;
+                      ? `Future ${rawLabel.toLowerCase()} updated for ${petNames}`
+                      : `${petNames} ${pastVerb} (updated)`;
                   } else {
                     heading = isFuture
-                      ? `Future ${rawLabel.toLowerCase()} organised for ${petName}`
-                      : `${petName} ${tmpl.past}`;
+                      ? `Future ${rawLabel.toLowerCase()} organised for ${petNames}`
+                      : `${petNames} ${pastVerb}`;
                   }
                 } else {
                   const lowerAct = rawLabel.toLowerCase();
                   if (isFuture) {
                     heading = isUpdated
-                      ? `Future ${lowerAct} updated for ${petName}`
-                      : `Future ${lowerAct} organised for ${petName}`;
+                      ? `Future ${lowerAct} updated for ${petNames}`
+                      : `Future ${lowerAct} organised for ${petNames}`;
                   } else {
                     const article = /^[aeiou]/.test(lowerAct) ? 'an' : 'a';
                     heading = isUpdated
-                      ? `${petName} had ${article} ${lowerAct} (updated)`
-                      : `${petName} — Had ${article} ${lowerAct}`;
+                      ? `${petNames} had ${article} ${lowerAct} (updated)`
+                      : `${petNames} — Had ${article} ${lowerAct}`;
                   }
                 }
               }
