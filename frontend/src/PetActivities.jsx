@@ -340,7 +340,7 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
           created = Array.isArray(body) ? body : [body];
         }
         if (Array.isArray(created) && created.length > 0) {
-          const groupKey = (a) => `${a.activityTypeId || a.activityType?.id || ''}|${(a.timestamp || '').slice(0,16)}`;
+          const groupKey = (a) => `${a.activityType?.name || a.activityType?.label || a.activityTypeId || ''}|${(a.timestamp || '').slice(0,16)}`;
           const grouped = {};
           created.forEach(a => {
             const key = groupKey(a);
@@ -348,30 +348,49 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
             grouped[key].push(a);
           });
           const merged = Object.values(grouped).map(group => {
-            if (group.length === 1) return group[0];
+            if (group.length === 1) {
+              // Ensure petNames is set for single merged activity
+              const single = { ...group[0] };
+              if (!Array.isArray(single.data?.petNames) || single.data.petNames.length === 0) {
+                // Try to use allPetNames or action.data.petNames
+                let names = [];
+                if (Array.isArray(allPetNames) && allPetNames.length > 0) names = allPetNames;
+                else if (Array.isArray(action.data?.petNames) && action.data.petNames.length > 0) names = action.data.petNames;
+                single.data = { ...single.data, petNames: names };
+              }
+              return single;
+            }
             const base = { ...group[0] };
-            base.data = { ...base.data, petNames: group.map(g => g.pet?.name || g.petName || ''), petIds: group.map(g => g.petId || g.pet?.id) };
+            // Merge all pet names, filter out empty strings
+            let mergedNames = group.flatMap(g => Array.isArray(g.data?.petNames) ? g.data.petNames : [g.pet?.name || g.petName || '']).filter(Boolean);
+            // Fallback if mergedNames is empty
+            if (mergedNames.length === 0) {
+              if (Array.isArray(allPetNames) && allPetNames.length > 0) mergedNames = allPetNames;
+              else if (Array.isArray(action.data?.petNames) && action.data.petNames.length > 0) mergedNames = action.data.petNames;
+            }
+            base.data = { ...base.data, petNames: Array.from(new Set(mergedNames)), petIds: group.map(g => g.petId || g.pet?.id) };
             delete base.pet;
             delete base.petId;
             base._isMergedMultiPet = true;
             return base;
           });
           console.log('[createFavourite] merged activities:', merged);
+          // Immediately dedupe and merge activities so only merged appears
           setActivities((prev = []) => {
-            let filtered = prev;
-            merged.forEach(m => {
-              if (!Array.isArray(m.data?.petIds)) return;
-              filtered = filtered.filter(a => {
+            // Remove any activities matching the same type, time, and petIds as the merged
+            let filtered = prev.filter(a => {
+              return !merged.some(m => {
                 const sameType = (a.activityTypeId || a.activityType?.id) === (m.activityTypeId || m.activityType?.id);
                 const sameTime = (a.timestamp || '').slice(0,16) === (m.timestamp || '').slice(0,16);
                 const isSinglePet = (a.petId || a.pet?.id) && (!a.data?.petIds || a.data.petIds.length <= 1);
-                const inMerged = m.data.petIds.includes(a.petId || a.pet?.id);
-                return !(sameType && sameTime && isSinglePet && inMerged);
+                const inMerged = Array.isArray(m.data?.petIds) && m.data.petIds.includes(a.petId || a.pet?.id);
+                return sameType && sameTime && isSinglePet && inMerged;
               });
             });
-            const existingIds = new Set(filtered.map(a => String(a.id)));
-            const toAdd = merged.filter(c => !existingIds.has(String(c.id)));
-            return [...toAdd, ...filtered];
+            // Remove any just-created single activities that would duplicate the merged
+            const mergedIds = new Set(merged.map(m => String(m.id)));
+            filtered = filtered.filter(a => !mergedIds.has(String(a.id)));
+            return [...merged, ...filtered];
           });
         }
         try { await loadFavourites(); } catch (e) {}
