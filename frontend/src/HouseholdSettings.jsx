@@ -31,6 +31,8 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [localPlan, setLocalPlan] = useState(household?.plan || 'free');
 
   useEffect(() => {
     if (!household) {
@@ -51,6 +53,50 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
       setLoading(false);
     }
   };
+
+  // Current member record for the signed-in user (if any)
+  const currentUserMember = members.find(m => m.userId === user.id);
+
+  // small helper
+  const capitalize = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : '');
+
+  const handleChangePlan = async (newPlan) => {
+    setError('');
+    setSuccessMessage('');
+    try {
+      await apiFetch(`/api/households/${household.id}/plan`, {
+        method: 'PATCH',
+        body: JSON.stringify({ plan: newPlan })
+      });
+      // Try to refresh household list and update local plan without full reload
+      try {
+        const households = await apiFetch('/api/households');
+        const updated = Array.isArray(households) ? households.find(h => h.id === household.id) : null;
+        if (updated && updated.plan) {
+          setLocalPlan(updated.plan);
+          try { localStorage.setItem('household', JSON.stringify({ ...household, plan: updated.plan })); } catch (e) {}
+          if (typeof onSignOut === 'function' && typeof window !== 'undefined') {
+            // notify parent if it listens via a custom event
+            try { window.dispatchEvent(new CustomEvent('householdUpdated', { detail: updated })); } catch (e) {}
+          }
+        } else {
+          setLocalPlan(newPlan);
+          try { localStorage.setItem('household', JSON.stringify({ ...household, plan: newPlan })); } catch (e) {}
+        }
+      } catch (e) {
+        // fallback: use the chosen plan
+        setLocalPlan(newPlan);
+      }
+      setSuccessMessage(`Plan updated to ${capitalize(newPlan)}.`);
+      setShowUpgrade(false);
+    } catch (err) {
+      setError(err.message || 'Failed to update plan');
+    }
+  };
+
+  useEffect(() => {
+    setLocalPlan(household?.plan || 'free');
+  }, [household]);
 
   const handleInvite = async (e) => {
     e.preventDefault();
@@ -136,6 +182,17 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
             <p><span className="text-gray-500">Name:</span> {household.name}</p>
             {household.address && <p><span className="text-gray-500">Address:</span> {household.address}</p>}
             {household.city && <p><span className="text-gray-500">City:</span> {household.city}, {household.state}</p>}
+            <p>
+              <span className="text-gray-500">Plan:</span> {capitalize(localPlan || household.plan || 'free')}
+              {currentUserMember?.role === 'owner' && (
+                <button
+                  onClick={() => setShowUpgrade(true)}
+                  className="ml-3 inline-flex items-center gap-2 bg-accent text-gray-900 font-semibold py-1 px-3 rounded-lg hover:opacity-90 transition cursor-pointer text-sm"
+                >
+                  Upgrade
+                </button>
+              )}
+            </p>
           </div>
         </section>
 
@@ -264,6 +321,33 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
             </section>
           );
         })()}
+            {showUpgrade && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                  <h3 className="text-lg font-semibold mb-4">Upgrade Household Plan</h3>
+                  <p className="text-sm text-gray-600 mb-4">Current plan: {capitalize(localPlan || household.plan || 'free')}</p>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 border rounded">
+                      <div>
+                        <div className="font-semibold">Premium</div>
+                        <div className="text-xs text-gray-500">Extra features (placeholder)</div>
+                      </div>
+                      <button onClick={() => handleChangePlan('premium')} className="bg-accent text-white px-3 py-1 rounded">Upgrade</button>
+                    </div>
+                    <div className="flex items-center justify-between p-3 border rounded">
+                      <div>
+                        <div className="font-semibold">Business</div>
+                        <div className="text-xs text-gray-500">Team features (placeholder)</div>
+                      </div>
+                      <button onClick={() => handleChangePlan('business')} className="bg-accent text-white px-3 py-1 rounded">Upgrade</button>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-end gap-3">
+                    <button onClick={() => setShowUpgrade(false)} className="px-4 py-2 rounded bg-gray-100">Close</button>
+                  </div>
+                </div>
+              </div>
+            )}
       </div>
       </main>
     </div>

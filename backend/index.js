@@ -1430,6 +1430,47 @@ app.delete('/api/households/:householdId/members/:memberId', authenticateToken, 
   }
 });
 
+// Owner-only: change household plan (simple bypass for payment flow)
+app.patch('/api/households/:householdId/plan', authenticateToken, async (req, res) => {
+  try {
+    const { householdId } = req.params;
+    const { plan } = req.body;
+
+    if (!plan) return res.status(400).json({ error: 'Plan is required' });
+
+    const userId = req.user.userId || req.user.id;
+
+    // Verify requester is owner of the household
+    const access = await prisma.householdMember.findFirst({
+      where: { householdId: parseInt(householdId), userId: parseInt(userId), role: 'owner' }
+    });
+
+    if (!access) {
+      return res.status(403).json({ error: 'Only household owners can change plan' });
+    }
+
+    const updated = await prisma.household.update({
+      where: { id: parseInt(householdId) },
+      data: { plan: String(plan) },
+      select: { id: true, name: true, plan: true }
+    });
+
+    console.log(`✅ Household ${householdId} plan changed to ${plan} by user ${userId}`);
+
+    // Optionally emit socket event so household members can react
+    try {
+      if (typeof io !== 'undefined') {
+        io.to(`household:${householdId}`).emit('householdPlanChanged', { householdId: parseInt(householdId), plan: String(plan) });
+      }
+    } catch (e) { console.warn('Failed to emit householdPlanChanged', e); }
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Change household plan error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Current user endpoints
 // ---------------------------------------------------------------------------

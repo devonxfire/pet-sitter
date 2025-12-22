@@ -16,6 +16,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut, o
   const [country, setCountry] = useState('');
   const [numberOfMembers, setNumberOfMembers] = useState('1');
   const [notes, setNotes] = useState('');
+  const [plan, setPlan] = useState('free');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -80,7 +81,8 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut, o
           zipCode: zipCode || null,
           country: country || null,
           numberOfMembers: numberOfMembers ? parseInt(numberOfMembers) : null,
-          notes: notes || null
+          notes: notes || null,
+          plan: plan || 'free'
         })
       });
 
@@ -102,6 +104,26 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut, o
         <div className="mb-6">
           <h1 className="text-xl font-medium text-gray-900">Create Household</h1>
           <p className="text-sm text-gray-500 mt-1">Let's set up your household</p>
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Choose a plan</label>
+            <div className="flex items-center gap-3">
+              <label className={`inline-flex items-center gap-3 p-3 rounded-lg border ${plan==='free' ? 'border-accent bg-accent/10' : 'border-gray-200'} cursor-pointer`}>
+                <input type="radio" name="plan" value="free" checked={plan==='free'} onChange={() => setPlan('free')} className="hidden" />
+                <div className="text-sm font-semibold">Free</div>
+                <div className="text-xs text-gray-500">Basic features</div>
+              </label>
+              <label className="inline-flex items-center gap-3 p-3 rounded-lg border border-gray-200 opacity-50 cursor-not-allowed">
+                <input type="radio" name="plan" value="premium" disabled className="hidden" />
+                <div className="text-sm font-semibold">Premium</div>
+                <div className="text-xs text-gray-500">Coming soon</div>
+              </label>
+              <label className="inline-flex items-center gap-3 p-3 rounded-lg border border-gray-200 opacity-50 cursor-not-allowed">
+                <input type="radio" name="plan" value="business" disabled className="hidden" />
+                <div className="text-sm font-semibold">Business</div>
+                <div className="text-xs text-gray-500">Coming soon</div>
+              </label>
+            </div>
+          </div>
         </div>
         <form onSubmit={handleSubmit} className="space-y-6">
           {!user && (
@@ -254,20 +276,24 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut, o
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-accent text-white font-semibold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center"
-          >
-            {loading ? (
-              'Creating...'
-            ) : (
-              <>
-                <span aria-hidden="true" className="mr-2">🏠</span>
-                <span>Create Household</span>
-              </>
-            )}
-          </button>
+          <div className="flex">
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex items-center gap-2 bg-accent text-white font-semibold py-2 px-4 rounded-xl hover:opacity-90 transition disabled:opacity-50 cursor-pointer"
+            >
+              {loading ? (
+                'Creating...'
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4" aria-hidden="true" focusable="false">
+                    <path fill="white" d="M12 3l9 8h-3v8h-12v-8h-3l9-8z" />
+                  </svg>
+                  <span>Create Household</span>
+                </>
+              )}
+            </button>
+          </div>
         </form>
       </div>
       </main>
