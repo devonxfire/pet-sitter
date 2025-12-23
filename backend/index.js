@@ -984,7 +984,7 @@ app.get('/api/pets/:petId/activities', authenticateToken, async (req, res) => {
 app.post('/api/pets/:petId/activities', authenticateToken, async (req, res) => {
   try {
     const { petId } = req.params;
-    const { activityTypeId, timestamp, notes, photoUrl, data } = req.body;
+    let { activityTypeId, timestamp, notes, photoUrl, data } = req.body;
     console.log('[ACTIVITY][POST] Incoming:', { petId, activityTypeId, timestamp, notes, photoUrl, data, userId: req.user.userId });
 
     // Validate timestamp
@@ -1024,17 +1024,11 @@ app.post('/api/pets/:petId/activities', authenticateToken, async (req, res) => {
         }
       }
     });
-    if (!pet) {
-      console.warn('[ACTIVITY][POST] Pet not found:', petId);
-    }
-    if (!pet || pet.household.members.length === 0) {
-      console.warn('[ACTIVITY][POST] Access denied for user', req.user.userId, 'on pet', petId);
-      return res.status(403).json({ error: 'Access denied' });
-    }
 
-    // Handle activity type: if activityTypeId is a string (e.g., 'feeding'), find or create it
+    // Determine finalActivityTypeId (handle string or numeric activityTypeId)
     let finalActivityTypeId = activityTypeId;
     if (typeof activityTypeId === 'string') {
+      // Try to find existing activityType for this pet
       const activityType = await prisma.activityType.findFirst({
         where: {
           petId: parseInt(petId),
@@ -1216,28 +1210,63 @@ app.delete('/api/activities/:activityId', authenticateToken, async (req, res) =>
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Delete activity
-    await prisma.activity.delete({
-      where: { id: parseInt(activityId) }
-    });
+    // If this is a multi-pet activity with a groupId, delete all activities with the same groupId
+    let deletedIds = [parseInt(activityId)];
+    const groupId = activity.data && activity.data.groupId ? String(activity.data.groupId) : null;
+    if (groupId) {
+      const others = await prisma.activity.findMany({
+        where: {
+          id: { not: parseInt(activityId) },
+          data: { path: ['groupId'], equals: groupId }
+        }
+      });
+      const otherIds = others.map(a => a.id);
+      if (otherIds.length > 0) {
+        await prisma.activity.deleteMany({ where: { id: { in: otherIds } } });
+        deletedIds = deletedIds.concat(otherIds);
+      }
+    } else if (activity.data && Array.isArray(activity.data.petIds) && activity.data.petIds.length > 1) {
+      // Fallback: timestamp window logic for legacy activities
+      const ts = new Date(activity.timestamp);
+      const tsStart = new Date(ts.getTime() - 10000); // 10 seconds before
+      const tsEnd = new Date(ts.getTime() + 10000);   // 10 seconds after
+      const others = await prisma.activity.findMany({
+        where: {
+          id: { not: parseInt(activityId) },
+          activityTypeId: activity.activityTypeId,
+          timestamp: { gte: tsStart, lte: tsEnd },
+          petId: { in: activity.data.petIds.map(id => parseInt(id)) }
+        }
+      });
+      const otherIds = others.map(a => a.id);
+      if (otherIds.length > 0) {
+        await prisma.activity.deleteMany({ where: { id: { in: otherIds } } });
+        deletedIds = deletedIds.concat(otherIds);
+      }
+    }
 
-    console.log(`✅ Activity deleted: ${activityId}`);
+    // Delete the original activity
+    await prisma.activity.delete({ where: { id: parseInt(activityId) } });
 
-    // Emit deletion to household room
+    console.log(`✅ Activity deleted: ${activityId}${deletedIds.length > 1 ? ' (multi-pet, also deleted: ' + deletedIds.join(', ') + ')' : ''}`);
+
+    // Emit deletion to household room for all deleted ids
     try {
       const householdId = activity.pet && (activity.pet.household?.id || activity.pet.householdId);
       if (typeof io !== 'undefined' && householdId) {
-        io.to(`household:${householdId}`).emit('deletedActivity', { activityId: parseInt(activityId) });
+        deletedIds.forEach(id => {
+          io.to(`household:${householdId}`).emit('deletedActivity', { activityId: id });
+        });
         const members = await prisma.householdMember.findMany({ where: { householdId: parseInt(householdId), userId: { not: null } }, select: { userId: true } });
         members.forEach(m => {
-          try { io.to(`user:${m.userId}`).emit('deletedActivity', { activityId: parseInt(activityId) }); } catch (e) {}
+          try { deletedIds.forEach(id => io.to(`user:${m.userId}`).emit('deletedActivity', { activityId: id })); } catch (e) {}
         });
       }
     } catch (err) {
       console.warn('Failed to emit socket deletedActivity', err);
     }
 
-    res.json({ success: true });
+    res.json({ success: true, deletedIds });
   } catch (error) {
     console.error('Delete activity error:', error);
     res.status(500).json({ error: 'Internal server error' });

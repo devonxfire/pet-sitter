@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { generateGroupId } from './groupId';
 import { apiFetch, apiUrl } from './api';
 import ACTIVITY_TYPES from './activityTypes';
 import { theme } from './theme';
@@ -113,6 +114,11 @@ export default function LogActivity({ petId, household, user, activity, onActivi
     setLoading(true);
     // Debug: log timestamp values
     console.log('[LogActivity] Raw timestamp input:', timestamp);
+    let groupId = null;
+    // If multi-pet, generate a groupId
+    if (Array.isArray(selectedPetIds) && selectedPetIds.length > 1) {
+      groupId = generateGroupId();
+    }
     try {
       const iso = new Date(timestamp).toISOString();
       console.log('[LogActivity] Converted to ISO:', iso);
@@ -256,7 +262,11 @@ export default function LogActivity({ petId, household, user, activity, onActivi
             activityTypeId: selectedType,
             timestamp: new Date(timestamp).toISOString(),
             notes: notes || null,
-            data: { petNames: pets.filter(p => petIdsToSend.includes(p.id)).map(p => p.name) }
+            data: {
+              petNames: pets.filter(p => petIdsToSend.includes(p.id)).map(p => p.name),
+              petIds: petIdsToSend,
+              ...(groupId ? { groupId } : {})
+            }
           };
           if (photoUrlForThis) payload.photoUrl = photoUrlForThis;
           console.log('[LogActivity] POST payload for pet', pid, payload);
@@ -298,7 +308,7 @@ export default function LogActivity({ petId, household, user, activity, onActivi
                 petNames: allPetNames,
                 applyToAll: allSelected,
                 notes: notes || '',
-                data: {}
+                ...(groupId ? { groupId } : {})
               }
             };
             try {

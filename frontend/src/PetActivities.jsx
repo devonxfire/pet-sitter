@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { generateGroupId } from './groupId';
 import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiFetch, apiUrl, API_BASE } from './api';
@@ -305,12 +306,13 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
           : [petId ? parseInt(petId) : undefined];
         // Only POST to server, do not update local activities state
         if (petIds.length > 1) {
+          const groupId = action.data?.groupId || generateGroupId();
           await Promise.all(petIds.map(async pid => {
             const payload = {
               activityTypeId: action.key,
               timestamp: new Date().toISOString(),
               notes: action.data?.notes || '',
-              data: { petNames: action.data?.petNames || [], petIds },
+              data: { petNames: action.data?.petNames || [], petIds, groupId },
             };
             await fetch(apiUrl(`/api/pets/${pid}/activities`), {
               method: 'POST',
@@ -721,7 +723,7 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
                 }
               }}
             >
-              <svg className="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#C3001F" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6.01 4.01 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 17.99 4 20 6.01 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+              <svg className="w-5 h-5 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#C3001F" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6.01 4.01 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 17.99 4 20 6.01 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
               <span>Favourites</span>
             </button>
           </div>
@@ -949,16 +951,32 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
         <ActivityView activity={viewingActivity} onClose={() => setViewingActivity(null)} onEdit={(act) => { setViewingActivity(null); setEditingActivity(act); }} onDelete={(id) => { setViewingActivity(null); setActivities(prev => prev.filter(a => String(a.id) !== String(id))); }} />
       )}
 
-      {confirmDeleteId && (
-        <ConfirmDialog
-          title="Delete activity"
-          message={`Delete this activity? This cannot be undone.`}
-          onConfirm={() => performDeleteActivity(confirmDeleteId)}
-          onCancel={() => setConfirmDeleteId(null)}
-          confirmLabel="Delete"
-          cancelLabel="Cancel"
-        />
-      )}
+
+      {confirmDeleteId && (() => {
+        // Find the activity to delete
+        const activity = activities.find(a => String(a.id) === String(confirmDeleteId));
+        let extraWarning = '';
+        let petNames = [];
+        if (activity && Array.isArray(activity.data?.petIds) && activity.data.petIds.length > 1) {
+          // Try to resolve pet names from householdPets
+          petNames = (householdPets || []).filter(p => activity.data.petIds.includes(p.id)).map(p => p.name);
+          if (petNames.length > 0) {
+            extraWarning = `\n\nThis will delete this activity for ALL these pets: ${petNames.join(', ')}.`;
+          } else {
+            extraWarning = `\n\nThis will delete this activity for ALL pets involved.`;
+          }
+        }
+        return (
+          <ConfirmDialog
+            title="Delete activity"
+            message={`Delete this activity? This cannot be undone.${extraWarning}`}
+            onConfirm={() => performDeleteActivity(confirmDeleteId)}
+            onCancel={() => setConfirmDeleteId(null)}
+            confirmLabel="Delete"
+            cancelLabel="Cancel"
+          />
+        );
+      })()}
 
         {showFavouritesModal && (
           <FavouritesModal
