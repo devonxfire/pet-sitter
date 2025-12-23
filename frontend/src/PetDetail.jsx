@@ -426,7 +426,7 @@ export default function PetDetail({ household, user, onSignOut }) {
 
   // Only fetch if not provided as props (for deduplication)
   useEffect(() => {
-    if (propsPet && propsActivities) return;
+    if (pet && activities) return;
     const fetchPetDetails = async () => {
       try {
         const petData = await apiFetch(`/api/pets/${petId}`);

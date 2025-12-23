@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './PetActivityGraph.css';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LabelList } from 'recharts';
 
@@ -21,7 +21,25 @@ function formatTimeOfDay(dateStr) {
 
 // Props: activities = [{ timestamp, activityType: { name } }]
 function PetActivityGraph({ activities, onHoverActivity, onClickActivity, onLeaveActivity }) {
-  // Last 5 activities, sorted by timestamp
+  // Responsive: show 3 activities on mobile portrait, 5 otherwise
+  const [activityLimit, setActivityLimit] = useState(5);
+  useEffect(() => {
+    function updateLimit() {
+      // Use window.matchMedia to detect orientation and width
+      if (window.matchMedia('(max-width: 640px) and (orientation: portrait)').matches) {
+        setActivityLimit(3);
+      } else {
+        setActivityLimit(5);
+      }
+    }
+    updateLimit();
+    window.addEventListener('resize', updateLimit);
+    window.addEventListener('orientationchange', updateLimit);
+    return () => {
+      window.removeEventListener('resize', updateLimit);
+      window.removeEventListener('orientationchange', updateLimit);
+    };
+  }, []);
   // Conversational label logic
   const VERB_LABELS = {
     feeding: { past: 'FED', future: 'FUTURE FEEDING' },
@@ -36,7 +54,7 @@ function PetActivityGraph({ activities, onHoverActivity, onClickActivity, onLeav
   };
   const now = new Date();
   // Add horizontal jitter for same-day activities
-  const sortedActs = [...(activities || [])].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).slice(-5);
+  const sortedActs = [...(activities || [])].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).slice(-activityLimit);
   // Group by date string
   const dateGroups = {};
   sortedActs.forEach((a, i) => {
@@ -89,7 +107,9 @@ function PetActivityGraph({ activities, onHoverActivity, onClickActivity, onLeav
     <div>
       <div className="bg-gray-50 rounded-xl border border-gray-200 p-6 mb-8">
         <h3 className="text-xl font-bold mb-4 text-gray-900">Activity Timeline</h3>
-        <ResponsiveContainer width="100%" height={320}>
+        <div className="w-full overflow-x-auto">
+          <div className="min-w-[400px] sm:min-w-0" style={{ minWidth: '400px' }}>
+            <ResponsiveContainer width="100%" height={320}>
           <ScatterChart
             margin={{ top: 30, right: 30, bottom: 30, left: 30 }}
             style={{ background: theme.grayBg }}
@@ -99,7 +119,7 @@ function PetActivityGraph({ activities, onHoverActivity, onClickActivity, onLeav
               dataKey="x"
               type="category"
               name="Date"
-              tick={{ fill: theme.grayText, fontWeight: 500 }}
+              tick={{ fill: theme.grayText, fontWeight: 500, className: 'pet-activity-graph-axis-label' }}
               axisLine={{ stroke: theme.grayBorder }}
               tickLine={{ stroke: theme.grayBorder }}
               interval="preserveStartEnd"
@@ -110,7 +130,7 @@ function PetActivityGraph({ activities, onHoverActivity, onClickActivity, onLeav
               domain={[0, 24]}
               name="Time of Day"
               tickFormatter={h => `${Math.floor(h)}:${String(Math.round((h % 1) * 60)).padStart(2, '0')}`}
-              tick={{ fill: theme.grayText, fontWeight: 500 }}
+              tick={{ fill: theme.grayText, fontWeight: 500, className: 'pet-activity-graph-axis-label' }}
               axisLine={{ stroke: theme.grayBorder }}
               tickLine={{ stroke: theme.grayBorder }}
             />
@@ -150,11 +170,19 @@ function PetActivityGraph({ activities, onHoverActivity, onClickActivity, onLeav
                 offset={16}
                 fill={theme.grayText}
                 fontWeight={700}
+                className="pet-activity-graph-label"
               />
             </Scatter>
           </ScatterChart>
-        </ResponsiveContainer>
-        <div className="text-sm text-gray-500 mt-2">Last 5 activities by date and time of day.</div>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        <div className="text-sm text-gray-500 mt-2">
+          Last {activityLimit} activities by date and time of day.
+          {activityLimit === 3 && typeof window !== 'undefined' && window.matchMedia('(max-width: 640px) and (orientation: portrait)').matches && (
+            <span> (change to landscape orientation to see more)</span>
+          )}
+        </div>
       </div>
     </div>
   );

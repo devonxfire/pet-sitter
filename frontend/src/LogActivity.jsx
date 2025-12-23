@@ -430,10 +430,12 @@ export default function LogActivity({ petId, household, user, activity, onActivi
 
   // Step 1: Select Activity Type
   const [hoveredType, setHoveredType] = React.useState(null);
+  const [slideIndex, setSlideIndex] = React.useState(0);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
   if (currentStep === 'selectType') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem', minWidth: '700px'}}>
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl mx-4 relative animate-fade-in" style={{padding: '2.5rem 2.5rem 2.5rem 2.5rem', minWidth: isMobile ? undefined : '700px'}}>
           <ModalClose onClick={onClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none cursor-pointer" />
           <div className="flex flex-row items-center mb-6 justify-center w-full">
             <div className="flex flex-col items-center w-full">
@@ -464,57 +466,104 @@ export default function LogActivity({ petId, household, user, activity, onActivi
               transition: height 0.18s, background 0.18s;
               z-index: 2;
             }
-            /* Show red border by default ONLY if Feeding and nothing is selected and no other card is hovered */
             .activity-type-card-fix.feeding-default::after {
               height: 4px;
               background: #C3001F;
               border-bottom-left-radius: 0.75rem;
               border-bottom-right-radius: 0.75rem;
             }
-            /* Show red border on hover ONLY if a type is selected (no feeding-default) */
             .activity-type-card-fix:not(.feeding-default):hover::after {
               height: 4px;
               background: #C3001F;
               border-bottom-left-radius: 0.75rem;
               border-bottom-right-radius: 0.75rem;
             }
-            /* Hide feeding-default border if any card is hovered */
             .activity-type-card-fix.feeding-default.hide-default::after {
               height: 0 !important;
               background: transparent !important;
             }
           `}</style>
-          <div className="grid grid-cols-4 gap-5">
-            {ACTIVITY_TYPES.map((type) => {
-              // Map special cases for image names
-              let imgName = (type.name || type.id || '').toLowerCase().replace(/\s+/g, '-') + '-activity.png';
-              if (type.id === 'feeding') imgName = 'food-activity.png';
-              if (type.id === 'chilling') imgName = 'chill-activity.png';
-              // Add feeding-default class if this is the Feeding card and no type is selected yet and no other card is hovered
-              const isFeedingDefault = type.id === 'feeding' && !selectedType && !hoveredType;
-              // Hide feeding-default border if any card is hovered (except itself)
-              const hideFeedingDefault = type.id === 'feeding' && !selectedType && hoveredType && hoveredType !== 'feeding';
-              return (
+          {isMobile ? (
+            <div className="flex flex-col items-center w-full">
+              <div className="flex items-center justify-center w-full mb-4">
                 <button
-                  key={type.id}
-                  onClick={() => handleTypeSelect(type.id)}
-                  onMouseEnter={() => setHoveredType(type.id)}
-                  onMouseLeave={() => setHoveredType(null)}
-                  className={
-                    `py-8 px-4 rounded-xl flex flex-col items-center gap-2 border border-gray-200 shadow-2xl transition-all duration-150 focus:outline-none activity-type-card-fix cursor-pointer` +
-                    (isFeedingDefault ? ' feeding-default' : '') +
-                    (hideFeedingDefault ? ' hide-default' : '')
-                  }
-                  style={{ boxShadow: '0 12px 48px 0 rgba(0,0,0,0.28)' }}
+                  aria-label="Previous activity type"
+                  className="p-2 text-gray-400 hover:text-gray-700 focus:outline-none"
+                  onClick={() => setSlideIndex((slideIndex - 1 + ACTIVITY_TYPES.length) % ACTIVITY_TYPES.length)}
+                  disabled={ACTIVITY_TYPES.length <= 1}
                 >
-                  <img src={`/${imgName}`} alt={type.label} style={{ width: '90px', height: '60px', objectFit: 'contain', marginBottom: '0.5rem', borderRadius: 0, boxShadow: 'none' }} />
-                  <span className="text-base font-medium text-gray-500 text-center">
-                    {type.label}
-                  </span>
+                  <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
                 </button>
-              );
-            })}
-          </div>
+                <div className="flex-1 flex justify-center">
+                  {(() => {
+                    const type = ACTIVITY_TYPES[slideIndex];
+                    let imgName = (type.name || type.id || '').toLowerCase().replace(/\s+/g, '-') + '-activity.png';
+                    if (type.id === 'feeding') imgName = 'food-activity.png';
+                    if (type.id === 'chilling') imgName = 'chill-activity.png';
+                    const isFeedingDefault = type.id === 'feeding' && !selectedType && !hoveredType;
+                    const hideFeedingDefault = type.id === 'feeding' && !selectedType && hoveredType && hoveredType !== 'feeding';
+                    return (
+                      <button
+                        key={type.id}
+                        onClick={() => handleTypeSelect(type.id)}
+                        onMouseEnter={() => setHoveredType(type.id)}
+                        onMouseLeave={() => setHoveredType(null)}
+                        className={
+                          `py-8 px-4 rounded-xl flex flex-col items-center gap-2 border border-gray-200 shadow-2xl transition-all duration-150 focus:outline-none activity-type-card-fix cursor-pointer mx-2` +
+                          (isFeedingDefault ? ' feeding-default' : '') +
+                          (hideFeedingDefault ? ' hide-default' : '')
+                        }
+                        style={{ boxShadow: '0 12px 48px 0 rgba(0,0,0,0.28)', minWidth: '220px', maxWidth: '90vw' }}
+                      >
+                        <img src={`/${imgName}`} alt={type.label} style={{ width: '90px', height: '60px', objectFit: 'contain', marginBottom: '0.5rem', borderRadius: 0, boxShadow: 'none' }} />
+                        <span className="text-base font-medium text-gray-500 text-center">
+                          {type.label}
+                        </span>
+                      </button>
+                    );
+                  })()}
+                </div>
+                <button
+                  aria-label="Next activity type"
+                  className="p-2 text-gray-400 hover:text-gray-700 focus:outline-none"
+                  onClick={() => setSlideIndex((slideIndex + 1) % ACTIVITY_TYPES.length)}
+                  disabled={ACTIVITY_TYPES.length <= 1}
+                >
+                  <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+              <div className="text-xs text-gray-400 mb-2">{slideIndex + 1} / {ACTIVITY_TYPES.length}</div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4 max-h-[60vh] overflow-y-auto sm:grid sm:grid-cols-4 sm:gap-5">
+              {ACTIVITY_TYPES.map((type) => {
+                let imgName = (type.name || type.id || '').toLowerCase().replace(/\s+/g, '-') + '-activity.png';
+                if (type.id === 'feeding') imgName = 'food-activity.png';
+                if (type.id === 'chilling') imgName = 'chill-activity.png';
+                const isFeedingDefault = type.id === 'feeding' && !selectedType && !hoveredType;
+                const hideFeedingDefault = type.id === 'feeding' && !selectedType && hoveredType && hoveredType !== 'feeding';
+                return (
+                  <button
+                    key={type.id}
+                    onClick={() => handleTypeSelect(type.id)}
+                    onMouseEnter={() => setHoveredType(type.id)}
+                    onMouseLeave={() => setHoveredType(null)}
+                    className={
+                      `py-8 px-4 rounded-xl flex flex-col items-center gap-2 border border-gray-200 shadow-2xl transition-all duration-150 focus:outline-none activity-type-card-fix cursor-pointer` +
+                      (isFeedingDefault ? ' feeding-default' : '') +
+                      (hideFeedingDefault ? ' hide-default' : '')
+                    }
+                    style={{ boxShadow: '0 12px 48px 0 rgba(0,0,0,0.28)' }}
+                  >
+                    <img src={`/${imgName}`} alt={type.label} style={{ width: '90px', height: '60px', objectFit: 'contain', marginBottom: '0.5rem', borderRadius: 0, boxShadow: 'none' }} />
+                    <span className="text-base font-medium text-gray-500 text-center">
+                      {type.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     );
