@@ -64,23 +64,21 @@ export default function TopNav({ user, household, onSignOut }) {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [menuRef]);
 
+  // Responsive hamburger menu state
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <nav className={`relative z-9999 h-20 md:h-20 ${location?.pathname !== '/' ? 'border-b border-gray-100' : ''}`} style={{ pointerEvents: 'auto' }}>
-      {/**
-       * When a user is logged in we prefer the dashboard-style top menu that
-       * stretches across the full width. For logged-out users keep the narrower
-       * centered layout.
-       */}
-      <div className={user ? 'max-w-7xl mx-auto px-6 h-20 flex items-center' : 'max-w-6xl mx-auto px-6 h-20 flex items-center'}>
+      <div className={user ? 'max-w-7xl mx-auto px-6 h-20 flex items-center justify-between' : 'max-w-6xl mx-auto px-6 h-20 flex items-center justify-between'}>
         {/* Left: logo */}
         <div className="flex items-center mr-4">
-            <Link to="/" className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3">
             <img src="/petdaily-logo-desktop.png" alt="PetDaily" className="h-12 md:h-14 object-contain block transform -translate-y-2 md:-translate-y-1" />
           </Link>
         </div>
 
-        {/* Center: primary nav (centered) */}
-          <div className="flex-1 flex justify-center items-center">
+        {/* Center: primary nav (hidden on mobile) */}
+        <div className="flex-1 hidden md:flex justify-center items-center">
           <div className="flex items-center gap-6">
             {user && (
               <>
@@ -101,45 +99,60 @@ export default function TopNav({ user, household, onSignOut }) {
           </div>
         </div>
 
-        {/* Right: user / actions */}
+        {/* Right: user / actions and hamburger */}
         <div className="flex items-center ml-4">
+          {/* Hamburger icon for mobile (right side) */}
+          <div className="flex md:hidden mr-2">
+            <button
+              onClick={() => setMobileMenuOpen((s) => !s)}
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-gray-900 focus:outline-none"
+              aria-label="Open main menu"
+            >
+              <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+          </div>
           {user ? (
-            <div ref={menuRef} className="relative flex items-center gap-3">
-              <button
-                onClick={() => setOpen((s) => !s)}
-                className="user-toggle no-global-accent cursor-pointer flex items-center gap-3 text-gray-900 focus:outline-none px-3 py-2"
-                aria-haspopup="true"
-                aria-expanded={open}
-                type="button"
-              >
-                {user?.photoUrl ? (
-                  <img src={user.photoUrl} alt={user.name || 'User'} className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover" />
-                ) : (
-                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-user-initials text-white flex items-center justify-center font-semibold">{initials(user?.name)}</div>
-                )}
-                <span className="text-gray-900 font-medium leading-none">Welcome{user?.name ? `, ${user.name.split(' ')[0]}!` : '!'}</span>
-                <svg className="w-4 h-4 text-gray-500 ml-1" viewBox="0 0 20 20" fill="none" aria-hidden>
-                  <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-
-              {open && (
-                <div
-                  className="absolute right-0 top-full mt-3 w-44 bg-white rounded-lg shadow-lg z-99999"
-                  style={{ pointerEvents: 'auto' }}
-                  onClick={e => e.stopPropagation()}
+            <div className="relative flex items-center gap-3">
+              {/* Only show dropdown on md+ screens */}
+              <div className="hidden md:flex items-center gap-3" ref={menuRef}>
+                <button
+                  onClick={() => setOpen((s) => !s)}
+                  className="user-toggle no-global-accent cursor-pointer flex items-center gap-3 text-gray-900 focus:outline-none px-3 py-2"
+                  aria-haspopup="true"
+                  aria-expanded={open}
+                  type="button"
                 >
-                  <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dropdown-item" onClick={() => setOpen(false)}>My Profile</Link>
-                  <button
-                    onClick={() => { setOpen(false); onSignOut && onSignOut(); }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dropdown-item"
+                  {user?.photoUrl ? (
+                    <img src={user.photoUrl} alt={user.name || 'User'} className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-user-initials text-white flex items-center justify-center font-semibold">{initials(user?.name)}</div>
+                  )}
+                  <span className="text-gray-900 font-medium leading-none">Welcome{user?.name ? `, ${user.name.split(' ')[0]}!` : '!'}</span>
+                  <svg className="w-4 h-4 text-gray-500 ml-1" viewBox="0 0 20 20" fill="none" aria-hidden>
+                    <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                {open && (
+                  <div
+                    className="absolute right-0 top-full mt-3 w-44 bg-white rounded-lg shadow-lg z-99999"
+                    style={{ pointerEvents: 'auto' }}
+                    onClick={e => e.stopPropagation()}
                   >
-                    Sign out
-                  </button>
-                </div>
-              )}
-
-              {/* Notification bell sits to the right of the welcome button */}
+                    <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dropdown-item" onClick={() => setOpen(false)}>My Profile</Link>
+                    <button
+                      onClick={() => { setOpen(false); onSignOut && onSignOut(); }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dropdown-item"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
+              {/* Notification bell always visible */}
               <NotificationBell navigate={navigate} />
             </div>
           ) : (
@@ -150,6 +163,34 @@ export default function TopNav({ user, household, onSignOut }) {
           )}
         </div>
       </div>
+
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-99999 bg-black bg-opacity-40 md:hidden" onClick={() => setMobileMenuOpen(false)}>
+          <div className="absolute top-0 left-0 w-3/4 max-w-xs h-full bg-white shadow-lg p-6 flex flex-col gap-2" onClick={e => e.stopPropagation()}>
+            <div className="flex flex-col gap-4">
+              {user && (
+                <>
+                  <Link to="/dashboard" className="text-lg text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>My Pets</Link>
+                  <Link to="/household-settings" className="text-lg text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Settings</Link>
+                </>
+              )}
+              <Link to="/plans" className="text-lg text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Plans</Link>
+              {user ? (
+                <>
+                  <Link to="/profile" className="text-base text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>My Profile</Link>
+                  <button onClick={() => { setMobileMenuOpen(false); onSignOut && onSignOut(); }} className="text-base text-red-600 py-2 text-left">Sign out</button>
+                </>
+              ) : (
+                <>
+                  <Link to="/create-household" className="btn btn-red topnav-cta mb-2" onClick={() => setMobileMenuOpen(false)}>Get started</Link>
+                  <Link to="/login" className="text-base text-accent hover:underline" onClick={() => setMobileMenuOpen(false)}>Sign in</Link>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
