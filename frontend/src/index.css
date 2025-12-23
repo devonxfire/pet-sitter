@@ -1,4 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap');
+/* SUPER-SPECIFIC OVERRIDE: Force white background for Sign out button in mobile menu, override .page-non-landing */
+.fixed.inset-0.z-99999.md\:hidden .mobile-signout-btn,
+.fixed.inset-0.z-99999.md\:hidden .mobile-signout-btn:hover,
+.fixed.inset-0.z-99999.md\:hidden .mobile-signout-btn:focus,
+.fixed.inset-0.z-99999.md\:hidden .mobile-signout-btn:active {
+  background: #fff !important;
+  background-color: #fff !important;
+  color: #374151 !important;
+  border-bottom: 1px solid #E5E7EB !important;
+  box-shadow: none !important;
+  width: 100% !important;
+  text-align: left !important;
+  font-size: 1.125rem !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+}
 /* import getSocket from './socket';  // Not valid in CSS, but shown for reference */
 /* MAXIMUM-SPECIFICITY: Force transparent background for modal close (X) button, no gray on hover/focus */
 .fixed.inset-0.z-50.flex.items-center.justify-center.bg-black\/50 button[aria-label="Close"],
@@ -819,4 +835,22 @@ button.no-global-accent:hover:not(.user-toggle):not(.no-accent-hover) > * {
   font-weight: 700 !important;
   border-radius: 9999px !important;
   box-shadow: 0 1px 2px rgba(11,18,32,0.12) !important;
+}
+
+
+/* FINAL OVERRIDE: Match My Profile button style for mobile sign out button */
+.mobile-signout-btn,
+.mobile-signout-btn:hover,
+.mobile-signout-btn:focus,
+.mobile-signout-btn:active {
+  background: #fff !important;
+  background-color: #fff !important;
+  color: #374151 !important;
+  border-bottom: 1px solid #E5E7EB !important;
+  box-shadow: none !important;
+  width: 100% !important;
+  text-align: left !important;
+  font-size: 1.125rem !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
 }

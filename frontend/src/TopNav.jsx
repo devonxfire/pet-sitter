@@ -1,4 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
+// Utility to force transparent background on sign out button
+function useForceTransparentSignOut() {
+  useEffect(() => {
+    const btn = document.querySelector('.mobile-signout-btn');
+    if (btn) {
+      btn.style.setProperty('background', 'transparent', 'important');
+      btn.style.setProperty('background-color', 'transparent', 'important');
+      btn.style.setProperty('box-shadow', 'none', 'important');
+      btn.style.setProperty('outline', 'none', 'important');
+      btn.style.setProperty('border', 'none', 'important');
+      btn.style.setProperty('transition', 'none', 'important');
+    }
+  });
+}
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import './no-hover-effect.css';
@@ -178,13 +192,18 @@ export default function TopNav({ user, household, onSignOut }) {
               <Link to="/plans" className="text-lg text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Plans</Link>
               {user ? (
                 <>
-                  <Link to="/profile" className="text-base text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>My Profile</Link>
-                  <button onClick={() => { setMobileMenuOpen(false); onSignOut && onSignOut(); }} className="text-base text-red-600 py-2 text-left">Sign out</button>
+                  <Link to="/profile" className="text-lg text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>My Profile</Link>
+                  <button
+                    onClick={() => { setMobileMenuOpen(false); onSignOut && onSignOut(); }}
+                    className="text-lg text-gray-700 py-2 border-b border-gray-100 w-full text-left hover:bg-gray-100 no-global-accent"
+                  >
+                    Sign out
+                  </button>
                 </>
               ) : (
                 <>
-                  <Link to="/create-household" className="btn btn-red topnav-cta mb-2" onClick={() => setMobileMenuOpen(false)}>Get started</Link>
-                  <Link to="/login" className="text-base text-accent hover:underline" onClick={() => setMobileMenuOpen(false)}>Sign in</Link>
+                  <Link to="/create-household" className="btn btn-red topnav-cta mb-2 text-lg" onClick={() => setMobileMenuOpen(false)}>Get started</Link>
+                  <Link to="/login" className="text-lg text-accent hover:underline" onClick={() => setMobileMenuOpen(false)}>Sign in</Link>
                 </>
               )}
             </div>
