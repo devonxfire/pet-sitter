@@ -9,45 +9,60 @@ import ACTIVITY_TYPES from './activityTypes';
 import ConfirmDialog from './ConfirmDialog';
 import ModalClose from './ModalClose';
 
+
 function FavouritesModal({ favourites, onLog, onDelete, onClose }) {
-    // Removed invalid references to household, user, showLogActivity, editingActivity, viewingActivity
+  // Helper to format pet names for display
+  function formatPetNames(petNames) {
+    if (!Array.isArray(petNames) || petNames.length === 0) return '';
+    if (petNames.length === 1) return petNames[0];
+    if (petNames.length === 2) return petNames.join(' and ');
+    return petNames.slice(0, -1).join(', ') + ' and ' + petNames[petNames.length - 1];
+  }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 relative">
         <ModalClose onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold" />
-          <h2 className="text-2xl font-bold mb-4 text-gray-900">Favourites</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-900">Favourites</h2>
         {(!favourites || favourites.length === 0) ? (
           <div className="text-center py-8"><p className="text-gray-500">No current Favourites</p></div>
         ) : (
           <div className="space-y-4">
-            {favourites.map((qa) => (
-              <div key={`qa-${qa.id}`} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-2">
-                    <p className="font-semibold text-gray-900">{qa.label}</p>
-                    <span className="text-sm text-gray-500">{new Date().toLocaleString()}</span>
+            {favourites.map((qa) => {
+              // Try to get pet names from data.petNames, fallback to nothing
+              const petNames = Array.isArray(qa.data?.petNames) ? qa.data.petNames : [];
+              const petNamesStr = petNames.length > 0 ? formatPetNames(petNames) : '';
+              const labelWithPets = petNamesStr
+                ? `${qa.label} for ${petNamesStr}`
+                : qa.label;
+              return (
+                <div key={`qa-${qa.id}`} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="font-semibold text-gray-900">{labelWithPets}</p>
+                      <span className="text-sm text-gray-500">{new Date().toLocaleString()}</span>
+                    </div>
+                    {qa.data?.notes && (<p className="text-gray-700 text-sm">{qa.data.notes}</p>)}
+                    <p className="text-xs text-gray-500 mt-2">Favourite</p>
                   </div>
-                  {qa.data?.notes && (<p className="text-gray-700 text-sm">{qa.data.notes}</p>)}
-                  <p className="text-xs text-gray-500 mt-2">Favourite</p>
+                  <div className="ml-4 flex flex-col items-end gap-2">
+                    <button
+                      onClick={() => onLog(qa)}
+                      className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition"
+                      style={{ cursor: 'pointer', width: '100%' }}
+                    >
+                      Log
+                    </button>
+                    <button
+                      onClick={() => onDelete(qa)}
+                      className="px-3 py-2 text-sm font-medium text-accent hover:bg-gray-100 rounded-lg transition no-global-accent no-accent-hover delete-btn"
+                      style={{ color: 'var(--brand-red)', cursor: 'pointer', width: '100%' }}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
-                <div className="ml-4 flex flex-col items-end gap-2">
-                  <button
-                    onClick={() => onLog(qa)}
-                    className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition"
-                    style={{ cursor: 'pointer', width: '100%' }}
-                  >
-                    Log
-                  </button>
-                  <button
-                    onClick={() => onDelete(qa)}
-                    className="px-3 py-2 text-sm font-medium text-accent hover:bg-gray-100 rounded-lg transition no-global-accent no-accent-hover delete-btn"
-                    style={{ color: 'var(--brand-red)', cursor: 'pointer', width: '100%' }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -280,7 +295,6 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
 
   const createFavourite = async (action) => {
     try {
-      console.log('[createFavourite] action:', action);
       if (!household?.id) { alert('No household context available. Favourites require a household.'); return; }
       if (!action?.id) { console.error('Favourite missing id', { action }); alert('Favourite is missing an id. Try refreshing the Favourites list.'); return; }
       if (action.id && household?.id) {
@@ -289,111 +303,34 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
         const petIds = Array.isArray(action.data?.petIds) && action.data.petIds.length > 0
           ? action.data.petIds
           : [petId ? parseInt(petId) : undefined];
-        let created = [];
-        let allPetNames = [];
-        if (Array.isArray(pets) && pets.length > 0) {
-          allPetNames = pets.filter(p => petIds.includes(p.id)).map(p => p.name);
-        } else if (Array.isArray(householdPets) && householdPets.length > 0) {
-          allPetNames = householdPets.filter(p => petIds.includes(p.id)).map(p => p.name);
-        } else if (pet && petIds.length === 1 && petIds[0] === pet.id) {
-          allPetNames = [pet.name];
-        }
-        // Fallback: if allPetNames is empty but action.data.petNames exists, use it
-        if ((!allPetNames || allPetNames.length === 0) && Array.isArray(action.data?.petNames) && action.data.petNames.length > 0) {
-          allPetNames = action.data.petNames;
-        }
-        console.log('[createFavourite] petIds:', petIds, 'allPetNames:', allPetNames, 'action.data:', action.data);
+        // Only POST to server, do not update local activities state
         if (petIds.length > 1) {
-          const results = await Promise.all(petIds.map(async pid => {
+          await Promise.all(petIds.map(async pid => {
             const payload = {
               activityTypeId: action.key,
               timestamp: new Date().toISOString(),
               notes: action.data?.notes || '',
-              data: { petNames: allPetNames, petIds },
+              data: { petNames: action.data?.petNames || [], petIds },
             };
-            console.log(`[createFavourite] POST /api/pets/${pid}/activities payload:`, payload);
-            const resp = await fetch(apiUrl(`/api/pets/${pid}/activities`), {
+            await fetch(apiUrl(`/api/pets/${pid}/activities`), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
               body: JSON.stringify(payload)
             });
-            let body = null; try { body = await resp.json(); } catch (e) { body = null; }
-            if (!resp.ok) { const msg = body?.error || (body?.message) || `HTTP ${resp.status}`; alert(`Failed to apply Favourite: ${msg}`); return null; }
-            console.log(`[createFavourite] Response for pet ${pid}:`, body);
-            return body;
           }));
-          created = results.flat().filter(Boolean);
         } else {
           const payload = {
             petId: petIds[0],
             timestamp: new Date().toISOString()
           };
-          console.log('[createFavourite] POST (single pet) to', replayUrl, 'payload:', payload);
-          const resp = await fetch(replayUrl, {
+          await fetch(replayUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
             body: JSON.stringify(payload)
           });
-          let body = null; try { body = await resp.json(); } catch (e) { body = null; }
-          if (!resp.ok) { const msg = body?.error || (body?.message) || `HTTP ${resp.status}`; alert(`Failed to apply Favourite: ${msg}`); return; }
-          console.log('[createFavourite] Response (single pet):', body);
-          created = Array.isArray(body) ? body : [body];
         }
-        if (Array.isArray(created) && created.length > 0) {
-          const groupKey = (a) => `${a.activityType?.name || a.activityType?.label || a.activityTypeId || ''}|${(a.timestamp || '').slice(0,16)}`;
-          const grouped = {};
-          created.forEach(a => {
-            const key = groupKey(a);
-            if (!grouped[key]) grouped[key] = [];
-            grouped[key].push(a);
-          });
-          const merged = Object.values(grouped).map(group => {
-            if (group.length === 1) {
-              // Ensure petNames is set for single merged activity
-              const single = { ...group[0] };
-              if (!Array.isArray(single.data?.petNames) || single.data.petNames.length === 0) {
-                // Try to use allPetNames or action.data.petNames
-                let names = [];
-                if (Array.isArray(allPetNames) && allPetNames.length > 0) names = allPetNames;
-                else if (Array.isArray(action.data?.petNames) && action.data.petNames.length > 0) names = action.data.petNames;
-                single.data = { ...single.data, petNames: names };
-              }
-              return single;
-            }
-            const base = { ...group[0] };
-            // Merge all pet names, filter out empty strings
-            let mergedNames = group.flatMap(g => Array.isArray(g.data?.petNames) ? g.data.petNames : [g.pet?.name || g.petName || '']).filter(Boolean);
-            // Fallback if mergedNames is empty
-            if (mergedNames.length === 0) {
-              if (Array.isArray(allPetNames) && allPetNames.length > 0) mergedNames = allPetNames;
-              else if (Array.isArray(action.data?.petNames) && action.data.petNames.length > 0) mergedNames = action.data.petNames;
-            }
-            base.data = { ...base.data, petNames: Array.from(new Set(mergedNames)), petIds: group.map(g => g.petId || g.pet?.id) };
-            delete base.pet;
-            delete base.petId;
-            base._isMergedMultiPet = true;
-            return base;
-          });
-          console.log('[createFavourite] merged activities:', merged);
-          // Immediately dedupe and merge activities so only merged appears
-          setActivities((prev = []) => {
-            // Remove any activities matching the same type, time, and petIds as the merged
-            let filtered = prev.filter(a => {
-              return !merged.some(m => {
-                const sameType = (a.activityTypeId || a.activityType?.id) === (m.activityTypeId || m.activityType?.id);
-                const sameTime = (a.timestamp || '').slice(0,16) === (m.timestamp || '').slice(0,16);
-                const isSinglePet = (a.petId || a.pet?.id) && (!a.data?.petIds || a.data.petIds.length <= 1);
-                const inMerged = Array.isArray(m.data?.petIds) && m.data.petIds.includes(a.petId || a.pet?.id);
-                return sameType && sameTime && isSinglePet && inMerged;
-              });
-            });
-            // Remove any just-created single activities that would duplicate the merged
-            const mergedIds = new Set(merged.map(m => String(m.id)));
-            filtered = filtered.filter(a => !mergedIds.has(String(a.id)));
-            return [...merged, ...filtered];
-          });
-        }
-        try { await loadFavourites(); } catch (e) {}
+        // Always reload favourites from server and close modal
+        await loadFavourites();
         setShowFavouritesModal(false);
         return;
       }
