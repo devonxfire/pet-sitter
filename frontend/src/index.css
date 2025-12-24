@@ -1,4 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap');
+/* Ensure hero-cta .btn-red always gets hover shade on landing page */
+.hero-cta .btn.btn-red:hover,
+.hero-cta a.btn.btn-red:hover,
+.hero-cta button.btn.btn-red:hover,
+.hero-cta .btn.btn-red:focus,
+.hero-cta a.btn.btn-red:focus,
+.hero-cta button.btn.btn-red:focus {
+  background-color: #ED1C24 !important;
+  color: #fff !important;
+  border: 1px solid #ED1C24 !important;
+  box-shadow: 0 8px 32px rgba(237,28,36,0.18) !important;
+}
 /* SUPER-SPECIFIC OVERRIDE: Force white background for Sign out button in mobile menu, override .page-non-landing */
 .fixed.inset-0.z-99999.md\:hidden .mobile-signout-btn,
 .fixed.inset-0.z-99999.md\:hidden .mobile-signout-btn:hover,

@@ -29,7 +29,7 @@ export default function HeroBlock({ user, onSignOut }) {
         {/* CTA buttons placed under the heading and left-aligned with heading text */}
         <div className="md:col-span-7 mt-8">
             <div className="flex justify-start">
-              <div className="w-full max-w-xl">
+              <div className="w-full max-w-xl hero-cta">
                 <div className="flex flex-col sm:flex-row gap-4 w-full">
                   {user ? (
                     <>
