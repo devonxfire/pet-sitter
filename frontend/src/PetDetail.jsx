@@ -958,7 +958,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                         <button
                           onClick={() => {
                             if (household?.id) {
-                              navigate(`/household/${household.id}/calendar?pet=${petId}`);
+                              navigate(`/household/${household.id}/calendar`);
                             } else {
                               // fallback: try to find householdId from pet or context
                               // or show an error

@@ -81,7 +81,7 @@ function FavouritesModal({ favourites, onLog, onDelete, onClose }) {
 
 export default function PetActivities({ household, user, onSignOut, pet: propPet, activities: propActivities, disableInternalFetch }) {
   const navigate = useNavigate();
-  const { petId } = useParams();
+  const { petId, householdId: paramHouseholdId } = useParams();
   const [householdPets, setHouseholdPets] = useState([]);
   // Keep a local pets array in sync with householdPets for reliable pet name lookups
   const [pets, setPets] = useState([]);
@@ -640,7 +640,14 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
                         <span>Activities</span>
                       </button>
                       <button
-                        onClick={() => navigate(`/pet/${petId}/calendar`)}
+                        onClick={() => {
+                          const hid = paramHouseholdId || household?.id;
+                          if (hid) {
+                            navigate(`/household/${hid}/calendar`);
+                          } else {
+                            alert('Household not found for this pet.');
+                          }
+                        }}
                         className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
                         ref={el => {
                           if (el) {
