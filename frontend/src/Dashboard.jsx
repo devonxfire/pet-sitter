@@ -209,7 +209,10 @@ export default function Dashboard({ user, household, onSignOut }) {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-normal" style={{ color: '#6b7280' }}>Your Pets</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div
+              className="w-full flex flex-col items-center md:grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+              style={{ margin: 0, padding: 0 }}
+            >
               {pets.map((pet, idx) => {
                 // Determine border logic: default on first, or on hovered
                 const isDefault = hoveredPetIdx === null && idx === 0;
@@ -218,7 +221,8 @@ export default function Dashboard({ user, household, onSignOut }) {
                 return (
                   <React.Fragment key={pet.id}>
                     <div
-                      className={`bg-gray-50 rounded-2xl p-6 border border-gray-200 transition-transform duration-300 ease-in-out transform-gpu hover:scale-102 hover:shadow-lg flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4 relative group cursor-pointer pet-card-fix ${borderClass} max-w-sm`}
+                      className={`bg-gray-50 rounded-2xl p-6 border border-gray-200 transition-transform duration-300 ease-in-out transform-gpu hover:scale-102 hover:shadow-lg flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-4 relative group cursor-pointer pet-card-fix ${borderClass}`}
+                      style={{ maxWidth: '75vw', minWidth: 320, width: '100%', ...(window.innerWidth >= 768 ? { maxWidth: 384 } : {}) }}
                       onMouseEnter={() => setHoveredPetIdx(idx)}
                       onMouseLeave={() => setHoveredPetIdx(null)}
                       onClick={() => {
@@ -311,11 +315,17 @@ export default function Dashboard({ user, household, onSignOut }) {
                 </div>
               </div>
             )}
-            <div className="flex justify-start mt-12 mb-8">
+            <div className="w-full flex flex-col items-center mt-8 mb-8">
               <button
                 onClick={handleWizardOpen}
                 className="btn text-lg font-semibold px-5 py-2 hover:opacity-90 transition shadow rounded-lg"
-                style={{ letterSpacing: '0.02em' }}
+                style={{
+                  letterSpacing: '0.02em',
+                  maxWidth: '75vw',
+                  minWidth: 320,
+                  width: '100%',
+                  ...(window.innerWidth >= 768 ? { maxWidth: 384 } : {})
+                }}
               >
                 + Add Pet
               </button>

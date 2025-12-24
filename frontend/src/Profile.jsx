@@ -150,8 +150,8 @@ export default function Profile({ user, household, onSignOut }) {
               <button
                 type="button"
                 onClick={() => { try { (window.__profileFileRef || document.querySelector('input[type=file]')).click(); } catch (e) {} }}
-                className="rounded-2xl bg-gray-100 p-1 relative opacity-50"
-                style={{ width: 96, height: 96, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: 'pointer' }}
+                className="rounded-2xl bg-white p-1 relative"
+                style={{ width: 96, height: 96, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: 'pointer', opacity: 1 }}
               >
                 {user?.photoUrl || user?.photo ? (
                   <img src={(user.photoUrl && (user.photoUrl.startsWith('http') ? user.photoUrl : `${API_BASE}${user.photoUrl}`)) || user.photo} alt={user?.name || 'Profile'} className="w-full h-full object-cover" />
