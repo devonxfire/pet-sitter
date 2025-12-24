@@ -104,6 +104,12 @@ export default function TopNav({ user, household, onSignOut }) {
                   to="/household-settings"
                   className={`text-sm text-gray-600 hover:text-gray-900 py-1 border-b transition-all duration-150 ${location.pathname === '/household-settings' ? 'border-accent nav-link-active' : 'border-transparent'}`}
                 >Settings</Link>
+                <Link
+                  to={household?.id ? `/household/${household.id}/calendar` : '#'}
+                  className={`text-sm text-gray-600 hover:text-gray-900 py-1 border-b transition-all duration-150 ${location.pathname.includes('/calendar') ? 'border-accent nav-link-active' : 'border-transparent'}`}
+                >
+                  Calendar
+                </Link>
               </>
             )}
             <Link
@@ -187,6 +193,7 @@ export default function TopNav({ user, household, onSignOut }) {
                 <>
                   <Link to="/dashboard" className="text-lg text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>My Pets</Link>
                   <Link to="/household-settings" className="text-lg text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Settings</Link>
+                  <Link to={firstPetId ? `/pet/${firstPetId}/calendar` : '#'} className="text-lg text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Calendar</Link>
                 </>
               )}
               <Link to="/plans" className="text-lg text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Plans</Link>

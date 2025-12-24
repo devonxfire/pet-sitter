@@ -956,7 +956,15 @@ export default function PetDetail({ household, user, onSignOut }) {
                           <span>Activities</span>
                         </button>
                         <button
-                          onClick={() => navigate(`/pet/${petId}/calendar`)}
+                          onClick={() => {
+                            if (household?.id) {
+                              navigate(`/household/${household.id}/calendar?pet=${petId}`);
+                            } else {
+                              // fallback: try to find householdId from pet or context
+                              // or show an error
+                              alert('Household not found for this pet.');
+                            }
+                          }}
                           className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
                           ref={el => {
                             if (el) {

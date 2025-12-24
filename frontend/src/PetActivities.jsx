@@ -21,7 +21,14 @@ function FavouritesModal({ favourites, onLog, onDelete, onClose }) {
   }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 relative">
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full relative"
+        style={{
+          maxWidth: '95vw',
+          padding: '1.25rem',
+          ...(window.innerWidth < 640 ? { maxWidth: '92vw', padding: '0.75rem' } : {}),
+        }}
+      >
         <ModalClose onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold" />
             <h2 className="text-2xl font-bold mb-4 text-gray-900 text-center sm:text-left">Favourites</h2>
         {(!favourites || favourites.length === 0) ? (

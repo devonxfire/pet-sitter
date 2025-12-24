@@ -4,7 +4,15 @@ import ModalClose from './ModalClose';
 export default function ConfirmDialog({ title = 'Confirm', message, onConfirm, onCancel, confirmLabel = 'Delete', cancelLabel = 'Cancel' }) {
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6 relative">
+      <div
+        className="bg-white rounded-xl shadow-2xl w-full mx-2 sm:mx-4 relative"
+        style={{
+          maxWidth: '95vw',
+          width: '100%',
+          padding: '1.5rem 0.5rem 1.5rem 0.5rem',
+          ...(window.innerWidth >= 640 ? { maxWidth: 420, padding: '2.5rem 2rem 2rem 2rem' } : {})
+        }}
+      >
         <ModalClose onClick={onCancel} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold" />
         <h2 className="text-xl font-semibold text-gray-900 mb-3 text-center">{title}</h2>
         <p className="text-sm text-gray-600 mb-6 text-center">{message}</p>

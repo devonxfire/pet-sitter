@@ -80,7 +80,14 @@ export default function EditActivityModal({ activity, onActivityUpdated, onClose
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+      <div
+        className="bg-white rounded-2xl w-full mx-4"
+        style={{
+          maxWidth: '95vw',
+          padding: '1.25rem',
+          ...(window.innerWidth < 640 ? { maxWidth: '92vw', padding: '0.75rem' } : {}),
+        }}
+      >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900">Edit Activity</h2>
           <ModalClose onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl" />

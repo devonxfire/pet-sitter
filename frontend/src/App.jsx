@@ -18,6 +18,7 @@ import Terms from './Terms';
 import Privacy from './Privacy';
 import Contact from './Contact';
 import PlansPage from './Plans';
+import HouseholdCalendarPage from './HouseholdCalendarPage';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -216,6 +217,10 @@ function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/plans" element={<PlansPage />} />
+        <Route
+          path="/household/:householdId/calendar"
+          element={<HouseholdCalendarPage />}
+        />
 
         <Route
           path="/dashboard"

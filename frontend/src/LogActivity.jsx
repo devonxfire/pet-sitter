@@ -869,7 +869,15 @@ export default function LogActivity({ petId, household, user, activity, onActivi
   if (currentStep === 'details') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
+        <div
+          className="bg-white rounded-xl shadow-2xl w-full mx-2 sm:mx-4 relative animate-fade-in"
+          style={{
+            maxWidth: '95vw',
+            width: '100%',
+            padding: '1.5rem 0.5rem 1.5rem 0.5rem',
+            ...(window.innerWidth >= 640 ? { maxWidth: 480, padding: '2.5rem 2rem 2rem 2rem' } : {})
+          }}
+        >
           <ModalClose onClick={onClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none" />
           <div className="flex items-center justify-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 text-center">Details</h2>
@@ -981,7 +989,15 @@ export default function LogActivity({ petId, household, user, activity, onActivi
   if (currentStep === 'summary') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
+        <div
+          className="bg-white rounded-xl shadow-2xl w-full mx-2 sm:mx-4 relative animate-fade-in"
+          style={{
+            maxWidth: '95vw',
+            width: '100%',
+            padding: '1.5rem 0.5rem 1.5rem 0.5rem',
+            ...(window.innerWidth >= 640 ? { maxWidth: 480, padding: '2.5rem 2rem 2rem 2rem' } : {})
+          }}
+        >
           <ModalClose onClick={onClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none" />
           <div className="flex items-center justify-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 text-center">Summary</h2>

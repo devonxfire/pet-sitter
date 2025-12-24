@@ -318,7 +318,7 @@ export default function Dashboard({ user, household, onSignOut }) {
             <div className="w-full flex flex-col items-center mt-8 mb-8">
               <button
                 onClick={handleWizardOpen}
-                className="btn text-lg font-semibold px-5 py-2 hover:opacity-90 transition shadow rounded-lg"
+                className="btn text-lg font-semibold px-5 py-2 hover:opacity-90 transition shadow rounded-lg cursor-pointer"
                 style={{
                   letterSpacing: '0.02em',
                   maxWidth: '75vw',

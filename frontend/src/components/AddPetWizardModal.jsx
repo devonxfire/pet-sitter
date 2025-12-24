@@ -397,7 +397,15 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
+      <div
+        className="bg-white rounded-xl shadow-2xl w-full mx-2 sm:mx-4 relative animate-fade-in"
+        style={{
+          maxWidth: '95vw',
+          width: '100%',
+          padding: '1.5rem 0.5rem 1.5rem 0.5rem',
+          ...(window.innerWidth >= 640 ? { maxWidth: 420, padding: '2.5rem 2rem 2rem 2rem' } : {})
+        }}
+      >
         <ModalClose id="add-pet-wizard-close" onClick={handleRequestClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none" />
               {/* Close confirmation modal */}
               {showCloseConfirm && (

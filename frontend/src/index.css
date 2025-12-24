@@ -854,3 +854,27 @@ button.no-global-accent:hover:not(.user-toggle):not(.no-accent-hover) > * {
   padding-top: 0.5rem !important;
   padding-bottom: 0.5rem !important;
 }
+
+/* Custom styles for react-calendar to use light gray background */
+.react-calendar {
+  background: #f7f7f7 !important;
+  border-radius: 0.75rem;
+  border: none;
+  color: #222;
+}
+.react-calendar__tile {
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+.react-calendar__tile--active,
+.react-calendar__tile--now {
+  background: #ffe5e5 !important;
+  color: #c3001f !important;
+}
+/* Ensure react-calendar with .no-global-accent uses light gray background */
+.react-calendar.no-global-accent {
+  background: #f7f7f7 !important;
+  border-radius: 0.75rem;
+  border: none;
+  color: #222;
+}
