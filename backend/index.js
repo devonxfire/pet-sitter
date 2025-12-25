@@ -1,3 +1,7 @@
+// Health check root route for uptime monitoring
+app.get('/', (req, res) => {
+  res.send('PetDaily backend is running');
+});
 // ...existing code...
 // ...existing code...
 // Upload user profile photo
