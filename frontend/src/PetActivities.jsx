@@ -878,7 +878,7 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
                   <div className="flex flex-col items-center text-center gap-2 mb-2 sm:flex-row sm:items-start sm:text-left sm:gap-0 sm:justify-between">
                     <div className="flex flex-col items-center w-full sm:flex-row sm:items-center sm:w-auto">
                       <img src={`/${imgName}`} alt={activity.activityType?.label || activity.activityType?.name || 'Activity'} className="w-20 h-20 mb-2 sm:w-14 sm:h-14 sm:mb-0 object-contain mx-auto sm:mx-0" />
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 sm:ml-4">
                         <p className="font-semibold text-gray-900 break-words">
                           {heading}
                         </p>
