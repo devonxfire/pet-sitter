@@ -1,0 +1,2 @@
+# Ignore local uploads and cache from deployment
+backend/public/uploads/
