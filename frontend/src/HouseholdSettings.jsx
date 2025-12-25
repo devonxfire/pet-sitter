@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ThemeSpinner from './ThemeSpinner';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch, apiUrl } from './api';
 
@@ -148,9 +149,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        <div className="flex items-center justify-center py-12">
-          <p className="text-gray-400">Loading...</p>
-        </div>
+        <ThemeSpinner label="Loading settings..." />
       </div>
     );
   }

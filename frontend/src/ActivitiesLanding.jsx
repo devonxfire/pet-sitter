@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ThemeSpinner from './ThemeSpinner';
 import { Link } from 'react-router-dom';
 import { apiFetch } from './api';
 
@@ -39,7 +40,7 @@ export default function ActivitiesLanding({ household, user, onSignOut }) {
         </div>
 
         {loading ? (
-          <div className="text-gray-500">Loading pets…</div>
+          <ThemeSpinner label="Loading pets…" />
         ) : pets.length === 0 ? (
           <div className="text-gray-500">No pets found for this household.</div>
         ) : (

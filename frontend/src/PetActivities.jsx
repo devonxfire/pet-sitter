@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import ThemeSpinner from './ThemeSpinner';
 import { generateGroupId } from './groupId';
 import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -506,7 +507,7 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
   if (loading) return (
     <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-6xl px-6 py-12">
-        <p className="text-gray-500">Loading activities...</p>
+        <ThemeSpinner label="Loading activities..." />
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ThemeSpinner from './ThemeSpinner';
 import AddPetWizardModal from './components/AddPetWizardModal';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiFetch, API_BASE } from './api';
@@ -173,9 +174,7 @@ export default function Dashboard({ user, household, onSignOut }) {
         <div className="max-w-6xl px-6 w-full">
 
         {loading ? (
-          <div className="text-center py-12">
-            <p className="text-gray-400">Loading...</p>
-          </div>
+          <ThemeSpinner label="Loading dashboard..." />
         ) : pets.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 mb-2">Welcome! Let's set up your first pet.</p>

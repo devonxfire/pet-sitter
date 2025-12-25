@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ThemeSpinner from './ThemeSpinner';
+
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiFetch, API_BASE, apiUrl } from './api';
 
@@ -7,6 +9,43 @@ import LogActivity from './LogActivity';
 import ActivityView from './ActivityView';
 import ACTIVITY_TYPES from './activityTypes';
 import { Link } from 'react-router-dom';
+
+// AvatarWithLoader: shows a spinner/overlay while image is loading
+function AvatarWithLoader({ src, alt }) {
+  const [loading, setLoading] = useState(true);
+  // Force spinner for at least 400ms
+  const [minDelayPassed, setMinDelayPassed] = useState(false);
+  useEffect(() => {
+    setLoading(true);
+    setMinDelayPassed(false);
+    const timer = setTimeout(() => setMinDelayPassed(true), 400);
+    return () => clearTimeout(timer);
+  }, [src]);
+  // Add cache-busting query param for testing spinner
+  const cacheBustedSrc = src + (src.includes('?') ? '&' : '?') + 't=' + Date.now();
+  const showSpinner = loading || !minDelayPassed;
+  return (
+    <div className="relative w-full h-full">
+      {showSpinner && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-60 z-10">
+          <svg className="animate-spin h-8 w-8 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+        </div>
+      )}
+      <img
+        src={cacheBustedSrc}
+        alt={alt}
+        className="w-full h-full object-cover select-none"
+        draggable={false}
+        style={showSpinner ? { visibility: 'hidden' } : {}}
+        onLoad={() => setLoading(false)}
+        onError={() => setLoading(false)}
+      />
+    </div>
+  );
+}
 
 
 
@@ -754,17 +793,7 @@ export default function PetDetail({ household, user, onSignOut }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        <header className="px-4 py-4">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            ← Back
-          </button>
-        </header>
-        <div className="flex items-center justify-center py-12">
-          <p className="text-gray-400">Loading...</p>
-        </div>
+        <ThemeSpinner label="Loading pet details..." />
       </div>
     );
   }
@@ -826,7 +855,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                   <div className="relative">
                     <div className="w-28 h-28 md:w-40 md:h-40 rounded-2xl bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
                       {pet.photoUrl ? (
-                        <img src={resolvePhotoUrl(pet.photoUrl)} alt={pet.name} className="w-full h-full object-cover select-none" draggable={false} />
+                        <AvatarWithLoader src={resolvePhotoUrl(pet.photoUrl)} alt={pet.name} />
                       ) : (
                         <div className="text-gray-400 text-4xl">📷</div>
                       )}

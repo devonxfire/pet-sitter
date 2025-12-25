@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ThemeSpinner from './ThemeSpinner';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiFetch } from './api';
 import './components/AddPetWizardModal.css';
@@ -36,38 +37,12 @@ export default function AddPet({ user, household, onSignOut }) {
 	const [loading, setLoading] = useState(false);
 
 	// Pre-populate vet info and food if household has pets
-	useEffect(() => {
-		if (!activeHousehold || !activeHousehold.pets || !Array.isArray(activeHousehold.pets) || activeHousehold.pets.length === 0) return;
-		// Use first pet's vet info as default
-		const firstPet = activeHousehold.pets[0];
-		if (firstPet) {
-			if (!vetName && firstPet.vetName) setVetName(firstPet.vetName);
-			if (!vetLocation && firstPet.vetLocation) setVetLocation(firstPet.vetLocation);
-			if (!vetContact && firstPet.vetContact) setVetContact(firstPet.vetContact);
-		}
-	}, [activeHousehold]);
 
-	// Always update food field to match selected species
-	useEffect(() => {
-		if (!activeHousehold || !activeHousehold.pets || !Array.isArray(activeHousehold.pets) || activeHousehold.pets.length === 0) return;
-		let match = null;
-		if (species === 'dog') {
-			match = activeHousehold.pets.find(p => (p.species || '').toLowerCase() === 'dog' && p.primaryFood);
-		} else if (species === 'cat') {
-			match = activeHousehold.pets.find(p => (p.species || '').toLowerCase() === 'cat' && p.primaryFood);
-		}
-		if (match) {
-			setPrimaryFood(match.primaryFood);
-		} else {
-			setPrimaryFood('');
-		}
-	}, [activeHousehold, species]);
-
+	// Handle form submit
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setError('');
 		setLoading(true);
-
 		try {
 			if (
 				!petName.trim() ||
@@ -80,13 +55,11 @@ export default function AddPet({ user, household, onSignOut }) {
 				setLoading(false);
 				return;
 			}
-
 			if (!activeHousehold) {
 				setError('No household found. Please create a household first.');
 				setLoading(false);
 				return;
 			}
-
 			const data = await apiFetch(`/api/households/${activeHousehold.id}/pets`, {
 				method: 'POST',
 				body: JSON.stringify({
@@ -94,8 +67,8 @@ export default function AddPet({ user, household, onSignOut }) {
 					species: species.toLowerCase(),
 					breed: breed || null,
 					age: age ? parseInt(age) : null,
-										weight: weight ? parseFloat(weight) : null,
-										weightUnit: weightUnit || 'kg',
+					weight: weight ? parseFloat(weight) : null,
+					weightUnit: weightUnit || 'kg',
 					notes: notes || null,
 					vetName: vetName || null,
 					vetLocation: vetLocation || null,
@@ -103,7 +76,6 @@ export default function AddPet({ user, household, onSignOut }) {
 					primaryFood: primaryFood || null,
 				}),
 			});
-
 			console.log('✅ Pet created:', data);
 			navigate('/dashboard', { state: { household: activeHousehold, petAdded: true } });
 		} catch (err) {
@@ -112,6 +84,57 @@ export default function AddPet({ user, household, onSignOut }) {
 			setLoading(false);
 		}
 	};
+
+	if (loading) {
+		return (
+			<div className="min-h-screen bg-white">
+				<ThemeSpinner label="Creating pet..." />
+			</div>
+		);
+	}
+
+	return (
+		<div className="min-h-screen bg-white">
+			<main className="flex justify-center py-8">
+				<div className="max-w-6xl px-6 mt-4 w-full">
+					<div className="mb-6">
+						<h1 className="text-3xl font-bold text-gray-900">Add a Pet</h1>
+					</div>
+
+					<form onSubmit={handleSubmit} className="space-y-6">
+						{/* General section */}
+						<div style={{ marginBottom: '12px', paddingBottom: '12px' }} className="border-b border-gray-200 pb-6">
+							<h2 className="text-2xl font-bold text-gray-900 mb-4">General</h2>
+
+							<div>
+								<label className="block text-sm font-medium text-gray-900 mb-2">Pet Name *</label>
+								<input
+									type="text"
+									value={petName}
+									onChange={(e) => setPetName(e.target.value)}
+									placeholder="e.g., Milo, Luna, Buddy"
+									className="w-full px-4 py-2 rounded-none border border-gray-200 focus:border-accent focus:outline-none"
+									required
+								/>
+							</div>
+						</div>
+
+						{error && <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">{error}</div>}
+
+						<div>
+							<button
+								type="submit"
+								disabled={loading}
+								className="w-full btn mt-4"
+							>
+								{loading ? 'Creating...' : 'Add Pet'}
+							</button>
+						</div>
+					</form>
+				</div>
+			</main>
+		</div>
+	);
 
 	// searchAreaForVets removed — users manually enter vet address
 

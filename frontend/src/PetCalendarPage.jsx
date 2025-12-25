@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ThemeSpinner from './ThemeSpinner';
 import ActivityView from './ActivityView';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -6,6 +7,7 @@ import 'react-calendar/dist/Calendar.css';
 // Placeholder for a calendar UI library/component
 // You can replace this with a real calendar like react-calendar, FullCalendar, or similar
 export default function HouseholdCalendarPage({ householdId }) {
+  const [loading, setLoading] = React.useState(false);
         // Notification/ActivityView verb templates
         const VERB_TEMPLATES = {
           feeding: { past: 'was fed', future: 'is scheduled for feeding' },
@@ -65,61 +67,64 @@ export default function HouseholdCalendarPage({ householdId }) {
   // Fetch activities for selected pet or all pets
   React.useEffect(() => {
     async function fetchActivities() {
-        if (!selectedPet) {
-            setActivities([]);
-            return;
+      if (!selectedPet) {
+        setActivities([]);
+        return;
+      }
+      let url = `/api/pets/${selectedPet}/activities?limit=200`;
+      setLoading(true);
+      try {
+        const res = await fetch(url, {
+          headers: { 'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : undefined }
+        });
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setActivities(data);
+        } else {
+          setActivities([]);
         }
-        let url = `/api/pets/${selectedPet}/activities?limit=200`;
-        console.log('[Calendar] Fetching activities:', { url, selectedPet, householdId });
-        try {
-            const res = await fetch(url, {
-                headers: { 'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : undefined }
-            });
-            const data = await res.json();
-            if (Array.isArray(data)) {
-                console.log('[Calendar] Activities fetched:', data);
-                setActivities(data);
-            } else {
-                setActivities([]);
-            }
-        } catch {
-            setActivities([]);
-        }
+      } catch {
+        setActivities([]);
+      } finally {
+        setLoading(false);
+      }
     }
     if (selectedPet) {
-        fetchActivities();
+      fetchActivities();
     } else {
-        setActivities([]);
+      setActivities([]);
     }
-}, [selectedPet, householdId]);
+  }, [selectedPet, householdId]);
   React.useEffect(() => {
     async function fetchPets() {
-        let hid = householdId;
-        // Try to get householdId from URL if not passed as prop
-        if (!hid) {
-            const match = window.location.pathname.match(/household\/(\d+)/);
-            if (match) hid = match[1];
-        }
-        if (!hid) {
-          setPets([]);
-          return;
-        }
-        try {
-          const res = await fetch(`/api/households/${hid}/pets`, {
-            headers: { 'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : undefined }
-          });
-          const data = await res.json();
-          if (Array.isArray(data)) {
-            setPets(data.map(p => ({ id: String(p.id), name: p.name })));
-          } else {
-            setPets([]);
-          }
-        } catch {
+      let hid = householdId;
+      if (!hid) {
+        const match = window.location.pathname.match(/household\/(\d+)/);
+        if (match) hid = match[1];
+      }
+      if (!hid) {
+        setPets([]);
+        return;
+      }
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/households/${hid}/pets`, {
+          headers: { 'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : undefined }
+        });
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setPets(data.map(p => ({ id: String(p.id), name: p.name })));
+        } else {
           setPets([]);
         }
+      } catch {
+        setPets([]);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchPets();
-}, [householdId]);
+  }, [householdId]);
 
   // Auto-select first pet if none selected or selectedPet not in pets list
   React.useEffect(() => {
@@ -131,6 +136,10 @@ export default function HouseholdCalendarPage({ householdId }) {
   const today = new Date();
   const monthName = today.toLocaleString('default', { month: 'long' });
   const year = today.getFullYear();
+  if (loading) {
+    return <ThemeSpinner label="Loading calendar..." />;
+  }
+
   return (
     <div className="max-w-2xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Household Calendar</h1>

@@ -605,6 +605,7 @@ app.post('/api/households/:householdId/favourites/:id/replay', authenticateToken
 app.get('/api/households/:householdId/pets', authenticateToken, async (req, res) => {
   try {
     const { householdId } = req.params;
+    console.log(`[GET /api/households/${householdId}/pets] userId:`, req.user.userId, 'query:', req.query);
 
     const member = await prisma.householdMember.findFirst({
       where: {
@@ -614,6 +615,7 @@ app.get('/api/households/:householdId/pets', authenticateToken, async (req, res)
     });
 
     if (!member) {
+      console.warn(`[GET /api/households/${householdId}/pets] Access denied for userId:`, req.user.userId);
       return res.status(403).json({ error: 'Access denied to this household' });
     }
 
@@ -628,9 +630,10 @@ app.get('/api/households/:householdId/pets', authenticateToken, async (req, res)
         activityTypes: true
       }
     });
+    console.log(`[GET /api/households/${householdId}/pets] Found pets:`, pets.length);
     res.json(pets);
   } catch (error) {
-    console.error('Get pets error:', error);
+    console.error('[GET /api/households/:householdId/pets] Get pets error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
