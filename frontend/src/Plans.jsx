@@ -116,7 +116,7 @@ export default function PlansPage() {
   return (
     <div className="min-h-screen bg-white py-12 px-4">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-4xl font-extrabold mb-8 text-center">Plans</h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-8 ml-1">Plans</h1>
         <div className="flex flex-col md:flex-row gap-8 items-stretch justify-center">
           {plans.map((plan, idx) => (
             <PlanCard key={plan.name} plan={plan} />

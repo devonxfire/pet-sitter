@@ -1,4 +1,5 @@
 import TopNav from './TopNav';
+import JoinPage from './JoinPage';
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { apiFetch } from './api';
@@ -217,9 +218,10 @@ function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/plans" element={<PlansPage />} />
+        <Route path="/join" element={<JoinPage />} />
         <Route
           path="/household/:householdId/calendar"
-          element={<HouseholdCalendarPage />}
+          element={<HouseholdCalendarPage household={household} />}
         />
 
         <Route

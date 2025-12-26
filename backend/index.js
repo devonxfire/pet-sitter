@@ -1,17 +1,30 @@
-// ...existing code...
-// ...existing code...
-// ...existing code...
-// ...existing code...
-// Upload user profile photo
-// ...existing code...
+// --- ENVIRONMENT & MAILGUN SETUP ---
+const dotenv = require('dotenv');
+dotenv.config();
+console.log('MAILGUN_API_KEY loaded:', process.env.MAILGUN_API_KEY ? process.env.MAILGUN_API_KEY.slice(0, 6) + '...' : 'NOT SET');
+console.log('MAILGUN_DOMAIN loaded:', !!process.env.MAILGUN_DOMAIN);
+console.log('MAILGUN_FROM_EMAIL loaded:', !!process.env.MAILGUN_FROM_EMAIL);
 
-// (Move this block below app initialization)
-// ...existing code...
-// ...existing code...
+const formData = require('form-data');
+const Mailgun = require('mailgun.js');
+const mailgun = new Mailgun(formData);
+const mg = mailgun.client({
+  username: 'api',
+  key: process.env.MAILGUN_API_KEY,
+  url: 'https://api.mailgun.net'
+});
+// Email sending temporarily disabled (Mailgun module not installed)
+// To re-enable, add Mailgun or another email provider integration here.
+// Determine allowed frontend origins (comma-separated env or sensible defaults)
+const DEFAULT_FRONTEND_ORIGINS = ['http://localhost:5173', 'http://localhost:5174'];
+const allowedOrigins = (process.env.FRONTEND_ORIGINS
+  ? process.env.FRONTEND_ORIGINS.split(',').map(s => s.trim()).filter(Boolean)
+  : (process.env.FRONTEND_ORIGIN ? [process.env.FRONTEND_ORIGIN] : DEFAULT_FRONTEND_ORIGINS)
+);
+
 // ...existing code...
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -21,17 +34,7 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const { Server } = require('socket.io');
-
-dotenv.config();
-// Determine allowed frontend origins (comma-separated env or sensible defaults)
-const DEFAULT_FRONTEND_ORIGINS = ['http://localhost:5173', 'http://localhost:5174'];
-const allowedOrigins = (process.env.FRONTEND_ORIGINS
-  ? process.env.FRONTEND_ORIGINS.split(',').map(s => s.trim()).filter(Boolean)
-  : (process.env.FRONTEND_ORIGIN ? [process.env.FRONTEND_ORIGIN] : DEFAULT_FRONTEND_ORIGINS)
-);
-
-// Enable CORS for the allowed frontend origins (mirrored for Socket.IO below)
-// `cors` accepts an array of origins starting with Express 4.x via custom function;
+// ...existing code...
 // passing the array directly is fine for development.
  
 const app = express();
@@ -1326,7 +1329,7 @@ app.get('/api/households/:householdId/members', authenticateToken, async (req, r
 app.post('/api/households/:householdId/members/invite', authenticateToken, async (req, res) => {
   try {
     const { householdId } = req.params;
-    const { email, role } = req.body;
+    const { email, role, message } = req.body;
 
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
@@ -1360,7 +1363,12 @@ app.post('/api/households/:householdId/members/invite', authenticateToken, async
       return res.status(400).json({ error: 'User already invited or is a member' });
     }
 
-    // Create pending invitation
+
+
+    // Use req.user for inviter info (no DB lookup)
+    const inviterName = req.user?.name || req.user?.email || 'A PetDaily member';
+
+    // Create pending invitation (MVP fields only)
     const invitation = await prisma.householdMember.create({
       data: {
         householdId: parseInt(householdId),
@@ -1368,13 +1376,47 @@ app.post('/api/households/:householdId/members/invite', authenticateToken, async
         role: role || 'member'
       },
       include: {
-        user: {
-          select: { id: true, email: true, name: true }
-        }
+        user: { select: { id: true, email: true, name: true } }
       }
     });
 
-    console.log(`✅ Invitation sent to ${email} for household ${householdId}`);
+
+    // Send invite email via Mailgun
+    try {
+      const appUrl = process.env.APP_BASE_URL || 'http://localhost:5174';
+      const inviteLink = `${appUrl}/join?household=${householdId}&email=${encodeURIComponent(email)}`;
+      // PetDaily logo (replace with your actual logo URL if needed)
+      const logoUrl = process.env.APP_LOGO_URL || 'https://petdaily.app/logo.png';
+      const roleDisplay = role ? role.charAt(0).toUpperCase() + role.slice(1) : 'Member';
+      const customMsg = message ? `<blockquote style=\"margin:1em 0;padding:1em;background:#f9f9f9;border-left:4px solid #4f46e5;color:#333;\">${message}</blockquote>` : '';
+      const html = `
+        <div style=\"font-family:sans-serif;max-width:480px;margin:0 auto;border:1px solid #eee;border-radius:8px;overflow:hidden;\">
+          <div style=\"background:#4f46e5;padding:24px 0;text-align:center;\">
+            <img src=\"${logoUrl}\" alt=\"PetDaily\" style=\"height:48px;\">
+          </div>
+          <div style=\"padding:24px;\">
+            <h2 style=\"margin-top:0;color:#4f46e5;\">You're invited to join a household on PetDaily!</h2>
+            <p><b>${inviterName}</b> has invited you as a <b>${roleDisplay}</b> for their household.</p>
+            ${customMsg}
+            <p style=\"margin:2em 0 1em 0;\">
+              <a href=\"${inviteLink}\" style=\"display:inline-block;padding:12px 24px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:4px;font-weight:bold;\">Accept Invitation</a>
+            </p>
+            <p style=\"font-size:13px;color:#888;\">Or copy and paste this link into your browser:<br><span style=\"word-break:break-all;\">${inviteLink}</span></p>
+            <p style=\"font-size:12px;color:#aaa;margin-top:2em;\">If you did not expect this invitation, you can ignore this email.</p>
+          </div>
+        </div>
+      `;
+      await mg.messages.create(process.env.MAILGUN_DOMAIN, {
+        from: process.env.MAILGUN_FROM_EMAIL || 'no-reply@yourapp.com',
+        to: [email],
+        subject: `You're invited to join a household on PetDaily!`,
+        html
+      });
+      console.log(`✅ Invitation email sent to ${email} for household ${householdId}`);
+    } catch (err) {
+      console.error('Mailgun error:', err);
+    }
+
     res.status(201).json(invitation);
   } catch (error) {
     console.error('Invite member error:', error);

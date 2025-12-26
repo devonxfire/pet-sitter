@@ -7,7 +7,7 @@ import { apiUrl } from './api';
 
 // Placeholder for a calendar UI library/component
 // You can replace this with a real calendar like react-calendar, FullCalendar, or similar
-export default function HouseholdCalendarPage({ householdId }) {
+export default function HouseholdCalendarPage({ householdId, household }) {
   const [loading, setLoading] = React.useState(false);
         // Notification/ActivityView verb templates
         const VERB_TEMPLATES = {
@@ -142,10 +142,12 @@ export default function HouseholdCalendarPage({ householdId }) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Household Calendar</h1>
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+    <div className="min-h-screen bg-white">
+      <main className="flex justify-center py-16">
+        <div className="max-w-6xl px-6 w-full">
+          <h1 className="text-4xl font-bold text-gray-900 mb-8">{household?.name ? `${household.name} Calendar` : 'Household Calendar'}</h1>
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <select className="rounded border px-3 py-2" value={selectedPet} onChange={e => setSelectedPet(e.target.value)}>
           {pets.map(pet => <option key={pet.id} value={pet.id}>{pet.name}</option>)}
         </select>
@@ -153,8 +155,8 @@ export default function HouseholdCalendarPage({ householdId }) {
           {types.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
         </select>
       </div>
-      {/* Calendar UI */}
-      <div className="bg-white rounded-xl shadow p-4 mb-6 flex flex-col items-center">
+          {/* Calendar UI */}
+          <div className="bg-white rounded-xl shadow p-4 mb-6 flex flex-col items-center">
         <Calendar
           onChange={setCalendarDate}
           value={calendarDate}
@@ -281,17 +283,30 @@ export default function HouseholdCalendarPage({ householdId }) {
       {viewingActivity && (
         <ActivityView activity={viewingActivity} onClose={() => setViewingActivity(null)} />
       )}
-      {/* Legend */}
-      <div className="flex gap-4 mt-4 justify-center">
+          {/* Legend */}
+          <div className="flex gap-4 mt-4 justify-center">
         <span className="flex items-center gap-2"><span className="w-4 h-4 rounded bg-blue-400 inline-block"></span>Activity</span>
         <span className="flex items-center gap-2"><span className="w-4 h-4 rounded bg-green-400 inline-block"></span>Appointment</span>
         <span className="flex items-center gap-2"><span className="w-4 h-4 rounded bg-yellow-400 inline-block"></span>Reminder</span>
       </div>
-      {/* Extra vertical space below legend */}
-      <div className="mb-8"></div>
-      {/* Schedule button */}
-      <button className="w-full py-3 bg-accent text-white font-semibold rounded-xl text-lg hover:opacity-90 transition mb-2">Schedule</button>
-      {/* Modal for scheduling (to be implemented) */}
+          {/* Extra vertical space below legend */}
+          <div className="mb-8"></div>
+          {/* Schedule button */}
+          <div className="flex">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 bg-accent text-gray-900 font-semibold py-2 px-4 rounded-lg hover:opacity-90 transition cursor-pointer mb-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4" aria-hidden="true" focusable="false" style={{ flex: '0 0 auto' }}>
+                <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="2" fill="none" />
+                <path d="M12 6v6l4 2" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              </svg>
+              <span>Schedule</span>
+            </button>
+          </div>
+          {/* Modal for scheduling (to be implemented) */}
+        </div>
+      </main>
     </div>
   );
 }

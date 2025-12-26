@@ -176,28 +176,12 @@ export default function Dashboard({ user, household, onSignOut }) {
         {loading ? (
           <ThemeSpinner label="Loading dashboard..." />
         ) : pets.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="py-12 w-full text-left">
             <p className="text-gray-500 mb-2">Welcome! Let's set up your first pet.</p>
             <button
               onClick={handleWizardOpen}
-              className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer shadow"
-              style={{
-                background: '#10B981',
-                backgroundColor: '#10B981',
-                color: '#fff',
-                boxShadow: '0 4px 16px 0 rgba(0,0,0,0.18)',
-                borderRadius: '0.75rem',
-                minWidth: '110px',
-                fontWeight: 400,
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = '#059669';
-                e.currentTarget.style.backgroundColor = '#059669';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = '#10B981';
-                e.currentTarget.style.backgroundColor = '#10B981';
-              }}
+              className="inline-flex items-center gap-2 bg-accent text-gray-900 font-semibold py-2 px-4 rounded-lg hover:opacity-90 transition cursor-pointer shadow"
+              style={{ minWidth: 110 }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
               Add Pet
@@ -314,19 +298,13 @@ export default function Dashboard({ user, household, onSignOut }) {
                 </div>
               </div>
             )}
-            <div className="w-full flex flex-col items-center mt-8 mb-8">
+            <div className="w-full flex flex-col items-start mt-8 mb-8">
               <button
                 onClick={handleWizardOpen}
-                className="btn text-lg font-semibold px-5 py-2 hover:opacity-90 transition shadow rounded-lg cursor-pointer"
-                style={{
-                  letterSpacing: '0.02em',
-                  maxWidth: '75vw',
-                  minWidth: 320,
-                  width: '100%',
-                  ...(window.innerWidth >= 768 ? { maxWidth: 384 } : {})
-                }}
+                className="inline-flex items-center gap-2 bg-accent text-gray-900 font-semibold py-2 px-4 rounded-lg hover:opacity-90 transition cursor-pointer"
               >
-                + Add Pet
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"><path d="M20 3v10a8 8 0 1 1-16 0V3l3.432 3.432A7.96 7.96 0 0 1 12 5c1.769 0 3.403.574 4.728 1.546z"/><path d="M2 16h5l-4 4m19-4h-5l4 4m-10-4a1 1 0 1 0 2 0a1 1 0 1 0-2 0m-2-5v.01m6-.01v.01"/></g></svg>
+                Add Pet
               </button>
             </div>
             {/* Household section removed */}

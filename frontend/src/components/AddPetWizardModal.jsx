@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import ThemeSpinner from '../ThemeSpinner';
 import heic2any from 'heic2any';
 import { apiFetch } from '../api';
 import ModalClose from '../ModalClose';
@@ -40,6 +41,7 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
     // Ref for breed suggestions dropdown
     const suggestionsRef = useRef(null);
   // Advance to next step or finish
+  const [finishing, setFinishing] = useState(false);
   const handleNext = async () => {
     setTriedNext(true);
     setValidationError('');
@@ -51,7 +53,9 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
     if (step < 5) {
       setStep(step + 1);
     } else {
+      setFinishing(true);
       const pet = await createPet();
+      setFinishing(false);
       if (onNext && pet) onNext(pet);
       onClose();
     }
@@ -626,7 +630,12 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
             </form>
           )}
           {step === 5 && (
-            <form className="w-full mt-4 flex flex-col items-center">
+            <form className="w-full mt-4 flex flex-col items-center relative">
+              {finishing && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80 rounded-xl">
+                  <ThemeSpinner label="Adding pet..." />
+                </div>
+              )}
               <label className="block text-sm font-medium text-gray-900 mb-2 text-center w-full">Pet Avatar <span className="text-gray-400 text-xs ml-1">(Optional)</span></label>
               <div className="mb-4 flex flex-col items-center">
                 <div className="relative">
