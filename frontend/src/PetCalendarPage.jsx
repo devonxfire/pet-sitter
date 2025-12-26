@@ -3,6 +3,7 @@ import ThemeSpinner from './ThemeSpinner';
 import ActivityView from './ActivityView';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import { apiUrl } from './api';
 
 // Placeholder for a calendar UI library/component
 // You can replace this with a real calendar like react-calendar, FullCalendar, or similar
@@ -71,7 +72,7 @@ export default function HouseholdCalendarPage({ householdId }) {
         setActivities([]);
         return;
       }
-      let url = `/api/pets/${selectedPet}/activities?limit=200`;
+      let url = apiUrl(`/api/pets/${selectedPet}/activities?limit=200`);
       setLoading(true);
       try {
         const res = await fetch(url, {
@@ -108,7 +109,7 @@ export default function HouseholdCalendarPage({ householdId }) {
       }
       setLoading(true);
       try {
-        const res = await fetch(`/api/households/${hid}/pets`, {
+        const res = await fetch(apiUrl(`/api/households/${hid}/pets`), {
           headers: { 'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : undefined }
         });
         const data = await res.json();
