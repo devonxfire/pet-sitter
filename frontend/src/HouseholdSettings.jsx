@@ -443,7 +443,26 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
                   </div>
                 </form>
               </section>
-              {/* Delete Household Section (directly after Invite Members) */}
+
+           
+
+            {/* Permissions Section */}
+            <div className="border-b border-gray-200 pt-8 mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Permissions</h2>
+              <div className="bg-gray-50 rounded-xl p-6 text-gray-500 text-base">
+                <span>Permissions settings will be available here soon.</span>
+              </div>
+            </div>
+
+            {/* Notifications Section */}
+            <div className="border-b border-gray-200 pt-8 mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Notifications</h2>
+              <div className="bg-gray-50 rounded-xl p-6 text-gray-500 text-base">
+                <span>Notification preferences will be available here soon.</span>
+              </div>
+            </div>
+
+               {/* Delete Household Section (directly after Invite Members) */}
               <section style={{ marginTop: '32px' }}>
                 <h2 className="text-2xl font-bold mb-2 text-red-700">Delete Household</h2>
                 <p className="mb-6 text-gray-700">Permanently delete this household and all its data. <span className="font-semibold text-red-700">This action cannot be undone.</span></p>
