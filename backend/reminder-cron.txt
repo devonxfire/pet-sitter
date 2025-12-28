@@ -1,0 +1,4 @@
+# Pet Sitter Reminder Script Cron
+
+# Run the reminder script every 5 minutes
+*/5 * * * * cd /Users/devon/Audioshelf\ Dropbox/Devon\ Martindale/WebDev/pet-sitter/backend && /usr/local/bin/node scripts/send_due_reminders.js >> reminder-cron.log 2>&1
