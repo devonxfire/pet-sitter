@@ -8,7 +8,6 @@ import Dashboard from './Dashboard';
 import Profile from './Profile';
 import CreateHousehold from './CreateHousehold';
 import Landing from './Landing';
-import AddPet from './AddPet';
 import PetDetail from './PetDetail';
 import PetActivities from './PetActivities';
 import ActivitiesLanding from './ActivitiesLanding';
@@ -123,15 +122,11 @@ function App() {
           path="/create-household"
           element={
             user ? (
-              user.isMainMember ? (
-                <CreateHousehold
-                  user={user}
-                  onHouseholdCreated={handleHouseholdCreated}
-                  onSignOut={handleSignOut}
-                />
-              ) : (
-                <Navigate to="/dashboard" />
-              )
+              <CreateHousehold
+                user={user}
+                onHouseholdCreated={handleHouseholdCreated}
+                onSignOut={handleSignOut}
+              />
             ) : (
               <CreateHousehold
                 user={null}
@@ -139,16 +134,6 @@ function App() {
                 onSignOut={handleSignOut}
                 onSignup={handleLogin}
               />
-            )
-          }
-        />
-        <Route
-          path="/add-pet"
-          element={
-            user ? (
-              <AddPet user={user} household={household} onSignOut={handleSignOut} />
-            ) : (
-              <Navigate to="/login" />
             )
           }
         />

@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { apiFetch } from './api';
 import './components/AddPetWizardModal.css';
 // PlacesSearch removed — address entered manually now
-
 export default function AddPet({ user, household, onSignOut }) {
 	const navigate = useNavigate();
 	const location = useLocation();

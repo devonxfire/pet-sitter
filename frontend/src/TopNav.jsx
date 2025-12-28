@@ -16,12 +16,15 @@ function useForceTransparentSignOut() {
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import './no-hover-effect.css';
-import { apiFetch } from './api';
-import { useMemo } from 'react';
 
 export default function TopNav({ user, household, onSignOut }) {
+  const [showNoHouseholdModal, setShowNoHouseholdModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+  const [firstPetId, setFirstPetId] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Close dropdown on route change
   useEffect(() => {
@@ -36,9 +39,6 @@ export default function TopNav({ user, household, onSignOut }) {
       document.body.classList.remove('page-non-landing');
     };
   }, [location?.pathname]);
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef(null);
-  const [firstPetId, setFirstPetId] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -78,8 +78,7 @@ export default function TopNav({ user, household, onSignOut }) {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [menuRef]);
 
-  // Responsive hamburger menu state
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
 
   return (
     <nav className={`relative z-9999 h-20 md:h-20 ${location?.pathname !== '/' ? 'border-b border-gray-100' : ''}`} style={{ pointerEvents: 'auto' }}>
@@ -100,16 +99,26 @@ export default function TopNav({ user, household, onSignOut }) {
                   to="/dashboard"
                   className={`text-sm text-gray-600 hover:text-gray-900 py-1 border-b transition-all duration-150 ${location.pathname === '/dashboard' ? 'border-accent nav-link-active' : 'border-transparent'}`}
                 >My Pets</Link>
-                <Link
-                  to="/household-settings"
-                  className={`text-sm text-gray-600 hover:text-gray-900 py-1 border-b transition-all duration-150 ${location.pathname === '/household-settings' ? 'border-accent nav-link-active' : 'border-transparent'}`}
-                >Settings</Link>
-                <Link
-                  to={household?.id ? `/household/${household.id}/calendar` : '#'}
-                  className={`text-sm text-gray-600 hover:text-gray-900 py-1 border-b transition-all duration-150 ${location.pathname.includes('/calendar') ? 'border-accent nav-link-active' : 'border-transparent'}`}
-                >
-                  Calendar
-                </Link>
+                <button
+                  className={`no-global-accent text-sm text-gray-600 hover:text-gray-900 py-1 border-b transition-all duration-150 ${location.pathname === '/household-settings' ? 'border-accent nav-link-active' : 'border-transparent'}`}
+                  style={{ cursor: 'pointer', border: 'none', background: 'transparent' }}
+                  onClick={e => {
+                    if (!household?.id) {
+                      e.preventDefault();
+                      setShowNoHouseholdModal(true);
+                    } else {
+                      navigate('/household-settings');
+                    }
+                  }}
+                >Settings</button>
+                {household?.id && (
+                  <Link
+                    to={`/household/${household.id}/calendar`}
+                    className={`text-sm text-gray-600 hover:text-gray-900 py-1 border-b transition-all duration-150 ${location.pathname.includes('/calendar') ? 'border-accent nav-link-active' : 'border-transparent'}`}
+                  >
+                    Calendar
+                  </Link>
+                )}
               </>
             )}
             <Link
@@ -192,8 +201,22 @@ export default function TopNav({ user, household, onSignOut }) {
               {user && (
                 <>
                   <Link to="/dashboard" className="text-lg text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>My Pets</Link>
-                  <Link to="/household-settings" className="text-lg text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Settings</Link>
-                  <Link to={firstPetId ? `/pet/${firstPetId}/calendar` : '#'} className="text-lg text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Calendar</Link>
+                  <button
+                    className="no-global-accent text-lg text-gray-700 py-2 border-b border-gray-100 w-full text-left"
+                    style={{ cursor: 'pointer', border: 'none', background: 'transparent' }}
+                    onClick={e => {
+                      setMobileMenuOpen(false);
+                      if (!household?.id) {
+                        e.preventDefault();
+                        setShowNoHouseholdModal(true);
+                      } else {
+                        navigate('/household-settings');
+                      }
+                    }}
+                  >Settings</button>
+                  {household?.id && (
+                    <Link to={firstPetId ? `/pet/${firstPetId}/calendar` : '#'} className="text-lg text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Calendar</Link>
+                  )}
                 </>
               )}
               <Link to="/plans" className="text-lg text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>Plans</Link>
@@ -213,6 +236,28 @@ export default function TopNav({ user, household, onSignOut }) {
                   <Link to="/login" className="text-lg text-accent hover:underline" onClick={() => setMobileMenuOpen(false)}>Sign in</Link>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Must create or join household first for settings */}
+      {showNoHouseholdModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-8 border border-gray-200">
+            <h3 className="text-xl font-bold text-red-600 mb-4">Join or Create a Household</h3>
+            <p className="mb-6 text-gray-700">You must join or create a household before you can access settings.</p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 rounded bg-gray-100 cursor-pointer"
+                style={{ cursor: 'pointer' }}
+                onClick={() => setShowNoHouseholdModal(false)}
+              >Cancel</button>
+              <button
+                className="px-4 py-2 rounded bg-accent text-white font-bold cursor-pointer"
+                style={{ cursor: 'pointer' }}
+                onClick={() => { setShowNoHouseholdModal(false); navigate('/create-household'); }}
+              >Create Household</button>
             </div>
           </div>
         </div>

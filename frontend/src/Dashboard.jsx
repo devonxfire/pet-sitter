@@ -88,7 +88,14 @@ export default function Dashboard({ user, household, onSignOut }) {
     navigate('/dashboard');
   };
 
-  const handleWizardOpen = () => setShowWizard(true);
+  const [showNoHouseholdModal, setShowNoHouseholdModal] = useState(false);
+  const handleWizardOpen = () => {
+    if (!household?.id) {
+      setShowNoHouseholdModal(true);
+      return;
+    }
+    setShowWizard(true);
+  };
   const handleWizardClose = () => setShowWizard(false);
 
   // Pre-populate vet info from first pet if available
@@ -113,7 +120,7 @@ export default function Dashboard({ user, household, onSignOut }) {
 
   return (
     <div className="min-h-screen bg-white">
-      {showWizard && (
+      {showWizard && household?.id && (
         <AddPetWizardModal
           open={true}
           onNext={handleWizardNext}
@@ -123,6 +130,32 @@ export default function Dashboard({ user, household, onSignOut }) {
           wizardData={wizardData}
           onDraftSave={handleDraftSave}
         />
+      )}
+
+      {/* Modal: Must create or join household first */}
+      {showNoHouseholdModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-8 border border-gray-200">
+            <h3 className="text-xl font-bold text-red-600 mb-4">Join or Create a Household</h3>
+            <p className="mb-6 text-gray-700">You must join or create a household before you can add pets.</p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 rounded bg-gray-100 cursor-pointer"
+                style={{ cursor: 'pointer' }}
+                onClick={() => setShowNoHouseholdModal(false)}
+              >Cancel</button>
+              <button
+                className="px-4 py-2 rounded bg-accent text-white font-bold cursor-pointer"
+                style={{ cursor: 'pointer' }}
+                onClick={() => {
+                  console.log('Create Household button clicked, navigating...');
+                  setShowNoHouseholdModal(false);
+                  navigate('/create-household');
+                }}
+              >Create Household</button>
+            </div>
+          </div>
+        </div>
       )}
       {/* Header band: match Profile/PetActivities header UI for consistency */}
       <div

@@ -88,7 +88,7 @@ export default function CreateHousehold({ user, onHouseholdCreated, onSignOut, o
 
       console.log('✅ Household created:', data);
       onHouseholdCreated(data);
-      navigate('/add-pet', { state: { household: data } });
+      navigate('/dashboard', { state: { household: data } });
     } catch (err) {
       console.error('❌ Error creating household:', err);
       setError(err.message || 'Failed to create household');

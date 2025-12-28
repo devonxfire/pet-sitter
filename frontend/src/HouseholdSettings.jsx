@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
 import ThemeSpinner from './ThemeSpinner';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch, apiUrl } from './api';
 
@@ -23,12 +23,46 @@ const prettifyRole = (role, description) => {
 };
 
 export default function HouseholdSettings({ household, user, onSignOut }) {
+  const navigate = useNavigate();
+
+  // Redirect to create-household if not a member of any household
+  React.useEffect(() => {
+    if (!household) {
+      navigate('/create-household');
+    }
+  }, [household, navigate]);
+    // --- Delete Household Handler ---
+    const handleDeleteHousehold = async () => {
+      if (deleteConfirmName !== (household?.name || '')) {
+        setDeleteError('Please type the exact household name to confirm.');
+        return;
+      }
+      setDeleting(true);
+      setDeleteError('');
+      try {
+        await apiFetch(`/api/households/${household.id}`, { method: 'DELETE' });
+        setShowDeleteModal(false);
+        setDeleteConfirmName('');
+        setSuccessMessage('Household deleted.');
+        if (typeof onSignOut === 'function') {
+          onSignOut();
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (err) {
+        setDeleteError(err.message || 'Failed to delete household');
+      } finally {
+        setDeleting(false);
+      }
+    };
+  // --- Remove Member Modal State ---
+  const [removeModalMember, setRemoveModalMember] = useState(null);
+
   // --- Delete Household State ---
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmName, setDeleteConfirmName] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [deleting, setDeleting] = useState(false);
-  const navigate = useNavigate();
   const [members, setMembers] = useState([]);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('household_member');
@@ -39,6 +73,20 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
   const [successMessage, setSuccessMessage] = useState('');
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [localPlan, setLocalPlan] = useState(household?.plan || 'free');
+
+  // --- Remove Member Modal Handler ---
+  const handleConfirmRemoveMember = async () => {
+    if (!removeModalMember) return;
+    try {
+      await apiFetch(`/api/households/${household.id}/members/${removeModalMember.id}`, {
+        method: 'DELETE'
+      });
+      fetchMembers();
+      setRemoveModalMember(null);
+    } catch (err) {
+      setError(err.message || 'Failed to remove member');
+    }
+  };
 
   useEffect(() => {
     if (!household) {
@@ -135,19 +183,8 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
     }
   };
 
-  const handleRemoveMember = async (memberId) => {
-    if (!window.confirm('Remove this member from the household?')) {
-      return;
-    }
-
-    try {
-      await apiFetch(`/api/households/${household.id}/members/${memberId}`, {
-        method: 'DELETE'
-      });
-      fetchMembers();
-    } catch (err) {
-      setError(err.message || 'Failed to remove member');
-    }
+  const handleRemoveMember = (member) => {
+    setRemoveModalMember(member);
   };
 
   if (loading) {
@@ -231,8 +268,9 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
 
                   {isOwner && member.userId !== user.id && (
                     <button
-                      onClick={() => handleRemoveMember(member.id)}
-                      className="ml-4 text-red-600 hover:bg-gray-50 px-3 py-2 rounded-lg text-sm font-medium transition"
+                      onClick={() => handleRemoveMember(member)}
+                      className="ml-4 text-red-600 hover:bg-gray-50 px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer"
+                      style={{ cursor: 'pointer' }}
                     >
                       Remove
                     </button>
@@ -324,11 +362,33 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
                 <h2 className="text-2xl font-bold mb-2 text-red-700">Delete Household</h2>
                 <p className="mb-6 text-gray-700">Permanently delete this household and all its data. <span className="font-semibold text-red-700">This action cannot be undone.</span></p>
                 <button
-                  className="bg-red-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-700 transition mb-2"
+                  className="bg-red-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-700 transition mb-2 cursor-pointer"
+                  style={{ cursor: 'pointer' }}
                   onClick={() => setShowDeleteModal(true)}
                 >
                   Delete Household
                 </button>
+                    {/* Remove Member Modal */}
+                    {removeModalMember && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-8 border border-gray-200">
+                          <h3 className="text-xl font-bold text-red-600 mb-4">Remove Member</h3>
+                          <p className="mb-6 text-gray-700">Are you sure you want to remove <span className="font-semibold">{removeModalMember.user ? removeModalMember.user.name : removeModalMember.invitedEmail}</span> from this household?</p>
+                          <div className="flex justify-end gap-3">
+                            <button
+                              className="px-4 py-2 rounded bg-gray-100 cursor-pointer"
+                              style={{ cursor: 'pointer' }}
+                              onClick={() => setRemoveModalMember(null)}
+                            >Cancel</button>
+                            <button
+                              className="px-4 py-2 rounded bg-red-600 text-white font-bold cursor-pointer"
+                              style={{ cursor: 'pointer' }}
+                              onClick={handleConfirmRemoveMember}
+                            >Remove</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
               </section>
             </>
           );
@@ -384,11 +444,13 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
                 {deleteError && <div className="text-red-500 mb-2">{deleteError}</div>}
                 <div className="flex justify-end gap-3">
                   <button
-                    className="px-4 py-2 rounded bg-gray-100"
+                    className="px-4 py-2 rounded bg-gray-100 cursor-pointer"
+                    style={{ cursor: 'pointer' }}
                     onClick={() => { setShowDeleteModal(false); setDeleteConfirmName(''); setDeleteError(''); }}
                   >Cancel</button>
                   <button
-                    className="px-4 py-2 rounded bg-red-600 text-white font-bold disabled:opacity-50"
+                    className="px-4 py-2 rounded bg-red-600 text-white font-bold disabled:opacity-50 cursor-pointer"
+                    style={{ cursor: 'pointer' }}
                     disabled={deleteConfirmName !== (household?.name || '') || deleting}
                     onClick={handleDeleteHousehold}
                   >Delete</button>
@@ -400,7 +462,8 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
                 <p className="mb-6 text-gray-700">Only the main member (owner) can delete this household. If you believe this is an error, please contact the household owner.</p>
                 <div className="flex justify-end gap-3">
                   <button
-                    className="px-4 py-2 rounded bg-gray-100"
+                    className="px-4 py-2 rounded bg-gray-100 cursor-pointer"
+                    style={{ cursor: 'pointer' }}
                     onClick={() => { setShowDeleteModal(false); setDeleteConfirmName(''); setDeleteError(''); }}
                   >Close</button>
                 </div>
@@ -413,20 +476,3 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
   </div>
   );
 }
-
-  // --- Delete Household Handler ---
-  const handleDeleteHousehold = async () => {
-    setDeleting(true);
-    setDeleteError('');
-    try {
-      await apiFetch(`/api/households/${household.id}`, { method: 'DELETE' });
-      setShowDeleteModal(false);
-      setDeleteConfirmName('');
-      setDeleting(false);
-      if (onSignOut) onSignOut();
-      navigate('/');
-    } catch (err) {
-      setDeleteError(err.message || 'Failed to delete household');
-      setDeleting(false);
-    }
-  };

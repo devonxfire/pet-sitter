@@ -19,7 +19,6 @@ export default function Footer({ user }) {
               <ul className="mt-2 text-sm text-gray-200 space-y-2">
                 <li><Link to="/" className="hover:underline hover:text-white">Home</Link></li>
                 <li><Link to="/dashboard" className="hover:underline hover:text-white">Dashboard</Link></li>
-                <li><Link to="/add-pet" className="hover:underline hover:text-white">Add Pet</Link></li>
               </ul>
             </div>
 
