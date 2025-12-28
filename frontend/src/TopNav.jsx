@@ -100,8 +100,27 @@ export default function TopNav({ user, household, onSignOut }) {
                   className={`text-sm text-gray-600 hover:text-gray-900 py-1 border-b transition-all duration-150 ${location.pathname === '/dashboard' ? 'border-accent nav-link-active' : 'border-transparent'}`}
                 >My Pets</Link>
                 <button
-                  className={`no-global-accent text-sm text-gray-600 hover:text-gray-900 py-1 border-b transition-all duration-150 ${location.pathname === '/household-settings' ? 'border-accent nav-link-active' : 'border-transparent'}`}
-                  style={{ cursor: 'pointer', border: 'none', background: 'transparent' }}
+                    className={`no-global-accent text-sm text-gray-600 hover:text-gray-900 py-1 border-b-2 transition-all duration-150 ${location.pathname === '/household-settings' ? 'border-accent nav-link-active' : 'border-transparent'}`}
+                    style={{
+                      cursor: 'pointer',
+                      background: 'transparent',
+                      boxShadow: 'none',
+                      outline: 'none',
+                      borderTop: 'none',
+                      borderLeft: 'none',
+                      borderRight: 'none',
+                      borderRadius: 0,
+                      // Remove gray bg on hover for Settings only
+                      transition: 'color 0.15s',
+                    }}
+                    onMouseOver={e => {
+                      e.currentTarget.style.setProperty('background', 'transparent', 'important');
+                      e.currentTarget.style.setProperty('background-color', 'transparent', 'important');
+                    }}
+                    onMouseOut={e => {
+                      e.currentTarget.style.setProperty('background', 'transparent', 'important');
+                      e.currentTarget.style.setProperty('background-color', 'transparent', 'important');
+                    }}
                   onClick={e => {
                     if (!household?.id) {
                       e.preventDefault();
@@ -202,7 +221,7 @@ export default function TopNav({ user, household, onSignOut }) {
                 <>
                   <Link to="/dashboard" className="text-lg text-gray-700 py-2 border-b border-gray-100" onClick={() => setMobileMenuOpen(false)}>My Pets</Link>
                   <button
-                    className="no-global-accent text-lg text-gray-700 py-2 border-b border-gray-100 w-full text-left"
+                    className="no-global-accent text-lg text-gray-700 py-2 w-full text-left"
                     style={{ cursor: 'pointer', border: 'none', background: 'transparent' }}
                     onClick={e => {
                       setMobileMenuOpen(false);

@@ -111,6 +111,12 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
   // Current member record for the signed-in user (if any)
   const currentUserMember = members.find(m => m.userId === user.id);
 
+  // --- Household Name Edit State ---
+  const [editingName, setEditingName] = useState(false);
+  const [editNameValue, setEditNameValue] = useState(household?.name || '');
+  const [savingName, setSavingName] = useState(false);
+  const [editNameError, setEditNameError] = useState('');
+
   // small helper
   const capitalize = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : '');
 
@@ -219,7 +225,87 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
         <section style={{ marginBottom: '16px', paddingBottom: '8px' }} className="border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Household Info</h2>
           <div className="space-y-2">
-            <p><span className="text-gray-500">Name:</span> {household.name}</p>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500">Name:</span>
+              {currentUserMember?.role === 'owner' ? (
+                editingName ? (
+                  <>
+                    <input
+                      type="text"
+                      value={editNameValue}
+                      onChange={e => setEditNameValue(e.target.value)}
+                      className="px-3 py-1 rounded-lg border border-gray-300 focus:border-accent focus:outline-none text-lg font-semibold text-gray-900"
+                      style={{ minWidth: 120, maxWidth: 300 }}
+                      disabled={savingName}
+                    />
+                    <button
+                      onClick={async () => {
+                        setSavingName(true);
+                        setEditNameError('');
+                        try {
+                          const updated = await apiFetch(`/api/households/${household.id}`, {
+                            method: 'PATCH',
+                            body: JSON.stringify({ name: editNameValue })
+                          });
+                          setEditingName(false);
+                          setSuccessMessage('Household name updated.');
+                          // Update local household name in state and localStorage
+                          if (updated && updated.name) {
+                            household.name = updated.name;
+                          }
+                          if (typeof window !== 'undefined') {
+                            try {
+                              const h = { ...household, name: editNameValue };
+                              localStorage.setItem('household', JSON.stringify(h));
+                            } catch (e) {}
+                          }
+                          // Optionally reload or update parent
+                          window.dispatchEvent(new CustomEvent('householdUpdated', { detail: { ...household, name: editNameValue } }));
+                        } catch (err) {
+                          setEditNameError(err.message || 'Failed to update name');
+                        } finally {
+                          setSavingName(false);
+                        }
+                      }}
+                      className="ml-2 px-3 py-1 rounded-lg bg-accent text-gray-900 font-semibold text-sm hover:opacity-90 transition cursor-pointer"
+                      disabled={savingName || !editNameValue.trim() || editNameValue === household.name}
+                      style={{ minWidth: 60 }}
+                    >
+                      {savingName ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingName(false);
+                        setEditNameValue(household.name);
+                        setEditNameError('');
+                      }}
+                      className="ml-1 px-3 py-1 rounded-lg bg-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-300 transition cursor-pointer"
+                      disabled={savingName}
+                    >
+                      Cancel
+                    </button>
+                    {editNameError && <span className="ml-2 text-red-600 text-sm">{editNameError}</span>}
+                  </>
+                ) : (
+                  <>
+                    <span className="text-lg font-semibold text-gray-900">{household.name}</span>
+                    <button
+                      onClick={() => {
+                        setEditingName(true);
+                        setEditNameValue(household.name);
+                        setEditNameError('');
+                      }}
+                      className="ml-2 px-3 py-1 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition cursor-pointer"
+                      style={{ minWidth: 60 }}
+                    >
+                      Edit
+                    </button>
+                  </>
+                )
+              ) : (
+                <span className="text-lg font-semibold text-gray-900">{household.name}</span>
+              )}
+            </div>
             {household.address && <p><span className="text-gray-500">Address:</span> {household.address}</p>}
             {household.city && <p><span className="text-gray-500">City:</span> {household.city}, {household.state}</p>}
             <p>

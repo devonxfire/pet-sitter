@@ -1,3 +1,4 @@
+// ...existing code...
 // --- ENVIRONMENT & MAILGUN SETUP ---
 const dotenv = require('dotenv');
 dotenv.config();
@@ -316,6 +317,49 @@ app.post('/api/auth/login', async (req, res) => {
 
 // ============================================================================
 // HOUSEHOLD ROUTES
+
+// Update household (owner only)
+app.patch('/api/households/:householdId', authenticateToken, async (req, res) => {
+  try {
+    const { householdId } = req.params;
+    const userId = req.user.userId || req.user.id;
+    // Only allow if user is owner of household
+    const access = await prisma.householdMember.findFirst({
+      where: {
+        householdId: parseInt(householdId),
+        userId: parseInt(userId),
+        role: 'owner'
+      }
+    });
+    if (!access) {
+      return res.status(403).json({ error: 'Only household owners can update household' });
+    }
+    const allowedFields = ['name', 'address', 'city', 'state', 'zipCode', 'country', 'notes'];
+    const data = {};
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) data[field] = req.body[field];
+    }
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+    const updated = await prisma.household.update({
+      where: { id: parseInt(householdId) },
+      data,
+      include: {
+        members: {
+          include: {
+            user: { select: { id: true, name: true, email: true } }
+          }
+        },
+        pets: true
+      }
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error('Patch household error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 // ============================================================================
 
 app.get('/api/households', authenticateToken, async (req, res) => {
