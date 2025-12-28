@@ -683,6 +683,7 @@ export default function PetDetail({ household, user, onSignOut }) {
     setEditingSection(section);
     if (section === 'general') {
       setEditValues({
+        name: pet.name || '',
         species: pet.species,
         breed: pet.breed || '',
         age: pet.age?.toString() || '',
@@ -713,6 +714,7 @@ export default function PetDetail({ household, user, onSignOut }) {
     try {
       const updateData = {};
       if (editingSection === 'general') {
+        updateData.name = editValues.name || pet.name;
         updateData.species = editValues.species;
         updateData.breed = editValues.breed || null;
         updateData.age = editValues.age ? parseInt(editValues.age) : null;
@@ -1087,6 +1089,17 @@ export default function PetDetail({ household, user, onSignOut }) {
 
           {editingSection === 'general' ? (
             <div className="space-y-6 mt-6">
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Name</label>
+                <input
+                  type="text"
+                  value={editValues.name}
+                  onChange={e => setEditValues({ ...editValues, name: e.target.value })}
+                  placeholder="Pet's name"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
+                />
+              </div>
               {/* Species */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">Species</label>
@@ -1210,11 +1223,19 @@ export default function PetDetail({ household, user, onSignOut }) {
             </div>
           ) : (!collapsedSections.general && (
             <div className="space-y-6">
+              {/* Name (read-only) */}
+              <div>
+                <p className="text-sm text-gray-500">Name</p>
+                <p className="text-lg text-gray-900">{pet?.name || '-'}</p>
+              </div>
+
+              {/* Species */}
               <div>
                 <p className="text-sm text-gray-500">Species</p>
                 <p className="text-lg text-gray-900">{pet?.species ? (pet.species.charAt(0).toUpperCase() + pet.species.slice(1)) : '-'}</p>
               </div>
 
+              {/* Breed */}
               <div>
                 <p className="text-sm text-gray-500">Breed</p>
                 <p className="text-lg text-gray-900">{pet?.breed || '-'}</p>
@@ -1245,193 +1266,185 @@ export default function PetDetail({ household, user, onSignOut }) {
         </div>
 
         {/* Vet Information Section */}
-        {(pet.vetName || pet.vetLocation || pet.vetContact) && (
-          <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200 ">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3 mt-2">
-                <button
-                  onClick={() => toggleSection('vet')}
-                  aria-expanded={!collapsedSections.vet}
-                  aria-label={collapsedSections.vet ? 'Expand vet section' : 'Collapse vet section'}
-                  className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition focus:outline-none focus:ring-0 no-global-accent no-accent-hover"
-                >
-                  <span className="text-sm">{collapsedSections.vet ? '+' : '−'}</span>
-                </button>
-                <h2 className="text-2xl font-bold text-gray-900">Vet Information</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                {editingSection === 'vet' ? (
-                  <>
-                    <button
-                      onClick={cancelEditingSection}
-                      className="inline-flex items-center gap-2 btn btn-red font-semibold px-6 py-2 rounded-xl mr-1 cursor-pointer bg-[#C3001F]! text-white! border-0! hover:bg-[#ED1C24]!"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={saveSection}
-                      disabled={savingSection}
-                      className="btn font-semibold px-3 py-2 rounded-lg text-sm hover:opacity-90 transition disabled:opacity-50 mr-2 cursor-pointer"
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {savingSection ? 'Saving...' : 'Save'}
-                    </button>
-                  </>
-                ) : (
+        <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200 ">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3 mt-2">
+              <button
+                onClick={() => toggleSection('vet')}
+                aria-expanded={!collapsedSections.vet}
+                aria-label={collapsedSections.vet ? 'Expand vet section' : 'Collapse vet section'}
+                className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition focus:outline-none focus:ring-0 no-global-accent no-accent-hover"
+              >
+                <span className="text-sm">{collapsedSections.vet ? '+' : '−'}</span>
+              </button>
+              <h2 className="text-2xl font-bold text-gray-900">Vet Information</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              {editingSection === 'vet' ? (
+                <>
                   <button
-                    onClick={() => { if (isHouseholdMember) startEditingSection('vet'); }}
-                    disabled={!isHouseholdMember}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover ${isHouseholdMember ? 'text-gray-600 hover:bg-gray-100 cursor-pointer' : 'text-gray-400 opacity-50 cursor-not-allowed'}`}
-                    style={{ cursor: isHouseholdMember ? 'pointer' : 'not-allowed' }}
+                    onClick={cancelEditingSection}
+                    className="inline-flex items-center gap-2 btn btn-red font-semibold px-6 py-2 rounded-xl mr-1 cursor-pointer bg-[#C3001F]! text-white! border-0! hover:bg-[#ED1C24]!"
                   >
-                    Edit
+                    Cancel
                   </button>
+                  <button
+                    onClick={saveSection}
+                    disabled={savingSection}
+                    className="btn font-semibold px-3 py-2 rounded-lg text-sm hover:opacity-90 transition disabled:opacity-50 mr-2 cursor-pointer"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {savingSection ? 'Saving...' : 'Save'}
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => { if (isHouseholdMember) startEditingSection('vet'); }}
+                  disabled={!isHouseholdMember}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover ${isHouseholdMember ? 'text-gray-600 hover:bg-gray-100 cursor-pointer' : 'text-gray-400 opacity-50 cursor-not-allowed'}`}
+                  style={{ cursor: isHouseholdMember ? 'pointer' : 'not-allowed' }}
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+          </div>
+
+          {editingSection === 'vet' ? (
+            <div className="space-y-6">
+              {/* Vet Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Vet Name</label>
+                <input
+                  type="text"
+                  value={editValues.vetName}
+                  onChange={(e) => setEditValues({ ...editValues, vetName: e.target.value })}
+                  placeholder="e.g., Dr. Smith or Happy Paws Vet"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
+                />
+              </div>
+
+              {/* Vet Location */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Vet Location</label>
+                <input
+                  type="text"
+                  value={editValues.vetLocation}
+                  onChange={(e) => setEditValues({ ...editValues, vetLocation: e.target.value })}
+                  placeholder="Clinic address or name"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
+                />
+              </div>
+
+              {/* Vet Contact */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Vet Contact</label>
+                <input
+                  type="tel"
+                  value={editValues.vetContact}
+                  onChange={(e) => setEditValues({ ...editValues, vetContact: e.target.value })}
+                  placeholder="Phone number"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
+                />
+              </div>
+            </div>
+          ) : ( !collapsedSections.vet && (
+            <div className="space-y-6">
+              <div>
+                <p className="text-sm text-gray-500">Veterinarian Name</p>
+                <p className="text-lg text-gray-900">{pet.vetName || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Location</p>
+                <p className="text-lg text-gray-900">{pet.vetLocation || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Contact</p>
+                <p className="text-lg text-gray-900">{pet.vetContact || '-'}</p>
+                {pet.vetContact && (
+                  <a
+                    href={`tel:${pet.vetContact}`}
+                    className="mt-3 inline-flex items-center gap-2 btn btn-red font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
+                    aria-label={`Call veterinarian at ${pet.vetContact} (Emergency)`}
+                  >
+                    <svg className="w-4 h-4 text-white shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M21 16.5v3a1.5 1.5 0 0 1-1.76 1.48c-2.13-.32-4.14-1.18-5.99-2.41a15.08 15.08 0 0 1-5.15-5.15C7.18 10.9 6.32 8.89 6 6.76A1.5 1.5 0 0 1 7.48 5H10.5a1.5 1.5 0 0 1 1.5 1.2c.12.82.39 1.62.8 2.35a1.5 1.5 0 0 1-.33 1.62l-1.2 1.2a11.99 11.99 0 0 0 5.15 5.15l1.2-1.2a1.5 1.5 0 0 1 1.62-.33c.73.41 1.53.68 2.35.8A1.5 1.5 0 0 1 21 16.5z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span>Call Vet Now (Emergency)</span>
+                  </a>
                 )}
               </div>
             </div>
-
-            {editingSection === 'vet' ? (
-              <div className="space-y-6">
-                {/* Vet Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Vet Name</label>
-                  <input
-                    type="text"
-                    value={editValues.vetName}
-                    onChange={(e) => setEditValues({ ...editValues, vetName: e.target.value })}
-                    placeholder="e.g., Dr. Smith or Happy Paws Vet"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
-                  />
-                </div>
-
-                {/* Vet Location */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Vet Location</label>
-                  <input
-                    type="text"
-                    value={editValues.vetLocation}
-                    onChange={(e) => setEditValues({ ...editValues, vetLocation: e.target.value })}
-                    placeholder="Clinic address or name"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
-                  />
-                </div>
-
-                {/* Vet Contact */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Vet Contact</label>
-                  <input
-                    type="tel"
-                    value={editValues.vetContact}
-                    onChange={(e) => setEditValues({ ...editValues, vetContact: e.target.value })}
-                    placeholder="Phone number"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
-                  />
-                </div>
-              </div>
-            ) : ( !collapsedSections.vet && (
-              <div className="space-y-6">
-                {pet.vetName && (
-                  <div>
-                    <p className="text-sm text-gray-500">Veterinarian Name</p>
-                    <p className="text-lg text-gray-900">{pet.vetName}</p>
-                  </div>
-                )}
-                {pet.vetLocation && (
-                  <div>
-                    <p className="text-sm text-gray-500">Location</p>
-                    <p className="text-lg text-gray-900">{pet.vetLocation}</p>
-                  </div>
-                )}
-                {pet.vetContact && (
-                  <div>
-                    <p className="text-sm text-gray-500">Contact</p>
-                    <p className="text-lg text-gray-900">{pet.vetContact}</p>
-                    <a
-                      href={`tel:${pet.vetContact}`}
-                      className="mt-3 inline-flex items-center gap-2 btn btn-red font-semibold px-6 py-2 rounded-xl hover:opacity-90 transition"
-                      aria-label={`Call veterinarian at ${pet.vetContact} (Emergency)`}
-                    >
-                      <svg className="w-4 h-4 text-white shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M21 16.5v3a1.5 1.5 0 0 1-1.76 1.48c-2.13-.32-4.14-1.18-5.99-2.41a15.08 15.08 0 0 1-5.15-5.15C7.18 10.9 6.32 8.89 6 6.76A1.5 1.5 0 0 1 7.48 5H10.5a1.5 1.5 0 0 1 1.5 1.2c.12.82.39 1.62.8 2.35a1.5 1.5 0 0 1-.33 1.62l-1.2 1.2a11.99 11.99 0 0 0 5.15 5.15l1.2-1.2a1.5 1.5 0 0 1 1.62-.33c.73.41 1.53.68 2.35.8A1.5 1.5 0 0 1 21 16.5z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Call Vet Now (Emergency)</span>
-                    </a>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+          ))}
+        </div>
 
         {/* Food Information Section */}
-        {pet.primaryFood && (
-          <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => toggleSection('food')}
-                  aria-expanded={!collapsedSections.food}
-                  aria-label={collapsedSections.food ? 'Expand food section' : 'Collapse food section'}
-                  className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition focus:outline-none focus:ring-0 no-global-accent no-accent-hover"
-                >
-                  <span className="text-sm">{collapsedSections.food ? '+' : '−'}</span>
-                </button>
-                <h2 className="text-2xl font-bold text-gray-900">Food Information</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                {editingSection === 'food' ? (
-                  <>
-                    <button
-                      onClick={cancelEditingSection}
-                      className="inline-flex items-center gap-2 btn btn-red font-semibold px-6 py-2 rounded-xl mr-1 cursor-pointer bg-[#C3001F]! text-white! border-0! hover:bg-[#ED1C24]!"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={saveSection}
-                      disabled={savingSection}
-                      className="btn font-semibold px-3 py-2 rounded-lg text-sm hover:opacity-90 transition disabled:opacity-50 mr-2 cursor-pointer"
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {savingSection ? 'Saving...' : 'Save'}
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => { if (isHouseholdMember) startEditingSection('food'); }}
-                    disabled={!isHouseholdMember}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover ${isHouseholdMember ? 'text-gray-600 hover:bg-gray-100 cursor-pointer' : 'text-gray-400 opacity-50 cursor-not-allowed'}`}
-                    style={{ cursor: isHouseholdMember ? 'pointer' : 'not-allowed' }}
-                  >
-                    Edit
-                  </button>
-                )}
-              </div>
+        <div style={{ marginBottom: '30px', paddingBottom: '30px' }} className="mx-auto max-w-6xl px-6 w-full border-b border-gray-200">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => toggleSection('food')}
+                aria-expanded={!collapsedSections.food}
+                aria-label={collapsedSections.food ? 'Expand food section' : 'Collapse food section'}
+                className="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-50 transition focus:outline-none focus:ring-0 no-global-accent no-accent-hover"
+              >
+                <span className="text-sm">{collapsedSections.food ? '+' : '−'}</span>
+              </button>
+              <h2 className="text-2xl font-bold text-gray-900">Food Information</h2>
             </div>
-
-            {editingSection === 'food' ? (
-              <div className="space-y-6">
-                {/* Primary Food */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Primary Food</label>
-                  <input
-                    type="text"
-                    value={editValues.primaryFood}
-                    onChange={(e) => setEditValues({ ...editValues, primaryFood: e.target.value })}
-                    placeholder="e.g., Kibble, Wet food, Raw"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
-                  />
-                </div>
-
-              </div>
-            ) : ( !collapsedSections.food && (
-              <div>
-                <p className="text-sm text-gray-500">Primary Food</p>
-                <p className="text-lg text-gray-900">{pet.primaryFood}</p>
-              </div>
-            ))}
+            <div className="flex items-center gap-2">
+              {editingSection === 'food' ? (
+                <>
+                  <button
+                    onClick={cancelEditingSection}
+                    className="inline-flex items-center gap-2 btn btn-red font-semibold px-6 py-2 rounded-xl mr-1 cursor-pointer bg-[#C3001F]! text-white! border-0! hover:bg-[#ED1C24]!"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveSection}
+                    disabled={savingSection}
+                    className="btn font-semibold px-3 py-2 rounded-lg text-sm hover:opacity-90 transition disabled:opacity-50 mr-2 cursor-pointer"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {savingSection ? 'Saving...' : 'Save'}
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => { if (isHouseholdMember) startEditingSection('food'); }}
+                  disabled={!isHouseholdMember}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover ${isHouseholdMember ? 'text-gray-600 hover:bg-gray-100 cursor-pointer' : 'text-gray-400 opacity-50 cursor-not-allowed'}`}
+                  style={{ cursor: isHouseholdMember ? 'pointer' : 'not-allowed' }}
+                >
+                  Edit
+                </button>
+              )}
+            </div>
           </div>
-        )}
+
+          {editingSection === 'food' ? (
+            <div className="space-y-6">
+              {/* Primary Food */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Primary Food</label>
+                <input
+                  type="text"
+                  value={editValues.primaryFood}
+                  onChange={(e) => setEditValues({ ...editValues, primaryFood: e.target.value })}
+                  placeholder="e.g., Kibble, Wet food, Raw"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
+                />
+              </div>
+
+            </div>
+          ) : ( !collapsedSections.food && (
+            <div>
+              <p className="text-sm text-gray-500">Primary Food</p>
+              <p className="text-lg text-gray-900">{pet.primaryFood || '-'}</p>
+            </div>
+          ))}
+        </div>
 
        
       
