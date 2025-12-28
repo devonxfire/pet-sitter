@@ -224,9 +224,9 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
         {/* Household Info */}
         <section style={{ marginBottom: '16px', paddingBottom: '8px' }} className="border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Household Info</h2>
-          <div className="space-y-2">
+          <div className="space-y-2 pb-4">
             <div className="flex items-center gap-2">
-              <span className="text-gray-500">Name:</span>
+              <span className="text-gray-500">Name of Household:</span>
               {currentUserMember?.role === 'owner' ? (
                 editingName ? (
                   <>
@@ -328,7 +328,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
           {members.length === 0 ? (
             <p className="text-gray-500">No members yet</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3 pb-4">
               {members.map((member) => {
                 // Find current user's role in this household
                 const currentUserMember = members.find(m => m.userId === user.id);

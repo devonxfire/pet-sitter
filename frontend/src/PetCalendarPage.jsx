@@ -301,7 +301,7 @@ export default function HouseholdCalendarPage({ householdId, household }) {
                 <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="2" fill="none" />
                 <path d="M12 6v6l4 2" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
               </svg>
-              <span>Schedule</span>
+              <span>Schedule New Appointment</span>
             </button>
           </div>
           {/* Modal for scheduling (to be implemented) */}
