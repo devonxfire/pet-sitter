@@ -2,6 +2,7 @@ import ThemeSpinner from './ThemeSpinner';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch, apiUrl } from './api';
+import { toast, ToastContainer } from './Toast.jsx';
 
 // Convert role keys into user-friendly English labels
 const prettifyRole = (role, description) => {
@@ -21,6 +22,12 @@ const prettifyRole = (role, description) => {
   const s = String(role).replace(/_/g, ' ').trim();
   return s.split(' ').map(w => w ? (w[0].toUpperCase() + w.slice(1)) : '').join(' ');
 };
+
+// Helper to capitalize first letter of a string
+function capitalizeFirst(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
 
 export default function HouseholdSettings({ household, user, onSignOut }) {
   const navigate = useNavigate();
@@ -61,7 +68,6 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
   // --- Delete Household State ---
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmName, setDeleteConfirmName] = useState('');
-  const [deleteError, setDeleteError] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [members, setMembers] = useState([]);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -69,8 +75,6 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
   const [inviteMessage, setInviteMessage] = useState('');
   const [inviteOtherDescription, setInviteOtherDescription] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [localPlan, setLocalPlan] = useState(household?.plan || 'free');
 
@@ -121,8 +125,6 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
   const capitalize = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : '');
 
   const handleChangePlan = async (newPlan) => {
-    setError('');
-    setSuccessMessage('');
     try {
       await apiFetch(`/api/households/${household.id}/plan`, {
         method: 'PATCH',
@@ -147,10 +149,8 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
         // fallback: use the chosen plan
         setLocalPlan(newPlan);
       }
-      setSuccessMessage(`Plan updated to ${capitalize(newPlan)}.`);
       setShowUpgrade(false);
     } catch (err) {
-      setError(err.message || 'Failed to update plan');
     }
   };
 
@@ -203,23 +203,9 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
 
   return (
     <div className="min-h-screen bg-white">
-
       <main className="flex justify-center py-16">
         <div className="max-w-6xl px-6 w-full">
-
         <h1 className="text-4xl font-bold text-gray-900 mb-8">Household Settings</h1>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
-
-        {successMessage && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
-            {successMessage}
-          </div>
-        )}
 
         {/* Household Info */}
         <section style={{ marginBottom: '16px', paddingBottom: '8px' }} className="border-b border-gray-200">
@@ -241,14 +227,13 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
                     <button
                       onClick={async () => {
                         setSavingName(true);
-                        setEditNameError('');
                         try {
                           const updated = await apiFetch(`/api/households/${household.id}`, {
                             method: 'PATCH',
                             body: JSON.stringify({ name: editNameValue })
                           });
                           setEditingName(false);
-                          setSuccessMessage('Household name updated.');
+                          toast('Household name updated.');
                           // Update local household name in state and localStorage
                           if (updated && updated.name) {
                             household.name = updated.name;
@@ -259,15 +244,14 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
                               localStorage.setItem('household', JSON.stringify(h));
                             } catch (e) {}
                           }
-                          // Optionally reload or update parent
                           window.dispatchEvent(new CustomEvent('householdUpdated', { detail: { ...household, name: editNameValue } }));
                         } catch (err) {
-                          setEditNameError(err.message || 'Failed to update name');
+                          toast(err.message || 'Failed to update name', { className: 'bg-red-500', style: { color: 'white' } });
                         } finally {
                           setSavingName(false);
                         }
                       }}
-                      className="ml-2 px-3 py-1 rounded-lg bg-accent text-gray-900 font-semibold text-sm hover:opacity-90 transition cursor-pointer"
+                      className="ml-2 px-3 py-1 rounded-lg bg-accent text-gray-900 font-semibold text-sm hover:opacity-90 transition cursor-pointer hover:cursor-pointer"
                       disabled={savingName || !editNameValue.trim() || editNameValue === household.name}
                       style={{ minWidth: 60 }}
                     >
@@ -312,7 +296,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
               <span className="text-gray-500">Plan:</span> {capitalize(localPlan || household.plan || 'free')}
               {currentUserMember?.role === 'owner' && (
                 <button
-                  onClick={() => setShowUpgrade(true)}
+                  onClick={() => { console.log('Open upgrade modal'); setShowUpgrade(true); }}
                   className="ml-3 inline-flex items-center gap-2 bg-accent text-gray-900 font-semibold py-1 px-3 rounded-lg hover:opacity-90 transition cursor-pointer text-sm"
                 >
                   Upgrade
@@ -499,6 +483,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
           );
         })()}
         {showUpgrade && (
+              (() => { console.log('Upgrade modal rendered'); return null; })(),
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
                 <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
                   <h3 className="text-lg font-semibold mb-4">Upgrade Household Plan</h3>
@@ -509,14 +494,14 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
                         <div className="font-semibold">Premium</div>
                         <div className="text-xs text-gray-500">Extra features (placeholder)</div>
                       </div>
-                      <button onClick={() => handleChangePlan('premium')} className="bg-accent text-white px-3 py-1 rounded">Upgrade</button>
+                      <button onClick={() => { console.log('Upgrade button clicked: premium'); handleChangePlan('premium'); }} className="bg-accent text-white px-3 py-1 rounded">Upgrade</button>
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded">
                       <div>
                         <div className="font-semibold">Business</div>
                         <div className="text-xs text-gray-500">Team features (placeholder)</div>
                       </div>
-                      <button onClick={() => handleChangePlan('business')} className="bg-accent text-white px-3 py-1 rounded">Upgrade</button>
+                      <button onClick={() => { console.log('Upgrade button clicked: business'); handleChangePlan('business'); }} className="bg-accent text-white px-3 py-1 rounded">Upgrade</button>
                     </div>
                   </div>
                   <div className="mt-4 flex justify-end gap-3">
@@ -578,6 +563,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
         </div>
       )}
     </main>
+    <ToastContainer />
   </div>
   );
 }

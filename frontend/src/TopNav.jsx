@@ -66,6 +66,12 @@ export default function TopNav({ user, household, onSignOut }) {
       .toUpperCase();
   };
 
+  // Helper to capitalize first letter
+  function capitalizeFirst(str) {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
   // Close menu on outside click
   useEffect(() => {
     function handleOutsideClick(e) {
@@ -179,7 +185,9 @@ export default function TopNav({ user, household, onSignOut }) {
                   ) : (
                     <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-user-initials text-white flex items-center justify-center font-semibold">{initials(user?.name)}</div>
                   )}
-                  <span className="text-gray-900 font-medium leading-none">Welcome{user?.name ? `, ${user.name.split(' ')[0]}!` : '!'}</span>
+                  <span className="text-gray-900 font-medium leading-none">
+                    Welcome{user?.name ? `, ${capitalizeFirst(user.name.split(' ')[0])}!` : '!'}
+                  </span>
                   <svg className="w-4 h-4 text-gray-500 ml-1" viewBox="0 0 20 20" fill="none" aria-hidden>
                     <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { apiFetch, apiUrl, API_BASE } from './api';
+import { toast, ToastContainer } from './Toast.jsx';
 
 export default function Profile({ user, household, onSignOut }) {
   const [loading, setLoading] = useState(true);
@@ -43,27 +44,19 @@ export default function Profile({ user, household, onSignOut }) {
         lastName: values.lastName,
         phoneNumber: values.phoneNumber
       };
-
       const updated = await apiFetch('/api/me', {
         method: 'PATCH',
         body: JSON.stringify(payload)
       });
-
-      // Update localStorage user copy so app reflects new name on refresh
       try {
         const stored = JSON.parse(localStorage.getItem('user') || '{}');
         const merged = { ...stored, ...updated };
         localStorage.setItem('user', JSON.stringify(merged));
-      } catch (e) {
-        // ignore
-      }
-
-      alert('Profile updated');
-      // Optionally reload to refresh top-level user state
-      window.location.reload();
+      } catch (e) {}
+      toast('Profile updated');
     } catch (err) {
       console.error('Failed to save profile', err);
-      alert(err.message || 'Failed to save profile');
+      toast(err.message || 'Failed to save profile');
     } finally {
       setSaving(false);
     }
@@ -71,31 +64,30 @@ export default function Profile({ user, household, onSignOut }) {
 
   const handlePasswordChange = async () => {
     if (!currentPassword || !newPassword) {
-      alert('Please provide current and new password');
+      toast('Please provide current and new password');
       return;
     }
     if (newPassword !== confirmPassword) {
-      alert('New passwords do not match');
+      toast('New passwords do not match');
       return;
     }
     if (newPassword.length < 6) {
-      alert('New password must be at least 6 characters');
+      toast('New password must be at least 6 characters');
       return;
     }
-
     setChangingPassword(true);
     try {
       await apiFetch('/api/me/password', {
         method: 'POST',
         body: JSON.stringify({ currentPassword, newPassword })
       });
-      alert('Password changed successfully');
+      toast('Password changed successfully');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
       console.error('Password change failed', err);
-      alert(err.message || 'Failed to change password');
+      toast(err.message || 'Failed to change password');
     } finally {
       setChangingPassword(false);
     }
@@ -113,6 +105,7 @@ export default function Profile({ user, household, onSignOut }) {
 
   return (
     <div className="min-h-screen bg-white">
+      <ToastContainer />
       <main className="flex justify-center py-12">
         <div className="max-w-3xl w-full px-6">
           <div className="flex items-center gap-4 mb-6">
@@ -131,7 +124,7 @@ export default function Profile({ user, household, onSignOut }) {
                   });
                   if (!resp.ok) {
                     const txt = await resp.text().catch(() => null);
-                    alert('Failed to upload avatar: ' + (txt || resp.status));
+                    toast('Failed to upload avatar: ' + (txt || resp.status));
                     return;
                   }
                   const j = await resp.json().catch(() => null);
@@ -143,9 +136,9 @@ export default function Profile({ user, household, onSignOut }) {
                       localStorage.setItem('user', JSON.stringify(merged));
                     } catch (e) {}
                     setValues(prev => ({ ...prev }));
-                    window.location.reload();
+                    toast('Avatar updated');
                   }
-                } catch (err) { console.error('Upload avatar failed', err); alert('Upload failed'); }
+                } catch (err) { console.error('Upload avatar failed', err); toast('Upload failed'); }
               }} />
               <button
                 type="button"
@@ -201,7 +194,7 @@ export default function Profile({ user, household, onSignOut }) {
               </div>
             </div>
             <div className="mt-4 flex gap-3">
-              <button onClick={handleSave} disabled={saving} className="bg-white border border-gray-200 text-gray-800 px-4 py-2 rounded-lg">{saving ? 'Saving...' : 'Save'}</button>
+              <button onClick={handleSave} disabled={saving} className="bg-white border border-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:cursor-pointer">{saving ? 'Saving...' : 'Save'}</button>
             </div>
           </section>
 
@@ -213,7 +206,7 @@ export default function Profile({ user, household, onSignOut }) {
               <input type="password" placeholder="Confirm new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-200" />
             </div>
             <div className="mt-4">
-              <button onClick={handlePasswordChange} disabled={changingPassword} className="bg-white border border-gray-200 text-gray-800 px-4 py-2 rounded-lg">{changingPassword ? 'Updating...' : 'Change password'}</button>
+              <button onClick={handlePasswordChange} disabled={changingPassword} className="bg-white border border-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:cursor-pointer">{changingPassword ? 'Updating...' : 'Change password'}</button>
             </div>
           </section>
         </div>
