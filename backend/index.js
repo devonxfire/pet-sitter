@@ -22,7 +22,6 @@ const allowedOrigins = (process.env.FRONTEND_ORIGINS
   : (process.env.FRONTEND_ORIGIN ? [process.env.FRONTEND_ORIGIN] : DEFAULT_FRONTEND_ORIGINS)
 );
 
-// ...existing code...
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
@@ -34,7 +33,7 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const { Server } = require('socket.io');
-// ...existing code...
+
 // passing the array directly is fine for development.
  
 const app = express();
@@ -398,6 +397,33 @@ app.post('/api/households', authenticateToken, async (req, res) => {
     res.json(household);
   } catch (error) {
     console.error('Create household error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Delete a household and all related data
+app.delete('/api/households/:householdId', authenticateToken, async (req, res) => {
+  try {
+    const { householdId } = req.params;
+    // Only allow if user is owner/main member of household
+    const access = await prisma.householdMember.findFirst({
+      where: {
+        householdId: parseInt(householdId),
+        userId: req.user.id,
+        role: { in: ['owner', 'member'] }
+      }
+    });
+    if (!access) {
+      return res.status(403).json({ error: 'Only owners/members can delete household' });
+    }
+    // Delete all related data (cascade)
+    await prisma.activity.deleteMany({ where: { pet: { householdId: parseInt(householdId) } } });
+    await prisma.pet.deleteMany({ where: { householdId: parseInt(householdId) } });
+    await prisma.householdMember.deleteMany({ where: { householdId: parseInt(householdId) } });
+    await prisma.household.delete({ where: { id: parseInt(householdId) } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete household error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -1348,25 +1374,38 @@ app.post('/api/households/:householdId/members/invite', authenticateToken, async
       return res.status(403).json({ error: 'Only owners/members can invite' });
     }
 
-    // Check if email already invited or is a member
-    const existing = await prisma.householdMember.findFirst({
+    // Check if email is already a member or has a pending invite for this household
+    const existingMember = await prisma.householdMember.findFirst({
       where: {
         householdId: parseInt(householdId),
-        OR: [
-          { invitedEmail: email.toLowerCase() },
-          { user: { email: email.toLowerCase() } }
-        ]
+        user: { email: email.toLowerCase() }
       }
     });
-
-    if (existing) {
-      return res.status(400).json({ error: 'User already invited or is a member' });
+    if (existingMember) {
+      return res.status(400).json({ error: 'User is already a member of this household' });
+    }
+    const pendingInvite = await prisma.householdMember.findFirst({
+      where: {
+        householdId: parseInt(householdId),
+        invitedEmail: email.toLowerCase()
+      }
+    });
+    if (pendingInvite) {
+      return res.status(400).json({ error: 'User already has a pending invitation to this household' });
     }
 
 
 
     // Use req.user for inviter info (no DB lookup)
-    const inviterName = req.user?.name || req.user?.email || 'A PetDaily member';
+    // Prefer first and last name if available, else fallback
+    let inviterName = 'A PetDaily member';
+    if (req.user?.firstName || req.user?.lastName) {
+      inviterName = `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim();
+    } else if (req.user?.name) {
+      inviterName = req.user.name;
+    } else if (req.user?.email) {
+      inviterName = req.user.email;
+    }
 
     // Create pending invitation (MVP fields only)
     const invitation = await prisma.householdMember.create({
@@ -1387,25 +1426,43 @@ app.post('/api/households/:householdId/members/invite', authenticateToken, async
       const inviteLink = `${appUrl}/join?household=${householdId}&email=${encodeURIComponent(email)}`;
       // PetDaily logo (replace with your actual logo URL if needed)
       const logoUrl = process.env.APP_LOGO_URL || 'https://petdaily.app/logo.png';
-      const roleDisplay = role ? role.charAt(0).toUpperCase() + role.slice(1) : 'Member';
-      const customMsg = message ? `<blockquote style=\"margin:1em 0;padding:1em;background:#f9f9f9;border-left:4px solid #4f46e5;color:#333;\">${message}</blockquote>` : '';
+      // Map role to display string
+      const roleMap = {
+        'household_member': 'Household Member',
+        'groomer': 'Groomer',
+        'vet': 'Vet',
+        'sitter': 'Sitter',
+        'owner': 'Owner',
+        'member': 'Household Member',
+      };
+      const roleDisplay = roleMap[(role || '').toLowerCase()] || 'Household Member';
+      // Theme colors (brand)
+      const theme = {
+        primary: '#DC2626', // brand red-600
+        grayDark: '#1A202C', // gray-900
+        grayLight: '#F7FAFC', // gray-100
+        grayBorder: '#E5E7EB', // gray-200
+        muted: '#6B7280', // gray-500
+      };
+      const customMsg = message ? `<blockquote style=\"margin:1em 0;padding:1em;background:${theme.grayLight};border-left:4px solid ${theme.primary};color:${theme.grayDark};\">${message}</blockquote>` : '';
       const html = `
-        <div style=\"font-family:sans-serif;max-width:480px;margin:0 auto;border:1px solid #eee;border-radius:8px;overflow:hidden;\">
-          <div style=\"background:#4f46e5;padding:24px 0;text-align:center;\">
+        <div style=\"font-family:sans-serif;max-width:480px;margin:0 auto;border:1px solid ${theme.grayBorder};border-radius:8px;overflow:hidden;\">
+          <div style=\"background:${theme.primary};padding:24px 0;text-align:center;\">
             <img src=\"${logoUrl}\" alt=\"PetDaily\" style=\"height:48px;\">
           </div>
-          <div style=\"padding:24px;\">
-            <h2 style=\"margin-top:0;color:#4f46e5;\">You're invited to join a household on PetDaily!</h2>
+          <div style=\"padding:24px;background:${theme.grayLight};\">
+            <h2 style=\"margin-top:0;color:${theme.primary};\">You're invited to join a household on PetDaily!</h2>
             <p><b>${inviterName}</b> has invited you as a <b>${roleDisplay}</b> for their household.</p>
             ${customMsg}
             <p style=\"margin:2em 0 1em 0;\">
-              <a href=\"${inviteLink}\" style=\"display:inline-block;padding:12px 24px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:4px;font-weight:bold;\">Accept Invitation</a>
+              <a href=\"${inviteLink}\" style=\"display:inline-block;padding:12px 24px;background:${theme.primary};color:#fff;text-decoration:none;border-radius:4px;font-weight:bold;\">Accept Invitation</a>
             </p>
-            <p style=\"font-size:13px;color:#888;\">Or copy and paste this link into your browser:<br><span style=\"word-break:break-all;\">${inviteLink}</span></p>
-            <p style=\"font-size:12px;color:#aaa;margin-top:2em;\">If you did not expect this invitation, you can ignore this email.</p>
+            <p style=\"font-size:13px;color:${theme.muted};\">Or copy and paste this link into your browser:<br><span style=\"word-break:break-all;\">${inviteLink}</span></p>
+            <p style=\"font-size:12px;color:${theme.grayBorder};margin-top:2em;\">If you did not expect this invitation, you can ignore this email.</p>
           </div>
         </div>
       `;
+      // NOTE: On Render, you must set the MAILGUN_API_KEY environment variable for email to work
       await mg.messages.create(process.env.MAILGUN_DOMAIN, {
         from: process.env.MAILGUN_FROM_EMAIL || 'no-reply@yourapp.com',
         to: [email],

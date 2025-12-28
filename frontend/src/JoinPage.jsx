@@ -11,6 +11,9 @@ export default function JoinPage() {
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginSubmitting, setLoginSubmitting] = useState(false);
 
   const email = searchParams.get('email') || '';
   const household = searchParams.get('household') || '';
@@ -56,7 +59,13 @@ export default function JoinPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || 'Registration failed.');
+        if (data.error && data.error.toLowerCase().includes('already registered')) {
+          // Email already registered, show login form
+          setShowLogin(true);
+          setError('This email is already registered. Please log in to accept your invitation.');
+        } else {
+          setError(data.error || 'Registration failed.');
+        }
         setSubmitting(false);
         return;
       }
@@ -90,22 +99,77 @@ export default function JoinPage() {
     setSubmitting(false);
   };
 
+  // Login flow for existing users
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginSubmitting(true);
+    setError('');
+    try {
+      const res = await fetch(apiUrl('/api/auth/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: loginPassword })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Login failed.');
+        setLoginSubmitting(false);
+        return;
+      }
+      const loginData = await res.json();
+      if (loginData.token) {
+        localStorage.setItem('token', loginData.token);
+      }
+      // Accept invitation after login
+      const acceptRes = await fetch(apiUrl(`/api/households/${household}/members/accept-invitation`), {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${loginData.token}` }
+      });
+      if (!acceptRes.ok) {
+        if (acceptRes.status === 404) {
+          setSuccess(true);
+          setTimeout(() => navigate('/dashboard'), 2000);
+          return;
+        } else {
+          setError('Failed to accept invitation.');
+          setLoginSubmitting(false);
+          return;
+        }
+      }
+      setSuccess(true);
+      setTimeout(() => navigate('/dashboard'), 2000);
+    } catch (err) {
+      setError('Something went wrong.');
+    }
+    setLoginSubmitting(false);
+  };
+
   if (loading) return <div className="flex flex-col items-center mt-16">Loading...</div>;
-  if (error) return <div className="flex flex-col items-center mt-16 text-red-500">{error}</div>;
   if (success) return <div className="flex flex-col items-center mt-16 text-green-600">Welcome! Redirecting...</div>;
 
   return (
     <div className="flex flex-col items-center mt-16">
       <img src="/logo192.png" alt="PetDaily" className="h-16 mb-4" />
       <h1 className="text-2xl font-bold text-indigo-700 mb-2">Join Household</h1>
-      <p className="mb-2">You've been invited as a <b>{invite.role}</b> to join a household on PetDaily.</p>
-      <form className="w-full max-w-xs mt-4" onSubmit={handleSubmit}>
-        <label className="block mb-2 text-sm font-medium">Email</label>
-        <input className="w-full mb-4 p-2 border rounded bg-gray-100" value={email} disabled />
-        <label className="block mb-2 text-sm font-medium">Create Password</label>
-        <input className="w-full mb-4 p-2 border rounded" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
-        <button className="w-full bg-indigo-600 text-white py-2 rounded font-bold disabled:opacity-50" type="submit" disabled={submitting}>Accept & Join</button>
-      </form>
+      <p className="mb-2">You've been invited as a <b>{invite?.role}</b> to join a household on PetDaily.</p>
+      {error && <div className="mb-4 text-red-500">{error}</div>}
+      {!showLogin ? (
+        <form className="w-full max-w-xs mt-4" onSubmit={handleSubmit}>
+          <label className="block mb-2 text-sm font-medium">Email</label>
+          <input className="w-full mb-4 p-2 border rounded bg-gray-100" value={email} disabled />
+          <label className="block mb-2 text-sm font-medium">Create Password</label>
+          <input className="w-full mb-4 p-2 border rounded" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
+          <button className="w-full bg-indigo-600 text-white py-2 rounded font-bold disabled:opacity-50" type="submit" disabled={submitting}>Accept & Join</button>
+        </form>
+      ) : (
+        <form className="w-full max-w-xs mt-4" onSubmit={handleLogin}>
+          <label className="block mb-2 text-sm font-medium">Email</label>
+          <input className="w-full mb-4 p-2 border rounded bg-gray-100" value={email} disabled />
+          <label className="block mb-2 text-sm font-medium">Password</label>
+          <input className="w-full mb-4 p-2 border rounded" type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} required minLength={6} />
+          <button className="w-full bg-indigo-600 text-white py-2 rounded font-bold disabled:opacity-50" type="submit" disabled={loginSubmitting}>Log In & Accept Invite</button>
+        </form>
+      )}
     </div>
   );
 }

@@ -23,6 +23,11 @@ const prettifyRole = (role, description) => {
 };
 
 export default function HouseholdSettings({ household, user, onSignOut }) {
+  // --- Delete Household State ---
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
   const [members, setMembers] = useState([]);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -115,8 +120,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
         body: JSON.stringify({
           email: inviteEmail,
           role: inviteRole,
-          welcomeMessage: inviteMessage || null,
-          roleDescription: inviteRole === 'other' ? (inviteOtherDescription || null) : null
+          message: inviteMessage || null
         })
       });
 
@@ -247,80 +251,89 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
           const canInvite = !!(currentUserMember && allowedRoles.includes(currentUserMember.role));
           if (!canInvite) return null;
           return (
-            <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Invite Members</h2>
-              <form onSubmit={handleInvite} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="member@example.com"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--color-accent)"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Role
-              </label>
-              <select
-                value={inviteRole}
-                onChange={(e) => setInviteRole(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--color-accent)"
-              >
-                <option value="household_member">Household Member</option>
-                <option value="household_friend">Household Friend</option>
-                <option value="pet_sitter">Pet Sitter</option>
-                <option value="dog_walker">Dog Walker</option>
-                <option value="groomer">Groomer</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            {inviteRole === 'other' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Please describe the role</label>
-                <input
-                  type="text"
-                  value={inviteOtherDescription}
-                  onChange={(e) => setInviteOtherDescription(e.target.value)}
-                  placeholder="e.g. 'Neighbour who helps with feeding and check-ins'"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--color-accent)"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Welcome message (optional)</label>
-              <textarea
-                value={inviteMessage}
-                onChange={(e) => setInviteMessage(e.target.value)}
-                placeholder="Optional: add a short welcome message that will be included with the invitation (e.g. 'Hi — I'm Alex, welcome to our household! You'll be able to add activities and receive notifications.')"
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--color-accent)"
-              />
-            </div>
-
-            <div className="flex">
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 bg-accent text-gray-900 font-semibold py-2 px-4 rounded-lg hover:opacity-90 transition cursor-pointer"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4" aria-hidden="true" focusable="false" style={{ flex: '0 0 auto' }}>
-                  <path fill="white" d="M2 21l21-9L2 3v7l15 2-15 2v7z" />
-                </svg>
-                <span>Send Invitation</span>
-              </button>
-            </div>
-              </form>
-            </section>
+            <>
+              <section>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Invite Members</h2>
+                <form onSubmit={handleInvite} className="space-y-4 border-b border-gray-200 pb-8">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="member@example.com"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--color-accent)"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Role
+                    </label>
+                    <select
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--color-accent)"
+                    >
+                      <option value="household_member">Household Member</option>
+                      <option value="household_friend">Household Friend</option>
+                      <option value="pet_sitter">Pet Sitter</option>
+                      <option value="dog_walker">Dog Walker</option>
+                      <option value="groomer">Groomer</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  {inviteRole === 'other' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Please describe the role</label>
+                      <input
+                        type="text"
+                        value={inviteOtherDescription}
+                        onChange={(e) => setInviteOtherDescription(e.target.value)}
+                        placeholder="e.g. 'Neighbour who helps with feeding and check-ins'"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--color-accent)"
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Welcome message (optional)</label>
+                    <textarea
+                      value={inviteMessage}
+                      onChange={(e) => setInviteMessage(e.target.value)}
+                      placeholder="Optional: add a short welcome message that will be included with the invitation (e.g. 'Hi — I'm Alex, welcome to our household! You'll be able to add activities and receive notifications.')"
+                      rows={4}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-(--color-accent)"
+                    />
+                  </div>
+                  <div className="flex">
+                    <button
+                      type="submit"
+                      className="inline-flex items-center gap-2 bg-accent text-gray-900 font-semibold py-2 px-4 rounded-lg hover:opacity-90 transition cursor-pointer"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4" aria-hidden="true" focusable="false" style={{ flex: '0 0 auto' }}>
+                        <path fill="white" d="M2 21l21-9L2 3v7l15 2-15 2v7z" />
+                      </svg>
+                      <span>Send Invitation</span>
+                    </button>
+                  </div>
+                </form>
+              </section>
+              {/* Delete Household Section (directly after Invite Members) */}
+              <section style={{ marginTop: '32px' }}>
+                <h2 className="text-2xl font-bold mb-2 text-red-700">Delete Household</h2>
+                <p className="mb-6 text-gray-700">Permanently delete this household and all its data. <span className="font-semibold text-red-700">This action cannot be undone.</span></p>
+                <button
+                  className="bg-red-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-700 transition mb-2"
+                  onClick={() => setShowDeleteModal(true)}
+                >
+                  Delete Household
+                </button>
+              </section>
+            </>
           );
         })()}
-            {showUpgrade && (
+        {showUpgrade && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
                 <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
                   <h3 className="text-lg font-semibold mb-4">Upgrade Household Plan</h3>
@@ -348,7 +361,72 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
               </div>
             )}
       </div>
-      </main>
-    </div>
+
+   
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-8 border border-gray-200">
+            {currentUserMember?.role === 'owner' ? (
+              <>
+                <h3 className="text-xl font-bold text-red-600 mb-4">Delete Household</h3>
+                <p className="mb-4 text-gray-700">This action cannot be undone. To confirm, type the household name below:</p>
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200"
+                    value={deleteConfirmName}
+                    onChange={e => setDeleteConfirmName(e.target.value)}
+                    placeholder={household?.name || 'Household Name'}
+                  />
+                </div>
+                {deleteError && <div className="text-red-500 mb-2">{deleteError}</div>}
+                <div className="flex justify-end gap-3">
+                  <button
+                    className="px-4 py-2 rounded bg-gray-100"
+                    onClick={() => { setShowDeleteModal(false); setDeleteConfirmName(''); setDeleteError(''); }}
+                  >Cancel</button>
+                  <button
+                    className="px-4 py-2 rounded bg-red-600 text-white font-bold disabled:opacity-50"
+                    disabled={deleteConfirmName !== (household?.name || '') || deleting}
+                    onClick={handleDeleteHousehold}
+                  >Delete</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-bold text-red-600 mb-4">Delete Household</h3>
+                <p className="mb-6 text-gray-700">Only the main member (owner) can delete this household. If you believe this is an error, please contact the household owner.</p>
+                <div className="flex justify-end gap-3">
+                  <button
+                    className="px-4 py-2 rounded bg-gray-100"
+                    onClick={() => { setShowDeleteModal(false); setDeleteConfirmName(''); setDeleteError(''); }}
+                  >Close</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </main>
+  </div>
   );
 }
+
+  // --- Delete Household Handler ---
+  const handleDeleteHousehold = async () => {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await apiFetch(`/api/households/${household.id}`, { method: 'DELETE' });
+      setShowDeleteModal(false);
+      setDeleteConfirmName('');
+      setDeleting(false);
+      if (onSignOut) onSignOut();
+      navigate('/');
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete household');
+      setDeleting(false);
+    }
+  };
