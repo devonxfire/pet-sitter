@@ -269,6 +269,17 @@ export default function LogActivity({ petId, household, user, activity, onActivi
             }
           };
           if (photoUrlForThis) payload.photoUrl = photoUrlForThis;
+          // Add reminder if enabled
+          if (reminderEnabled && reminderMethod === 'email') {
+            // Calculate remindAt: timestamp minus reminderTime (in minutes)
+            const activityTime = new Date(timestamp);
+            const remindAt = new Date(activityTime.getTime() - parseInt(reminderTime, 10) * 60000).toISOString();
+            payload.reminder = {
+              remindAt,
+              email: 'devonmartindale@gmail.com'
+            };
+            console.log('[LogActivity] Including reminder in payload:', payload.reminder);
+          }
           console.log('[LogActivity] POST payload for pet', pid, payload);
           return apiFetch(`/api/pets/${pid}/activities`, {
             method: 'POST',
@@ -734,7 +745,16 @@ export default function LogActivity({ petId, household, user, activity, onActivi
     console.log('[LogActivity] Rendering reminder step');
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 relative animate-fade-in" style={{padding: '2.5rem 2rem 2rem 2rem'}}>
+        <div
+          className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 relative animate-fade-in"
+          style={{
+            padding: '2.5rem 2rem 2rem 2rem',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
           <ModalClose onClick={onClose} className="absolute top-3 right-3 text-2xl font-bold focus:outline-none" />
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Set Reminder?</h2>

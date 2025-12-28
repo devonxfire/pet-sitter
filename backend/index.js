@@ -1068,7 +1068,7 @@ app.get('/api/pets/:petId/activities', authenticateToken, async (req, res) => {
 app.post('/api/pets/:petId/activities', authenticateToken, async (req, res) => {
   try {
     const { petId } = req.params;
-    let { activityTypeId, timestamp, notes, photoUrl, data } = req.body;
+    let { activityTypeId, timestamp, notes, photoUrl, data, reminder } = req.body;
     console.log('[ACTIVITY][POST] Incoming:', { petId, activityTypeId, timestamp, notes, photoUrl, data, userId: req.user.userId });
 
     // Validate timestamp
@@ -1158,6 +1158,60 @@ app.post('/api/pets/:petId/activities', authenticateToken, async (req, res) => {
         }
       });
       console.log(`✅ Activity logged: ${activity.activityType.name} for pet ${petId} by user ${req.user.userId}`);
+
+      // If reminder is present, create Reminder record and send instant confirmation email
+      if (reminder && reminder.remindAt && reminder.email) {
+        try {
+          await prisma.reminder.create({
+            data: {
+              userId: req.user.userId,
+              activityId: activity.id,
+              email: reminder.email,
+              remindAt: new Date(reminder.remindAt)
+            }
+          });
+          console.log(`⏰ Reminder scheduled for activity ${activity.id} at ${reminder.remindAt}`);
+          // Send instant confirmation email for testing
+          try {
+            // Capitalize first letter of activity name
+            const activityName = activity.activityType.name.charAt(0).toUpperCase() + activity.activityType.name.slice(1);
+            const createdAtStr = new Date().toLocaleString();
+            const remindAtStr = new Date(reminder.remindAt).toLocaleString();
+            const logoUrl = 'https://petdaily.app/logo.png'; // Replace with your actual logo URL
+            const themeColor = '#4F46E5'; // Example theme color (indigo-600)
+            const html = `
+              <div style="font-family:sans-serif;max-width:480px;margin:0 auto;border:1px solid #eee;border-radius:8px;overflow:hidden;">
+                <div style="background:${themeColor};padding:24px 0;text-align:center;">
+                  <img src="${logoUrl}" alt="PetDaily" style="height:48px;margin-bottom:8px;" />
+                  <h2 style="color:#fff;margin:0;font-size:1.6em;">Hi!</h2>
+                </div>
+                <div style="padding:24px 24px 16px 24px;">
+                  <p style="font-size:1.1em;margin-top:0;">Your reminder has been created with PetDaily. Here are the details:</p>
+                  <ul style="font-size:1em;line-height:1.7;margin:0 0 1em 0;padding:0 0 0 1.2em;">
+                    <li><strong>Activity:</strong> ${activityName}</li>
+                    <li><strong>Pet:</strong> ${pet.name}</li>
+                    <li><strong>By:</strong> ${activity.user.name || 'Unknown'}</li>
+                  </ul>
+                  <p style="margin:0 0 0.5em 0;"><strong>Reminder created at:</strong> ${createdAtStr}</p>
+                  <p style="margin:0 0 1.5em 0;"><strong>Reminder will be sent at:</strong> ${remindAtStr}</p>
+                  <p style="font-size:1.05em;color:#444;">You'll get a reminder email at the scheduled time. Thank you for using PetDaily!</p>
+                </div>
+              </div>
+            `;
+            await mg.messages.create(process.env.MAILGUN_DOMAIN, {
+              from: process.env.MAILGUN_FROM_EMAIL || 'no-reply@yourapp.com',
+              to: [reminder.email],
+              subject: `Reminder set: ${activityName} for ${pet.name}`,
+              html
+            });
+            console.log(`✅ Instant confirmation email sent to ${reminder.email}`);
+          } catch (emailErr) {
+            console.error('Failed to send instant confirmation email:', emailErr);
+          }
+        } catch (remErr) {
+          console.error('Failed to create reminder:', remErr);
+        }
+      }
 
       // Emit real-time event to household room (if socket server available)
       try {
