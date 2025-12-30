@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ThemeSpinner from './ThemeSpinner';
 
+import { getPetQuote } from './petQuotes';
+
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiFetch, API_BASE, apiUrl } from './api';
 
@@ -446,22 +448,7 @@ export default function PetDetail({ household, user, onSignOut }) {
     return '📝';
   };
 
-  // Small helper: generate a short, pet-specific quote using templates.
-  // This is deterministic and offline — no external API calls required.
-  const getPetQuote = (name) => {
-    const n = name || 'Your pet';
-    const templates = [
-      `${n} is the little miracle that makes every day brighter.`,
-      `Home is where ${n} greets you with a wag and a smile.`,
-      `${n} fills ordinary moments with extraordinary love.`,
-      `Life is better with ${n} by your side.`,
-      `${n} teaches the heart how to be gentle again.`
-    ];
-    // pick a pseudo-random template based on name so it feels consistent
-    let sum = 0;
-    for (let i = 0; i < n.length; i++) sum += n.charCodeAt(i);
-    return templates[sum % templates.length];
-  };
+
 
   // Only fetch if not provided as props (for deduplication)
   useEffect(() => {
@@ -851,183 +838,168 @@ export default function PetDetail({ household, user, onSignOut }) {
           </div>
           <div className="mx-auto max-w-6xl px-6 w-full relative" style={{zIndex: 1}}>
             <div className="mb-1 py-12">
-              <div className="grid md:grid-flow-col md:auto-cols-max items-start gap-2 md:gap-2">
+              <div className="flex flex-col items-center justify-center gap-4">
                 {/* Avatar */}
-                <div className="shrink-0 flex flex-col items-center md:items-start -ml-3 md:ml-0">
-                  <div className="relative">
-                    <div className="w-28 h-28 md:w-40 md:h-40 rounded-2xl bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
-                      {pet.photoUrl ? (
-                        <AvatarWithLoader src={resolvePhotoUrl(pet.photoUrl)} alt={pet.name} />
-                      ) : (
-                        <div className="text-gray-400 text-4xl">📷</div>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => { if (isHouseholdMember) fileInputRef.current?.click(); }}
-                      className={`absolute -bottom-3 -right-3 md:-bottom-2 md:-right-2 btn rounded-full w-9 h-9 md:w-12 md:h-12 flex items-center justify-center transition transform opacity-50 ${isHouseholdMember ? 'hover:scale-105 cursor-pointer' : 'cursor-not-allowed'} text-sm avatar-action z-20 ring-2 ring-white shadow`}
-                      type="button"
-                      aria-label="Change photo"
-                      aria-disabled={!isHouseholdMember}
-                      disabled={!isHouseholdMember}
-                    >
-                      +
-                    </button>
-                    <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => handlePhotoUpload(e)} className="hidden" />
+                <div className="relative flex flex-col items-center">
+                  <div className="w-28 h-28 md:w-40 md:h-40 rounded-2xl bg-gray-200 border-2 border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
+                    {pet.photoUrl ? (
+                      <AvatarWithLoader src={resolvePhotoUrl(pet.photoUrl)} alt={pet.name} />
+                    ) : (
+                      <div className="text-gray-400 text-4xl">📷</div>
+                    )}
                   </div>
+                  <button
+                    onClick={() => { if (isHouseholdMember) fileInputRef.current?.click(); }}
+                    className={`absolute -bottom-3 -right-3 md:-bottom-2 md:-right-2 btn rounded-full w-9 h-9 md:w-12 md:h-12 flex items-center justify-center transition transform opacity-50 ${isHouseholdMember ? 'hover:scale-105 cursor-pointer' : 'cursor-not-allowed'} text-sm avatar-action z-20 ring-2 ring-white shadow`}
+                    type="button"
+                    aria-label="Change photo"
+                    aria-disabled={!isHouseholdMember}
+                    disabled={!isHouseholdMember}
+                  >
+                    +
+                  </button>
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => handlePhotoUpload(e)} className="hidden" />
                 </div>
-                {/* Main info */}
-                <div className="min-w-0 flex-1 h-28 md:h-40 flex flex-col justify-between items-start ml-3 md:ml-5">
-                  <div className="flex flex-col justify-between h-full ">
-                    <div>
-                      <div className="flex items-baseline gap-3">
-                        <h1 className="text-2xl md:text-4xl leading-tight">
-                          {pet ? (
-                            <>
-                              <span className="font-bold text-white">{pet.name}'s </span>
-                              <span className="heading-light text-white" data-heading="Profile">Profile</span>
-                            </>
-                          ) : (
-                            <span className="heading-light text-white" data-heading="Profile">Profile</span>
-                          )}
-                        </h1>
-                        {/* single edit control is shown in the General Information section below */}
+                {/* Main info and actions centered below avatar */}
+                <div className="flex flex-col items-center w-full">
+                  <h1 className="text-2xl md:text-4xl leading-tight text-center">
+                    {pet ? (
+                      <>
+                        <span className="font-bold text-white">{pet.name}'s </span>
+                        <span className="heading-light text-white" data-heading="Profile">Profile</span>
+                      </>
+                    ) : (
+                      <span className="heading-light text-white" data-heading="Profile">Profile</span>
+                    )}
+                  </h1>
+                  <div className="mt-2">
+                    {latestActivity ? (
+                      <div className="flex flex-row items-center gap-2 text-sm text-white">
+                        <span>Latest Activity:</span>
+                        <span className="inline-flex items-center gap-2 px-2 py-0.5 bg-gray-100 rounded-full text-sm">
+                          {(() => {
+                            const name = latestActivity.activityType?.name?.toLowerCase() || '';
+                            let imgName = 'other-activity.png';
+                            if (name.includes('play')) imgName = 'play-activity.png';
+                            else if (name.includes('walk')) imgName = 'walk-activity.png';
+                            else if (name.includes('feed') || name.includes('food')) imgName = 'food-activity.png';
+                            else if (name.includes('water')) imgName = 'water-activity.png';
+                            else if (name.includes('groom')) imgName = 'grooming-activity.png';
+                            else if (name.includes('medicat')) imgName = 'medication-activity.png';
+                            else if (name.includes('chill')) imgName = 'chill-activity.png';
+                            return (
+                              <img src={`/${imgName}`} alt={name} style={{ width: 28, height: 28, objectFit: 'contain' }} />
+                            );
+                          })()}
+                          <span className="text-sm font-medium text-gray-900">{(latestActivity.activityType?.name
+                            ? `${latestActivity.activityType.name.charAt(0).toUpperCase()}${latestActivity.activityType.name.slice(1)}`
+                            : 'Activity')}</span>
+                        </span>
                       </div>
-                      <div className="mt-1">
-                        <div className="inline-block align-top">
-                          {latestActivity ? (
-                            <div className="flex items-center gap-3 text-sm text-white">
-                              <span className="">Latest Activity:</span>
-                              <span className="inline-flex items-center gap-2 px-2 py-0.5 bg-gray-100 rounded-full text-sm">
-                                {(() => {
-                                  const name = latestActivity.activityType?.name?.toLowerCase() || '';
-                                  let imgName = 'other-activity.png';
-                                  if (name.includes('play')) imgName = 'play-activity.png';
-                                  else if (name.includes('walk')) imgName = 'walk-activity.png';
-                                  else if (name.includes('feed') || name.includes('food')) imgName = 'food-activity.png';
-                                  else if (name.includes('water')) imgName = 'water-activity.png';
-                                  else if (name.includes('groom')) imgName = 'grooming-activity.png';
-                                  else if (name.includes('medicat')) imgName = 'medication-activity.png';
-                                  else if (name.includes('chill')) imgName = 'chill-activity.png';
-                                  return (
-                                    <img src={`/${imgName}`} alt={name} style={{ width: 28, height: 28, objectFit: 'contain' }} />
-                                  );
-                                })()}
-                                <span className="text-sm font-medium text-gray-900">{(latestActivity.activityType?.name
-                                  ? `${latestActivity.activityType.name.charAt(0).toUpperCase()}${latestActivity.activityType.name.slice(1)}`
-                                  : 'Activity')}</span>
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-3 text-sm text-white">
-                              <span>Last Activity:</span>
-                              <span className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full text-sm text-gray-200">No activities logged yet.</span>
-                            </div>
-                          )}
-                        </div>
+                    ) : (
+                      <div className="flex flex-row items-center gap-2 text-sm text-white">
+                        <span>Last Activity:</span>
+                        <span className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full text-sm text-gray-200">No activities logged yet.</span>
                       </div>
-                    </div>
-                    <div className="flex flex-row items-center gap-6 mt-3">
-                      <div className="flex flex-row gap-3">
-                        <button
-                          onClick={() => navigate(`/pet/${petId}`)}
-                          className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
-                          ref={el => {
-                            if (el) {
-                              el.style.setProperty('background', '#C3001F', 'important');
-                              el.style.setProperty('background-color', '#C3001F', 'important');
-                              el.style.setProperty('color', '#fff', 'important');
-                              el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
-                              el.style.setProperty('border-radius', '0.75rem', 'important');
-                            }
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.setProperty('background', '#8B0016', 'important');
-                            e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.setProperty('background', '#C3001F', 'important');
-                            e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
-                          }}
-                          aria-label={`View ${pet?.name || ''}'s Profile`}
-                          type="button"
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                            <circle cx="12" cy="8" r="4" />
-                            <path d="M4 20c0-4 8-4 8-4s8 0 8 4" />
-                          </svg>
-                          <span>Profile</span>
-                        </button>
-                        <button
-                          onClick={() => navigate(`/pet/${petId}/activities`)}
-                          className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
-                          ref={el => {
-                            if (el) {
-                              el.style.setProperty('background', '#C3001F', 'important');
-                              el.style.setProperty('background-color', '#C3001F', 'important');
-                              el.style.setProperty('color', '#fff', 'important');
-                              el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
-                              el.style.setProperty('border-radius', '0.75rem', 'important');
-                            }
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.setProperty('background', '#8B0016', 'important');
-                            e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.setProperty('background', '#C3001F', 'important');
-                            e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
-                          }}
-                          aria-label={`View ${pet?.name || ''}'s Activities`}
-                          type="button"
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
-                            <circle cx="12" cy="12" r="3" />
-                          </svg>
-                          <span>Activities</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (household?.id) {
-                              navigate(`/household/${household.id}/calendar`);
-                            } else {
-                              // fallback: try to find householdId from pet or context
-                              // or show an error
-                              alert('Household not found for this pet.');
-                            }
-                          }}
-                          className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
-                          ref={el => {
-                            if (el) {
-                              el.style.setProperty('background', '#C3001F', 'important');
-                              el.style.setProperty('background-color', '#C3001F', 'important');
-                              el.style.setProperty('color', '#fff', 'important');
-                              el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
-                              el.style.setProperty('border-radius', '0.75rem', 'important');
-                            }
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.setProperty('background', '#8B0016', 'important');
-                            e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.setProperty('background', '#C3001F', 'important');
-                            e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
-                          }}
-                          aria-label={`View ${pet?.name || ''}'s Calendar`}
-                          type="button"
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                            <rect x="3" y="4" width="18" height="18" rx="2" />
-                            <path d="M16 2v4M8 2v4M3 10h18" />
-                          </svg>
-                          <span>Calendar</span>
-                        </button>
-                      </div>
-                      <blockquote className="italic max-w-lg text-lg md:text-xl leading-tight ml-6" style={{ fontFamily: `'Dancing Script', cursive`, color: '#fff', textShadow: '0 1px 6px rgba(0,0,0,0.25)' }}>
-                        <span>“{getPetQuote(pet.name)}”</span>
-                      </blockquote>
-                    </div>
+                    )}
+                  </div>
+                  <blockquote className="italic max-w-lg text-lg md:text-xl leading-tight mt-4 text-center" style={{ fontFamily: `'Dancing Script', cursive`, color: '#fff', textShadow: '0 1px 6px rgba(0,0,0,0.25)' }}>
+                    <span>“{getPetQuote(pet.name)}”</span>
+                  </blockquote>
+                  <div className="flex flex-row items-center gap-3 mt-4 justify-center">
+                    <button
+                      onClick={() => navigate(`/pet/${petId}`)}
+                      className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      ref={el => {
+                        if (el) {
+                          el.style.setProperty('background', '#C3001F', 'important');
+                          el.style.setProperty('background-color', '#C3001F', 'important');
+                          el.style.setProperty('color', '#fff', 'important');
+                          el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                          el.style.setProperty('border-radius', '0.75rem', 'important');
+                        }
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.setProperty('background', '#8B0016', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.setProperty('background', '#C3001F', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
+                      }}
+                      aria-label={`View ${pet?.name || ''}'s Profile`}
+                      type="button"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                        <circle cx="12" cy="8" r="4" />
+                        <path d="M4 20c0-4 8-4 8-4s8 0 8 4" />
+                      </svg>
+                      <span>Profile</span>
+                    </button>
+                    <button
+                      onClick={() => navigate(`/pet/${petId}/activities`)}
+                      className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      ref={el => {
+                        if (el) {
+                          el.style.setProperty('background', '#C3001F', 'important');
+                          el.style.setProperty('background-color', '#C3001F', 'important');
+                          el.style.setProperty('color', '#fff', 'important');
+                          el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                          el.style.setProperty('border-radius', '0.75rem', 'important');
+                        }
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.setProperty('background', '#8B0016', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.setProperty('background', '#C3001F', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
+                      }}
+                      aria-label={`View ${pet?.name || ''}'s Activities`}
+                      type="button"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      <span>Activities</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (household?.id) {
+                          navigate(`/household/${household.id}/calendar`);
+                        } else {
+                          alert('Household not found for this pet.');
+                        }
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      ref={el => {
+                        if (el) {
+                          el.style.setProperty('background', '#C3001F', 'important');
+                          el.style.setProperty('background-color', '#C3001F', 'important');
+                          el.style.setProperty('color', '#fff', 'important');
+                          el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                          el.style.setProperty('border-radius', '0.75rem', 'important');
+                        }
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.setProperty('background', '#8B0016', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.setProperty('background', '#C3001F', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
+                      }}
+                      aria-label={`View ${pet?.name || ''}'s Calendar`}
+                      type="button"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                        <rect x="3" y="4" width="18" height="18" rx="2" />
+                        <path d="M16 2v4M8 2v4M3 10h18" />
+                      </svg>
+                      <span>Calendar</span>
+                    </button>
                   </div>
                 </div>
               </div>

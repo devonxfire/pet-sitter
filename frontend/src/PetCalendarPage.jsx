@@ -148,10 +148,10 @@ export default function HouseholdCalendarPage({ householdId, household }) {
           <h1 className="text-4xl font-bold text-gray-900 mb-8">{household?.name ? `${household.name} Calendar` : 'Household Calendar'}</h1>
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <select className="rounded border px-3 py-2" value={selectedPet} onChange={e => setSelectedPet(e.target.value)}>
+        <select className="rounded border px-3 py-2 cursor-pointer" value={selectedPet} onChange={e => setSelectedPet(e.target.value)}>
           {pets.map(pet => <option key={pet.id} value={pet.id}>{pet.name}</option>)}
         </select>
-        <select className="rounded border px-3 py-2" value={selectedType} onChange={e => setSelectedType(e.target.value)}>
+        <select className="rounded border px-3 py-2 cursor-pointer" value={selectedType} onChange={e => setSelectedType(e.target.value)}>
           {types.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
         </select>
       </div>
@@ -208,7 +208,11 @@ export default function HouseholdCalendarPage({ householdId, household }) {
         {modalInfo.open && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
             <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full relative">
-              <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl font-bold" onClick={() => setModalInfo({ open: false, date: null, activities: [] })}>&times;</button>
+              <button 
+                className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl font-bold cursor-pointer no-global-accent rounded-full"
+                style={{ backgroundColor: 'transparent', background: 'transparent !important' }}
+                onClick={() => setModalInfo({ open: false, date: null, activities: [] })}
+              >&times;</button>
               <h2 className="text-xl font-bold mb-2">Calendar for {modalInfo.date && modalInfo.date.toLocaleDateString()}</h2>
               {/* Group activities by type */}
               {(() => {
@@ -231,7 +235,7 @@ export default function HouseholdCalendarPage({ householdId, household }) {
                               className="py-2 cursor-pointer hover:bg-gray-100 rounded transition"
                               onClick={() => setViewingActivity(act)}
                             >
-                              <div className="font-semibold">{getEventPhrase(act)}</div>
+                              <div className="font-semibold text-gray-500">{getEventPhrase(act)}</div>
                               <div className="text-gray-500 text-xs">{new Date(act.timestamp).toLocaleString()}</div>
                             </li>
                           ))}
