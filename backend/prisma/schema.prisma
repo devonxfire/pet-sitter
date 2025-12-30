@@ -82,6 +82,7 @@ model Pet {
   species      String // dog, cat, bird, etc.
   breed        String?
   age          Int?
+  dob          DateTime? @map("dob") // date of birth (approx)
   weight       Float?
   weightUnit   String?  @map("weight_unit")
   photoUrl     String?  @map("photo_url")

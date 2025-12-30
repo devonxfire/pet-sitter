@@ -1,5 +1,27 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+
+// Helper to calculate age from dob (YYYY-MM-DD)
+export function getAgeFromDob(dob) {
+  if (!dob) return '';
+  const dobDate = new Date(dob);
+  const now = new Date();
+  let years = now.getFullYear() - dobDate.getFullYear();
+  let months = now.getMonth() - dobDate.getMonth();
+  let days = now.getDate() - dobDate.getDate();
+  if (days < 0) {
+    months--;
+    days += new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+  }
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  if (years < 0) return '';
+  let ageStr = years > 0 ? `${years} year${years > 1 ? 's' : ''}` : '';
+  if (months > 0) ageStr += (ageStr ? ', ' : '') + `${months} month${months > 1 ? 's' : ''}`;
+  return ageStr || 'Less than 1 month';
+}
 import ThemeSpinner from '../ThemeSpinner';
 import heic2any from 'heic2any';
 import { apiFetch } from '../api';
@@ -14,8 +36,8 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
         // Validation logic for each step
         const isStepValid = () => {
           if (step === 2) {
-            // General info: petName, age, species, breed, weight
-            if (!form.petName || !form.age || !form.species || !form.breed || !form.weight) return false;
+            // General info: petName, dob, species, breed, weight
+            if (!form.petName || !form.dob || !form.species || !form.breed || !form.weight) return false;
             return true;
           }
           if (step === 3) {
@@ -64,7 +86,7 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
   // If resuming a draft, start at the correct step and prefill form
   const initialForm = wizardData && wizardData.resumeDraft ? {
     petName: wizardData.name || '',
-    age: wizardData.age || '',
+    dob: wizardData.dob || '',
     species: wizardData.species || 'dog',
     breed: wizardData.breed || '',
     weight: wizardData.weight || '',
@@ -77,7 +99,7 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
     // Add more fields as needed
   } : {
     petName: '',
-    age: '',
+    dob: '',
     species: 'dog',
     breed: '',
     weight: '',
@@ -222,7 +244,7 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
       }
       const payload = {
         name: form.petName,
-        age: form.age,
+        dob: form.dob,
         species: form.species,
         breed: form.breed,
         weight: form.weight,
@@ -347,7 +369,7 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
       }
       const payload = {
         name: form.petName,
-        age: form.age,
+        dob: form.dob,
         species: form.species,
         breed: form.breed,
         weight: form.weight,
@@ -467,16 +489,19 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
                 />
               </div>
               <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-900 mb-1">Age *</label>
+                <label className="block text-sm font-medium text-gray-900 mb-1">Date of Birth (approx) *</label>
                 <input
-                  type="number"
-                  name="age"
-                  value={form.age}
+                  type="date"
+                  name="dob"
+                  value={form.dob}
                   onChange={handleChange}
                   className="w-full px-3 py-2 rounded border border-gray-200 focus:border-accent focus:outline-none"
-                  min="0"
                   required
+                  max={new Date().toISOString().split('T')[0]}
                 />
+                {form.dob && (
+                  <div className="text-gray-600 text-sm mt-1">Age: {getAgeFromDob(form.dob)}</div>
+                )}
               </div>
               <div className="mb-3">
                 <label className="block text-sm font-medium text-gray-900 mb-1">Species *</label>
@@ -672,8 +697,8 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
           )}
           <div className="flex items-center justify-between w-full mt-8" style={{ minHeight: 44 }}>
             <button
-              className="btn px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded shadow-none hover:bg-gray-200 transition disabled:opacity-50"
-              style={{ minWidth: 44 }}
+              className="btn px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded shadow-none hover:bg-gray-200 transition disabled:opacity-50 cursor-pointer"
+              style={{ minWidth: 44, cursor: 'pointer' }}
               onClick={handleBack}
               disabled={step === 1}
             >
@@ -681,8 +706,8 @@ export default function AddPetWizardModal({ open, onClose, onNext, previousVetIn
             </button>
             <span className="text-gray-500 text-sm font-medium select-none">Step {step} of 5</span>
             <button
-              className="btn btn-red px-2 py-1 text-xs font-medium transition-opacity duration-300 opacity-100"
-              style={{ minWidth: 44 }}
+              className="btn btn-red px-2 py-1 text-xs font-medium transition-opacity duration-300 opacity-100 cursor-pointer"
+              style={{ minWidth: 44, cursor: 'pointer' }}
               onClick={handleNext}
               type="button"
             >

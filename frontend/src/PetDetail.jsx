@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ThemeSpinner from './ThemeSpinner';
+import { getAgeFromDob } from './components/AddPetWizardModal';
 
 import { getPetQuote } from './petQuotes';
 
@@ -1143,18 +1144,25 @@ export default function PetDetail({ household, user, onSignOut }) {
                 </div>
               </div>
 
-              {/* Age and Weight */}
-              <div className="grid grid-cols-2 gap-4">
+
+              {/* Date of Birth, Age, and Weight */}
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Date of Birth</label>
+                  <input
+                    type="date"
+                    value={editValues.dob ? editValues.dob.slice(0, 10) : ''}
+                    onChange={e => setEditValues({ ...editValues, dob: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-2">Age</label>
                   <input
-                    type="number"
-                    value={editValues.age}
-                    onChange={(e) => setEditValues({ ...editValues, age: e.target.value })}
-                    placeholder="Years"
-                    min="0"
-                    max="100"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:outline-none"
+                    type="text"
+                    value={editValues.dob ? getAgeFromDob(editValues.dob) : ''}
+                    readOnly
+                    className="w-full px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 text-gray-700 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -1194,46 +1202,51 @@ export default function PetDetail({ household, user, onSignOut }) {
               </div>
             </div>
           ) : (!collapsedSections.general && (
-            <div className="space-y-6">
-              {/* Name (read-only) */}
-              <div>
-                <p className="text-sm text-gray-500">Name</p>
-                <p className="text-lg text-gray-900">{pet?.name || '-'}</p>
-              </div>
-
-              {/* Species */}
-              <div>
-                <p className="text-sm text-gray-500">Species</p>
-                <p className="text-lg text-gray-900">{pet?.species ? (pet.species.charAt(0).toUpperCase() + pet.species.slice(1)) : '-'}</p>
-              </div>
-
-              {/* Breed */}
-              <div>
-                <p className="text-sm text-gray-500">Breed</p>
-                <p className="text-lg text-gray-900">{pet?.breed || '-'}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
+            <>
+              <div className="space-y-6">
+                {/* Name (read-only) */}
                 <div>
-                  <p className="text-sm text-gray-500">Age</p>
-                  <p className="text-lg text-gray-900">{pet?.age ? `${pet.age} years` : '-'}</p>
+                  <p className="text-sm text-gray-500">Name</p>
+                  <p className="text-lg text-gray-900">{pet?.name || '-'}</p>
                 </div>
+
+                {/* Species */}
                 <div>
-                  <p className="text-sm text-gray-500">Weight</p>
-                  <p className="text-lg text-gray-900">{pet?.weight ? `${pet.weight} ${pet.weightUnit || 'lbs'}` : '-'}</p>
+                  <p className="text-sm text-gray-500">Species</p>
+                  <p className="text-lg text-gray-900">{pet?.species ? (pet.species.charAt(0).toUpperCase() + pet.species.slice(1)) : '-'}</p>
+                </div>
+
+                {/* Breed */}
+                <div>
+                  <p className="text-sm text-gray-500">Breed</p>
+                  <p className="text-lg text-gray-900">{pet?.breed || '-'}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-sm text-gray-500">Date of Birth</p>
+                    <p className="text-lg text-gray-900">{pet?.dob ? pet.dob : '-'}</p>
+                    <p className="text-sm text-gray-500 mt-2">Age</p>
+
+                    <p className="text-lg text-gray-900">{pet?.dob ? getAgeFromDob(pet.dob) : '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Weight</p>
+                    <p className="text-lg text-gray-900">{pet?.weight ? `${pet.weight} ${pet.weightUnit || 'lbs'}` : '-'}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">Siblings</p>
+                  <p className="text-lg text-gray-900 flex flex-wrap gap-1">{siblingLinks.length > 0 ? siblingLinks : '-'}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">Notes</p>
+                  <p className="text-lg text-gray-900 whitespace-pre-wrap wrap-break-word">{pet?.notes || '-'}</p>
                 </div>
               </div>
-
-              <div>
-                <p className="text-sm text-gray-500">Siblings</p>
-                <p className="text-lg text-gray-900 flex flex-wrap gap-1">{siblingLinks.length > 0 ? siblingLinks : '-'}</p>
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-500">Notes</p>
-                <p className="text-lg text-gray-900 whitespace-pre-wrap wrap-break-word">{pet?.notes || '-'}</p>
-              </div>
-            </div>
+            </>
           ))}
         </div>
 

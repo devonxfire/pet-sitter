@@ -789,30 +789,45 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
             <button onClick={() => setActivityFilter('all')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover cursor-pointer ${activityFilter === 'all' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>All</button>
             <button onClick={() => setActivityFilter('past')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover cursor-pointer ${activityFilter === 'past' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>✓ Past</button>
             <button onClick={() => setActivityFilter('upcoming')} className={`px-2 py-1 rounded-md text-sm font-medium transition no-global-accent no-accent-hover cursor-pointer ${activityFilter === 'upcoming' ? 'bg-gray-200 selected-filter' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>📅 Upcoming</button>
+            {/* Activity type dropdown filter */}
+            <label className="ml-4 mr-1 text-sm font-medium text-gray-700" htmlFor="activity-type-filter">Type</label>
+            <select
+              id="activity-type-filter"
+              value={typeFilter}
+              onChange={e => setTypeFilter(e.target.value)}
+              className="px-2 py-1 rounded-md text-sm font-medium border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent"
+              style={{ minWidth: 120 }}
+              aria-label="Filter by activity type"
+            >
+              <option value="all">All Types</option>
+              {Array.from(new Set(
+                (activities || [])
+                  .map(a => a.activityType?.name)
+                  .filter(Boolean)
+                  .map(name => name.charAt(0).toUpperCase() + name.slice(1))
+              ))
+                .sort((a, b) => a.localeCompare(b))
+                .map(name => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+            </select>
           </div>
         </div>
 
-        {activityFilter === 'quick' && (
-          <div ref={favouritesRef} className="mb-6">
-            {(!favourites || favourites.length === 0) ? (
-              <div className="text-center py-12 bg-gray-50 rounded-xl"><p className="text-gray-500">No current Favourites</p></div>
-            ) : (
-              <div className="space-y-4">{favourites.map((qa) => (
-                <div key={`qa-${qa.id}`} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2"><p className="font-semibold text-gray-900">{qa.label}</p><time className="text-sm text-gray-500">{qa.createdAt ? new Date(qa.createdAt).toLocaleString() : ''}</time></div>
-                    {qa.data?.notes && (<p className="text-gray-700 text-sm">{qa.data.notes}</p>)}
-                    <p className="text-xs text-gray-500 mt-2">Favourite</p>
-                  </div>
-                  <div className="ml-4 flex items-center gap-2">
-                    <button onClick={() => createFavourite(qa)} className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition">Log</button>
-                    <button onClick={() => handleDeleteFavourite(qa)} className="px-3 py-2 text-sm font-medium text-accent hover:bg-gray-100 rounded-lg transition no-global-accent no-accent-hover delete-btn" style={{ color: 'var(--brand-red)' }}>Delete</button>
-                  </div>
-                </div>
-              ))}</div>
-            )}
-          </div>
+        {/* Filter activities by typeFilter */}
+        {activityFilter !== 'quick' && typeFilter !== 'all' && activities && (
+          (() => {
+            // Only show activities matching the selected type
+            const filtered = activities.filter(a => {
+              const n = a.activityType?.name;
+              return n && n.charAt(0).toUpperCase() + n.slice(1) === typeFilter;
+            });
+            if (filtered.length === 0) return <div className="text-center text-gray-500 mb-8">No activities of this type.</div>;
+            return null; // Let the main list render as normal, since the main activity list uses activities already filtered by typeFilter
+          })()
         )}
+
+        
 
         <div className="flex flex-col space-y-4">
           {visibleActivities.length === 0 ? (
