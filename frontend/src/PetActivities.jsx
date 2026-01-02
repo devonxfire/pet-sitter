@@ -711,57 +711,64 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
                   </button>
 
                   <button
-                      onClick={() => setShowLogActivity('food')}
-                      className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
-                      ref={el => {
-                        if (el) {
-                          el.style.setProperty('background', '#C3001F', 'important');
-                          el.style.setProperty('background-color', '#C3001F', 'important');
-                          el.style.setProperty('color', '#fff', 'important');
-                          el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
-                          el.style.setProperty('border-radius', '0.75rem', 'important');
-                        }
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.setProperty('background', '#8B0016', 'important');
-                        e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.setProperty('background', '#C3001F', 'important');
-                        e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
-                      }}
-                      aria-label="Log Food"
-                      type="button"
-                    >
-                      <span role="img" aria-label="Food" className="text-lg">🍽️</span>
-                      <span>Food</span>
-                    </button>
-                    <button
-                      onClick={() => setShowLogActivity('medication')}
-                      className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
-                      ref={el => {
-                        if (el) {
-                          el.style.setProperty('background', '#C3001F', 'important');
-                          el.style.setProperty('background-color', '#C3001F', 'important');
-                          el.style.setProperty('color', '#fff', 'important');
-                          el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
-                          el.style.setProperty('border-radius', '0.75rem', 'important');
-                        }
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.setProperty('background', '#8B0016', 'important');
-                        e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.setProperty('background', '#C3001F', 'important');
-                        e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
-                      }}
-                      aria-label="Log Medication"
-                      type="button"
-                    >
-                      <span role="img" aria-label="Medication" className="text-lg">💊</span>
-                      <span>Medication</span>
-                    </button>
+                    onClick={() => setShowLogActivity('food')}
+                    className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                    ref={el => {
+                      if (el) {
+                        el.style.setProperty('background', '#C3001F', 'important');
+                        el.style.setProperty('background-color', '#C3001F', 'important');
+                        el.style.setProperty('color', '#fff', 'important');
+                        el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                        el.style.setProperty('border-radius', '0.75rem', 'important');
+                      }
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.setProperty('background', '#8B0016', 'important');
+                      e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.setProperty('background', '#C3001F', 'important');
+                      e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
+                    }}
+                    aria-label="Log Food"
+                    type="button"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                      <line x1="12" y1="4" x2="12" y2="20" />
+                      <line x1="9" y1="4" x2="9" y2="10" />
+                      <line x1="15" y1="4" x2="15" y2="10" />
+                    </svg>
+                    <span>Food</span>
+                  </button>
+                  <button
+                    onClick={() => setShowLogActivity('medication')}
+                    className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                    ref={el => {
+                      if (el) {
+                        el.style.setProperty('background', '#C3001F', 'important');
+                        el.style.setProperty('background-color', '#C3001F', 'important');
+                        el.style.setProperty('color', '#fff', 'important');
+                        el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                        el.style.setProperty('border-radius', '0.75rem', 'important');
+                      }
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.setProperty('background', '#8B0016', 'important');
+                      e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.setProperty('background', '#C3001F', 'important');
+                      e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
+                    }}
+                    aria-label="Log Medication"
+                    type="button"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                      <rect x="4" y="10" width="16" height="8" rx="4" />
+                      <line x1="8" y1="14" x2="16" y2="14" />
+                    </svg>
+                    <span>Medication</span>
+                  </button>
 
                 </div>
               </div>

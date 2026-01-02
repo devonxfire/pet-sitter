@@ -1040,7 +1040,11 @@ export default function PetDetail({ household, user, onSignOut }) {
                       aria-label="Log Food"
                       type="button"
                     >
-                      <span role="img" aria-label="Food" className="text-lg">🍽️</span>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                        <line x1="12" y1="4" x2="12" y2="20" />
+                        <line x1="9" y1="4" x2="9" y2="10" />
+                        <line x1="15" y1="4" x2="15" y2="10" />
+                      </svg>
                       <span>Food</span>
                     </button>
 
@@ -1067,7 +1071,10 @@ export default function PetDetail({ household, user, onSignOut }) {
                       aria-label="Log Medication"
                       type="button"
                     >
-                      <span role="img" aria-label="Medication" className="text-lg">💊</span>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                        <rect x="4" y="10" width="16" height="8" rx="4" />
+                        <line x1="8" y1="14" x2="16" y2="14" />
+                      </svg>
                       <span>Medication</span>
                     </button>
                   </div>
