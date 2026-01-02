@@ -257,19 +257,31 @@ export default function PetDetail({ household, user, onSignOut }) {
     return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
-  // Show all other pets in the same household as siblings, as clickable links
-  const siblingLinks = (pet && household && Array.isArray(household.pets))
-    ? household.pets.filter(p => String(p.id) !== String(pet.id)).map(s =>
-        s && s.name ? (
+  // Always use the latest household.pets from localStorage/state
+  const getCurrentHouseholdPets = () => {
+    if (household && Array.isArray(household.pets)) return household.pets;
+    try {
+      const stored = localStorage.getItem('household');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed.pets)) return parsed.pets;
+      }
+    } catch (e) {}
+    return [];
+  };
+  const siblingLinks = (pet && getCurrentHouseholdPets().length > 0)
+    ? getCurrentHouseholdPets()
+        .filter(p => p && p.id && p.name && String(p.id) !== String(pet.id))
+        .map(s => (
           <Link
             key={s.id}
             to={`/pet/${s.id}`}
             className="text-accent hover:underline cursor-pointer mr-2"
+            onClick={e => e.stopPropagation()}
           >
             {s.name}
           </Link>
-        ) : null
-      ).filter(Boolean)
+        ))
     : [];
 
   // Parse timestamp strings reliably. If the string lacks timezone info, assume UTC
@@ -908,6 +920,9 @@ export default function PetDetail({ household, user, onSignOut }) {
                     <span>“{getPetQuote(pet.name)}”</span>
                   </blockquote>
                   <div className="flex flex-row items-center gap-3 mt-4 justify-center">
+                    
+                   
+                   
                     <button
                       onClick={() => navigate(`/pet/${petId}`)}
                       className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
@@ -1000,6 +1015,60 @@ export default function PetDetail({ household, user, onSignOut }) {
                         <path d="M16 2v4M8 2v4M3 10h18" />
                       </svg>
                       <span>Calendar</span>
+                    </button>
+
+                     <button
+                      onClick={() => setShowLogActivity('food')}
+                      className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      ref={el => {
+                        if (el) {
+                          el.style.setProperty('background', '#C3001F', 'important');
+                          el.style.setProperty('background-color', '#C3001F', 'important');
+                          el.style.setProperty('color', '#fff', 'important');
+                          el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                          el.style.setProperty('border-radius', '0.75rem', 'important');
+                        }
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.setProperty('background', '#8B0016', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.setProperty('background', '#C3001F', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
+                      }}
+                      aria-label="Log Food"
+                      type="button"
+                    >
+                      <span role="img" aria-label="Food" className="text-lg">🍽️</span>
+                      <span>Food</span>
+                    </button>
+
+                     <button
+                      onClick={() => setShowLogActivity('medication')}
+                      className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      ref={el => {
+                        if (el) {
+                          el.style.setProperty('background', '#C3001F', 'important');
+                          el.style.setProperty('background-color', '#C3001F', 'important');
+                          el.style.setProperty('color', '#fff', 'important');
+                          el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                          el.style.setProperty('border-radius', '0.75rem', 'important');
+                        }
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.setProperty('background', '#8B0016', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.setProperty('background', '#C3001F', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
+                      }}
+                      aria-label="Log Medication"
+                      type="button"
+                    >
+                      <span role="img" aria-label="Medication" className="text-lg">💊</span>
+                      <span>Medication</span>
                     </button>
                   </div>
                 </div>
@@ -1225,7 +1294,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <p className="text-sm text-gray-500">Date of Birth</p>
-                    <p className="text-lg text-gray-900">{pet?.dob ? pet.dob : '-'}</p>
+                    <p className="text-lg text-gray-900">{pet?.dob ? pet.dob.slice(0, 10) : '-'}</p>
                     <p className="text-sm text-gray-500 mt-2">Age</p>
 
                     <p className="text-lg text-gray-900">{pet?.dob ? getAgeFromDob(pet.dob) : '-'}</p>

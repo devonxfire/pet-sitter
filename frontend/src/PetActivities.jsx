@@ -614,7 +614,8 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
                   <span>“{getPetQuote(pet?.name)}”</span>
                 </blockquote>
                 <div className="flex flex-row items-center gap-3 mt-4 justify-center">
-                  <button
+                   
+                                      <button
                     onClick={() => navigate(`/pet/${petId}`)}
                     className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
                     ref={el => {
@@ -708,6 +709,60 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
                     </svg>
                     <span>Calendar</span>
                   </button>
+
+                  <button
+                      onClick={() => setShowLogActivity('food')}
+                      className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      ref={el => {
+                        if (el) {
+                          el.style.setProperty('background', '#C3001F', 'important');
+                          el.style.setProperty('background-color', '#C3001F', 'important');
+                          el.style.setProperty('color', '#fff', 'important');
+                          el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                          el.style.setProperty('border-radius', '0.75rem', 'important');
+                        }
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.setProperty('background', '#8B0016', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.setProperty('background', '#C3001F', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
+                      }}
+                      aria-label="Log Food"
+                      type="button"
+                    >
+                      <span role="img" aria-label="Food" className="text-lg">🍽️</span>
+                      <span>Food</span>
+                    </button>
+                    <button
+                      onClick={() => setShowLogActivity('medication')}
+                      className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
+                      ref={el => {
+                        if (el) {
+                          el.style.setProperty('background', '#C3001F', 'important');
+                          el.style.setProperty('background-color', '#C3001F', 'important');
+                          el.style.setProperty('color', '#fff', 'important');
+                          el.style.setProperty('box-shadow', '0 4px 16px 0 rgba(0,0,0,0.18)', 'important');
+                          el.style.setProperty('border-radius', '0.75rem', 'important');
+                        }
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.setProperty('background', '#8B0016', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#8B0016', 'important');
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.setProperty('background', '#C3001F', 'important');
+                        e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
+                      }}
+                      aria-label="Log Medication"
+                      type="button"
+                    >
+                      <span role="img" aria-label="Medication" className="text-lg">💊</span>
+                      <span>Medication</span>
+                    </button>
+
                 </div>
               </div>
             </div>

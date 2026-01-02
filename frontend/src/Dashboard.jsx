@@ -27,7 +27,18 @@ export default function Dashboard({ user, household, onSignOut }) {
     if (!petToDelete) return;
     try {
       await apiFetch(`/api/pets/${petToDelete.id}`, { method: 'DELETE' });
-      setPets((prev) => prev.filter((p) => p.id !== petToDelete.id));
+      // Re-fetch pets from backend to ensure deleted pets are removed
+      if (household?.id) {
+        const updatedPets = await apiFetch(`/api/households/${household.id}/pets`);
+        setPets(updatedPets);
+        // Update household.pets in state and localStorage
+        const updatedHousehold = { ...household, pets: updatedPets };
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('household', JSON.stringify(updatedHousehold));
+        }
+        // Optionally, trigger a global update if household is managed at App level
+        // If you use a context/provider, update there as well
+      }
     } catch (err) {
       alert('Failed to delete pet: ' + (err?.error || err?.message || err));
     } finally {
@@ -246,7 +257,7 @@ export default function Dashboard({ user, household, onSignOut }) {
                           setShowWizard(true);
                           setWizardData({ ...pet, resumeDraft: true });
                         } else {
-                          navigate(`/pet/${pet.id}/activities`);
+                          navigate(`/pet/${pet.id}`);
                         }
                       }}
                     >
