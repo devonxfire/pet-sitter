@@ -15,6 +15,7 @@ const prettifyRole = (role, description) => {
     pet_sitter: 'Pet Sitter',
     dog_walker: 'Dog Walker',
     groomer: 'Groomer',
+    veterinarian: 'Veterinarian',
     other: description || 'Other'
   };
   if (map[role]) return map[role];
@@ -31,6 +32,10 @@ function capitalizeFirst(str) {
 
 export default function HouseholdSettings({ household, user, onSignOut }) {
   const navigate = useNavigate();
+  // Fix: Add missing deleteError state
+  const [deleteError, setDeleteError] = useState('');
+  // Fix: Add missing error state for general errors
+  const [error, setError] = useState('');
 
   // Redirect to create-household if not a member of any household
   React.useEffect(() => {
@@ -50,11 +55,14 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
         await apiFetch(`/api/households/${household.id}`, { method: 'DELETE' });
         setShowDeleteModal(false);
         setDeleteConfirmName('');
-        setSuccessMessage('Household deleted.');
+        // Route to home page immediately after deletion
+        navigate('/');
+        // Clear household from localStorage and state
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('household');
+        }
         if (typeof onSignOut === 'function') {
           onSignOut();
-        } else {
-          navigate('/dashboard');
         }
       } catch (err) {
         setDeleteError(err.message || 'Failed to delete household');
@@ -389,6 +397,7 @@ export default function HouseholdSettings({ household, user, onSignOut }) {
                       <option value="pet_sitter">Pet Sitter</option>
                       <option value="dog_walker">Dog Walker</option>
                       <option value="groomer">Groomer</option>
+                      <option value="veterinarian">Veterinarian</option>
                       <option value="other">Other</option>
                     </select>
                   </div>

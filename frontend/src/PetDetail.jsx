@@ -686,6 +686,7 @@ export default function PetDetail({ household, user, onSignOut }) {
         name: pet.name || '',
         species: pet.species,
         breed: pet.breed || '',
+        dob: pet.dob || '',
         age: pet.age?.toString() || '',
         weight: pet.weight?.toString() || '',
         weightUnit: pet.weightUnit || 'lbs',
@@ -717,6 +718,7 @@ export default function PetDetail({ household, user, onSignOut }) {
         updateData.name = editValues.name || pet.name;
         updateData.species = editValues.species;
         updateData.breed = editValues.breed || null;
+        updateData.dob = editValues.dob || null;
         updateData.age = editValues.age ? parseInt(editValues.age) : null;
         updateData.weight = editValues.weight ? parseFloat(editValues.weight) : null;
         updateData.weightUnit = editValues.weightUnit || 'lbs';
