@@ -110,9 +110,18 @@ if (!fs.existsSync(uploadsDir)) {
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    // User avatar upload: /api/me/photo
+    if ((req.originalUrl || req.url || '').includes('/api/me/photo')) {
+      // Save user avatar uploads at /uploads/users/:userId
+      const userId = req.user?.userId || req.user?.id || 'temp';
+      const userDir = path.join(__dirname, 'public', 'uploads', 'users', String(userId));
+      if (!fs.existsSync(userDir)) {
+        fs.mkdirSync(userDir, { recursive: true });
+      }
+      return cb(null, userDir);
+    }
+    // Pet avatar or activity photo
     const petId = req.params.petId || 'temp';
-    // Save pet avatar uploads at /uploads/pets/:petId
-    // Save activity photos under /uploads/pets/:petId/activities to avoid overwriting the pet avatar
     const isActivityUpload = (req.originalUrl || req.url || '').includes('/activities/photo');
     const baseDir = path.join(__dirname, 'public', 'uploads', 'pets', petId);
     const petDir = isActivityUpload ? path.join(baseDir, 'activities') : baseDir;
@@ -1728,7 +1737,8 @@ app.get('/api/me', authenticateToken, async (req, res) => {
         lastName: true,
         phoneNumber: true,
         isMainMember: true,
-        createdAt: true
+        createdAt: true,
+        photoUrl: true
       }
     });
 
@@ -1763,7 +1773,8 @@ app.patch('/api/me', authenticateToken, async (req, res) => {
         lastName: true,
         phoneNumber: true,
         isMainMember: true,
-        createdAt: true
+        createdAt: true,
+        photoUrl: true
       }
     });
 
@@ -1801,6 +1812,52 @@ app.post('/api/me/password', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('POST /api/me/password error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+// ============================================================================ 
+// USER AVATAR UPLOAD ROUTE
+// ============================================================================
+
+app.post('/api/me/photo', authenticateToken, upload.single('photo'), async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Convert HEIC/HEIF to JPEG for browser compatibility
+    let finalFilename = req.file.filename;
+    const uploadedPath = req.file.path;
+    if (req.file.mimetype === 'image/heic' || req.file.mimetype === 'image/heif') {
+      const base = path.basename(req.file.filename, path.extname(req.file.filename));
+      const jpegFilename = `${base}.jpg`;
+      const jpegPath = path.join(path.dirname(uploadedPath), jpegFilename);
+      const inputBuffer = await fs.promises.readFile(uploadedPath);
+      const outputBuffer = await heicConvert({ buffer: inputBuffer, format: 'JPEG', quality: 0.9 });
+      await fs.promises.writeFile(jpegPath, outputBuffer);
+      fs.unlinkSync(uploadedPath);
+      finalFilename = jpegFilename;
+    }
+
+    // Avatar already saved in /uploads/users/:userId by Multer
+    const userDir = path.join(__dirname, 'public', 'uploads', 'users', String(userId));
+    const destPath = path.join(userDir, finalFilename);
+    // No need to copy; file is already in place
+
+    // Save photo path to database (user avatar directory)
+    const photoUrl = `/uploads/users/${userId}/${finalFilename}`;
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { photoUrl },
+    });
+
+    console.log(`✅ User avatar uploaded: ${updatedUser.email} -> ${photoUrl}`);
+    res.json({ photoUrl });
+  } catch (error) {
+    console.error('User avatar upload error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload avatar' });
   }
 });
 

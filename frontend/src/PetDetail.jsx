@@ -16,7 +16,6 @@ import { Link } from 'react-router-dom';
 // AvatarWithLoader: shows a spinner/overlay while image is loading
 function AvatarWithLoader({ src, alt }) {
   const [loading, setLoading] = useState(true);
-  // Force spinner for at least 400ms
   const [minDelayPassed, setMinDelayPassed] = useState(false);
   useEffect(() => {
     setLoading(true);
@@ -24,8 +23,6 @@ function AvatarWithLoader({ src, alt }) {
     const timer = setTimeout(() => setMinDelayPassed(true), 400);
     return () => clearTimeout(timer);
   }, [src]);
-  // Add cache-busting query param for testing spinner
-  const cacheBustedSrc = src + (src.includes('?') ? '&' : '?') + 't=' + Date.now();
   const showSpinner = loading || !minDelayPassed;
   return (
     <div className="relative w-full h-full">
@@ -38,7 +35,7 @@ function AvatarWithLoader({ src, alt }) {
         </div>
       )}
       <img
-        src={cacheBustedSrc}
+        src={src}
         alt={alt}
         className="w-full h-full object-cover select-none"
         draggable={false}

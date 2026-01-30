@@ -26,7 +26,7 @@ function FavouritesModal({ favourites, onLog, onDelete, onClose }) {
       <div
         className="bg-white rounded-2xl shadow-xl w-full relative"
         style={{
-          maxWidth: '95vw',
+          maxWidth: '640px',
           padding: '1.25rem',
           ...(window.innerWidth < 640 ? { maxWidth: '92vw', padding: '0.75rem' } : {}),
         }}
@@ -44,28 +44,41 @@ function FavouritesModal({ favourites, onLog, onDelete, onClose }) {
               const labelWithPets = petNamesStr
                 ? `${qa.label} for ${petNamesStr}`
                 : qa.label;
+              // Determine activity image (same logic as PetDetail)
+              const activityTypeLower = (qa.key || qa.label || '').toLowerCase();
+              let imgName = 'other-activity.png';
+              if (activityTypeLower.includes('play')) imgName = 'play-activity.png';
+              else if (activityTypeLower.includes('walk')) imgName = 'walk-activity.png';
+              else if (activityTypeLower.includes('feed') || activityTypeLower.includes('food')) imgName = 'food-activity.png';
+              else if (activityTypeLower.includes('water')) imgName = 'water-activity.png';
+              else if (activityTypeLower.includes('groom')) imgName = 'grooming-activity.png';
+              else if (activityTypeLower.includes('medicat')) imgName = 'medication-activity.png';
+              else if (activityTypeLower.includes('chill')) imgName = 'chill-activity.png';
               return (
                 <div key={`qa-${qa.id}`} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
-                      <p className="font-semibold text-gray-900">{labelWithPets}</p>
-                      <span className="text-sm text-gray-500">{new Date().toLocaleString()}</span>
+                  <div className="flex items-center flex-1">
+                    <img src={`/${imgName}`} alt={qa.label} style={{ width: '56px', height: '40px', objectFit: 'contain', marginRight: '1rem', borderRadius: 0, boxShadow: 'none' }} />
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-2">
+                        <p className="font-semibold text-gray-900">{labelWithPets}</p>
+                        <span className="text-sm text-gray-500">{new Date().toLocaleString()}</span>
+                      </div>
+                      {qa.data?.notes && (<p className="text-gray-700 text-sm">{qa.data.notes}</p>)}
+                      <p className="text-xs text-gray-500 mt-2">Favourite</p>
                     </div>
-                    {qa.data?.notes && (<p className="text-gray-700 text-sm">{qa.data.notes}</p>)}
-                    <p className="text-xs text-gray-500 mt-2">Favourite</p>
                   </div>
-                  <div className="ml-4 flex flex-col items-end gap-2">
+                  <div className="ml-4 flex flex-col items-end gap-2 shrink-0">
                     <button
                       onClick={() => onLog(qa)}
                       className="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition"
-                      style={{ cursor: 'pointer', width: '100%' }}
+                      style={{ cursor: 'pointer', minWidth: '80px' }}
                     >
                       Log
                     </button>
                     <button
                       onClick={() => onDelete(qa)}
                       className="px-3 py-2 text-sm font-medium text-accent hover:bg-gray-100 rounded-lg transition no-global-accent no-accent-hover delete-btn"
-                      style={{ color: 'var(--brand-red)', cursor: 'pointer', width: '100%' }}
+                      style={{ color: 'var(--brand-red)', cursor: 'pointer', minWidth: '80px' }}
                     >
                       Delete
                     </button>

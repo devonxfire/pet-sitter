@@ -1,39 +1,53 @@
+
 import React, { useState, useEffect, useRef } from 'react';
+import AvatarWithLoader from './PetDetail.jsx';
 import { apiFetch, apiUrl, API_BASE } from './api';
 import { toast, ToastContainer } from './Toast.jsx';
 
+
+
 export default function Profile({ user, household, onSignOut }) {
   const [loading, setLoading] = useState(true);
+  // Removed avatarLoading state
   const [error, setError] = useState(null);
   const [values, setValues] = useState({ name: '', firstName: '', lastName: '', phoneNumber: '' });
   const [saving, setSaving] = useState(false);
+  const [currentUser, setCurrentUser] = useState({});
+  const [imgError, setImgError] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
+  // Fetch user data (for avatar and profile info)
+  const fetchUser = async () => {
+    setLoading(true);
+    try {
+      const data = await apiFetch('/api/me');
+      console.log('[Profile] /api/me response:', data);
+      setValues({
+        name: data.name || '',
+        firstName: data.firstName || '',
+        lastName: data.lastName || '',
+        phoneNumber: data.phoneNumber || ''
+      });
+      setCurrentUser(data);
+      // Optionally update user in localStorage for consistency
       try {
-        const data = await apiFetch('/api/me');
-        setValues({
-          name: data.name || '',
-          firstName: data.firstName || '',
-          lastName: data.lastName || '',
-          phoneNumber: data.phoneNumber || ''
-        });
-      } catch (err) {
-        console.error('Failed to load profile', err);
-        setError(err.message || 'Failed to load profile');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
-  }, []);
+        const stored = JSON.parse(localStorage.getItem('user') || '{}');
+        const merged = { ...stored, ...data };
+        localStorage.setItem('user', JSON.stringify(merged));
+      } catch (e) {}
+    } catch (err) {
+      console.error('[Profile] Failed to load profile', err);
+      setError(err.message || 'Failed to load profile');
+    } finally {
+      console.log('[Profile] setLoading(false) called');
+      setLoading(false);
+    }
+  };
+  useEffect(() => { fetchUser(); }, []);
 
   const handleSave = async () => {
     setSaving(true);
@@ -93,15 +107,7 @@ export default function Profile({ user, household, onSignOut }) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="flex items-center justify-center py-24">
-          <p className="text-gray-400">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-white">
@@ -114,6 +120,7 @@ export default function Profile({ user, household, onSignOut }) {
                 try {
                   const f = e.target.files && e.target.files[0];
                   if (!f) return;
+                  // No avatarLoading
                   const form = new FormData();
                   form.append('photo', f);
                   const token = localStorage.getItem('token');
@@ -125,20 +132,21 @@ export default function Profile({ user, household, onSignOut }) {
                   if (!resp.ok) {
                     const txt = await resp.text().catch(() => null);
                     toast('Failed to upload avatar: ' + (txt || resp.status));
+                    setAvatarLoading(false);
                     return;
                   }
                   const j = await resp.json().catch(() => null);
-                  // update local values and storage
                   if (j) {
                     try {
                       const stored = JSON.parse(localStorage.getItem('user') || '{}');
                       const merged = { ...stored, ...j };
                       localStorage.setItem('user', JSON.stringify(merged));
                     } catch (e) {}
-                    setValues(prev => ({ ...prev }));
+                    await fetchUser(); // re-fetch user data for instant UI update
                     toast('Avatar updated');
                   }
                 } catch (err) { console.error('Upload avatar failed', err); toast('Upload failed'); }
+                // No avatarLoading
               }} />
               <button
                 type="button"
@@ -146,8 +154,18 @@ export default function Profile({ user, household, onSignOut }) {
                 className="rounded-2xl bg-white p-1 relative"
                 style={{ width: 96, height: 96, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: 'pointer', opacity: 1 }}
               >
-                {user?.photoUrl || user?.photo ? (
-                  <img src={(user.photoUrl && (user.photoUrl.startsWith('http') ? user.photoUrl : `${API_BASE}${user.photoUrl}`)) || user.photo} alt={user?.name || 'Profile'} className="w-full h-full object-cover" />
+                {currentUser?.photoUrl && !imgError ? (
+                  (() => {
+                    const baseUrl = currentUser.photoUrl.startsWith('http') ? currentUser.photoUrl : `${API_BASE}${currentUser.photoUrl}`;
+                    const cacheBusted = baseUrl + (baseUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+                    console.log('Avatar image URL:', cacheBusted);
+                    return <AvatarWithLoader
+                      src={cacheBusted}
+                      alt={currentUser?.name || 'Profile'}
+                      key={baseUrl}
+                      onError={() => setImgError(true)}
+                    />;
+                  })()
                 ) : (
                   <div className="text-gray-400 text-4xl">👤</div>
                 )}
@@ -155,7 +173,7 @@ export default function Profile({ user, household, onSignOut }) {
               </button>
             </div>
             <div>
-              <h1 className="text-2xl font-semibold">Hi, {user?.name || user?.firstName || 'there'}!</h1>
+              <h1 className="text-2xl font-semibold">Hi, {currentUser?.name || currentUser?.firstName || 'there'}!</h1>
               <div className="text-sm text-gray-600 mt-1">Current Role: {(() => {
                 const prettify = (r) => {
                   if (!r) return 'Household Member';
@@ -166,7 +184,7 @@ export default function Profile({ user, household, onSignOut }) {
                   if (!household) return 'Household Member';
                   const members = household.members || household.users || [];
                   if (!Array.isArray(members) || members.length === 0) return 'Household Member';
-                  const me = members.find(m => (m.user && String(m.user.id) === String(user?.id)) || String(m.id) === String(user?.id) || (m.user && String(m.user.email) === String(user?.email)));
+                  const me = members.find(m => (m.user && String(m.user.id) === String(currentUser?.id)) || String(m.id) === String(currentUser?.id) || (m.user && String(m.user.email) === String(currentUser?.email)));
                   if (!me) return 'Household Member';
                   const raw = me.role || me.type || (me.isOwner ? 'owner' : me.title) || 'household_member';
                   return prettify(raw);
@@ -190,7 +208,7 @@ export default function Profile({ user, household, onSignOut }) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input value={user?.email || ''} disabled className="w-full px-4 py-3 rounded-lg border border-gray-100 bg-gray-50 text-gray-500" />
+                <input value={currentUser?.email || ''} disabled className="w-full px-4 py-3 rounded-lg border border-gray-100 bg-gray-50 text-gray-500" />
               </div>
             </div>
             <div className="mt-4 flex gap-3">
