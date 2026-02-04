@@ -30,7 +30,7 @@ export default function LogActivity({ petId, household, user, activity, onActivi
   const currentStep = (typeof step === 'string') ? step : internalStep;
   const setStepLocal = (typeof setStep === 'function') ? setStep : setInternalStep;
 
-  const [selectedType, setSelectedType] = useState(activity?.activityType?.name || '');
+  const [selectedType, setSelectedType] = useState(activity?.activityType?.id || '');
   const [timing, setTiming] = useState(activity ? (new Date(activity.timestamp) > new Date() ? 'upcoming' : 'happened') : ''); // 'happened' or 'upcoming'
   const [notes, setNotes] = useState(activity?.notes || '');
   const [photoFile, setPhotoFile] = useState(null);

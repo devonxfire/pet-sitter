@@ -23,35 +23,25 @@ function AvatarWithLoader({ src, alt }) {
     const timer = setTimeout(() => setMinDelayPassed(true), 400);
     return () => clearTimeout(timer);
   }, [src]);
-  const showSpinner = loading || !minDelayPassed;
+
   return (
-    <div className="relative w-full h-full">
-      {showSpinner && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-60 z-10">
-          <svg className="animate-spin h-8 w-8 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-          </svg>
-        </div>
-      )}
+    <div className="relative w-full h-full flex items-center justify-center">
       <img
         src={src}
         alt={alt}
-        className="w-full h-full object-cover select-none"
-        draggable={false}
-        style={showSpinner ? { visibility: 'hidden' } : {}}
+        className={`object-cover w-full h-full transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}
         onLoad={() => setLoading(false)}
         onError={() => setLoading(false)}
+        style={{ display: loading && !minDelayPassed ? 'none' : undefined }}
       />
+      {(loading || !minDelayPassed) && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-60 z-10">
+          <ThemeSpinner size={32} />
+        </div>
+      )}
     </div>
   );
 }
-
-
-
-// ...existing code...
-
-
 export default function PetDetail({ household, user, onSignOut }) {
   // --- All state/refs must be declared before use ---
   const [editValues, setEditValues] = useState({});
@@ -1016,8 +1006,8 @@ export default function PetDetail({ household, user, onSignOut }) {
                       <span>Calendar</span>
                     </button>
 
-                     <button
-                      onClick={() => setShowLogActivity('food')}
+                    <button
+                      onClick={() => navigate(`/pet/${petId}/food`)}
                       className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
                       ref={el => {
                         if (el) {
@@ -1036,7 +1026,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                         e.currentTarget.style.setProperty('background', '#C3001F', 'important');
                         e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
                       }}
-                      aria-label="Log Food"
+                      aria-label="View Food Inventory"
                       type="button"
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">

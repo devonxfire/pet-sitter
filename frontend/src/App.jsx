@@ -19,6 +19,7 @@ import Privacy from './Privacy';
 import Contact from './Contact';
 import PlansPage from './Plans';
 import HouseholdCalendarPage from './HouseholdCalendarPage';
+import PetFood from './PetFood';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -156,6 +157,10 @@ function App() {
               <Navigate to="/login" />
             )
           }
+        />
+        <Route
+          path="/pet/:petId/food"
+          element={<PetFood />}
         />
         <Route
           path="/activities"

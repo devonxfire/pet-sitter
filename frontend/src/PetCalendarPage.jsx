@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import ThemeSpinner from './ThemeSpinner';
 import ActivityView from './ActivityView';
+import LogActivity from './LogActivity';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { apiUrl } from './api';
@@ -50,6 +51,9 @@ export default function HouseholdCalendarPage({ householdId, household }) {
         }
       const [modalInfo, setModalInfo] = useState({ open: false, date: null, activities: [] });
       const [viewingActivity, setViewingActivity] = useState(null);
+      // State for scheduling new appointment modal
+      const [showLogActivity, setShowLogActivity] = useState(false);
+      const [logStep, setLogStep] = useState('selectType');
     const [calendarDate, setCalendarDate] = React.useState(new Date());
     // Placeholder: fetch pets and types for filters
     const [pets, setPets] = React.useState([]);
@@ -66,36 +70,33 @@ export default function HouseholdCalendarPage({ householdId, household }) {
   // Activities state
   const [activities, setActivities] = React.useState([]);
   // Fetch activities for selected pet or all pets
-  React.useEffect(() => {
-    async function fetchActivities() {
-      if (!selectedPet) {
-        setActivities([]);
-        return;
-      }
-      let url = apiUrl(`/api/pets/${selectedPet}/activities?limit=200`);
-      setLoading(true);
-      try {
-        const res = await fetch(url, {
-          headers: { 'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : undefined }
-        });
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setActivities(data);
-        } else {
-          setActivities([]);
-        }
-      } catch {
-        setActivities([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-    if (selectedPet) {
-      fetchActivities();
-    } else {
+  const fetchActivities = React.useCallback(async () => {
+    if (!selectedPet) {
       setActivities([]);
+      return;
+    }
+    let url = apiUrl(`/api/pets/${selectedPet}/activities?limit=200&_=${Date.now()}`);
+    setLoading(true);
+    try {
+      const res = await fetch(url, {
+        headers: { 'Authorization': localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : undefined }
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setActivities(data);
+      } else {
+        setActivities([]);
+      }
+    } catch {
+      setActivities([]);
+    } finally {
+      setLoading(false);
     }
   }, [selectedPet, householdId]);
+
+  React.useEffect(() => {
+    fetchActivities();
+  }, [fetchActivities]);
   React.useEffect(() => {
     async function fetchPets() {
       let hid = householdId;
@@ -300,6 +301,7 @@ export default function HouseholdCalendarPage({ householdId, household }) {
             <button
               type="button"
               className="inline-flex items-center gap-2 bg-accent text-gray-900 font-semibold py-2 px-4 rounded-lg hover:opacity-90 transition cursor-pointer mb-2"
+              onClick={() => setShowLogActivity(true)}
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4" aria-hidden="true" focusable="false" style={{ flex: '0 0 auto' }}>
                 <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="2" fill="none" />
@@ -308,7 +310,50 @@ export default function HouseholdCalendarPage({ householdId, household }) {
               <span>Schedule New Appointment</span>
             </button>
           </div>
-          {/* Modal for scheduling (to be implemented) */}
+          {/* LogActivity modal for scheduling new appointment */}
+          {showLogActivity && (
+            <LogActivity
+              petId={selectedPet}
+              household={household}
+              step={logStep}
+              setStep={setLogStep}
+              onActivityLogged={async newActivity => {
+                try {
+                  // Try to shape the activity for instant calendar update
+                  let normalized = { ...newActivity };
+                  if (!normalized.user && window.currentUser) normalized.user = window.currentUser;
+                  // If activityType is missing but activityTypeId is present, try to fill it
+                  if (!normalized.activityType && normalized.activityTypeId) {
+                    // Try to infer the name from ACTIVITY_TYPES (imported from activityTypes.js)
+                    const ACTIVITY_TYPES = [
+                      { id: 'feeding', name: 'Feeding' },
+                      { id: 'walk', name: 'Walk' },
+                      { id: 'play', name: 'Play' },
+                      { id: 'medication', name: 'Medication' },
+                      { id: 'water', name: 'Water' },
+                      { id: 'grooming', name: 'Grooming' },
+                      { id: 'chilling', name: 'Chilling' },
+                      { id: 'photo', name: 'Photo' },
+                      { id: 'other', name: 'Other' }
+                    ];
+                    const found = ACTIVITY_TYPES.find(t => t.id === normalized.activityTypeId);
+                    normalized.activityType = found ? { name: found.name, id: found.id } : { name: 'Other', id: 'other' };
+                  }
+                  setActivities(prev => [normalized, ...prev]);
+                } catch (e) {
+                  setActivities(prev => [newActivity, ...prev]);
+                }
+                setShowLogActivity(false);
+                setLogStep('selectType');
+                // Re-fetch after a short delay to ensure backend sync
+                setTimeout(fetchActivities, 1200);
+              }}
+              onClose={() => {
+                setShowLogActivity(false);
+                setLogStep('selectType');
+              }}
+            />
+          )}
         </div>
       </main>
     </div>
