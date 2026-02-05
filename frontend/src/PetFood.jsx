@@ -2,11 +2,263 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiUrl } from './api';
 
+// Move FoodWizardModal above PetFood so it is defined before use
+function FoodWizardModal({ petName, onClose, onComplete, initialData }) {
+  const [form, setForm] = useState(() => initialData || {
+    foodTypes: [], brands: {}, foods: {}, units: {}, weights: {}, bagFullness: {}, mealFrequencies: {}
+  });
+  const [step, setStep] = useState(0);
+
+  const FOOD_TYPE_OPTIONS = [
+    { value: 'pellets', label: 'Pellets' },
+    { value: 'raw', label: 'Raw' },
+    { value: 'wet', label: 'Wet Food' },
+    { value: 'other', label: 'Other' }
+  ];
+  const BRAND_OPTIONS = {
+    pellets: ['Royal Canin', 'Eukanuba', 'Hills', 'Acana'],
+    raw: ['Raw Love', 'Doggy Dinners', 'Barf'],
+    wet: ['Hill’s Science', 'Pedigree', 'Cesar'],
+    other: ['Homemade', 'Prescription', 'Other']
+  };
+  const FOOD_OPTIONS = {
+    'Royal Canin': ['Mobility', 'Digestive', 'Puppy'],
+    'Eukanuba': ['Skin', 'Weight Control'],
+    'Hills': ['Metabolic', 'Dental'],
+    'Acana': ['Grasslands', 'Wild Prairie'],
+    'Raw Love': ['Chicken', 'Beef'],
+    'Doggy Dinners': ['Lamb', 'Turkey'],
+    'Barf': ['Classic', 'Sport'],
+    'Hill’s Science': ['Adult', 'Puppy'],
+    'Pedigree': ['Chopped', 'Gravy'],
+    'Cesar': ['Filet Mignon', 'Porterhouse'],
+    'Homemade': ['Custom'],
+    'Prescription': ['Renal', 'Hepatic'],
+    'Other': ['Other']
+  };
+
+  function handleFoodTypeChange(e) {
+    const { value, checked } = e.target;
+    setForm(f => {
+      let foodTypes = f.foodTypes || [];
+      if (checked) {
+        foodTypes = [...foodTypes, value];
+      } else {
+        foodTypes = foodTypes.filter(t => t !== value);
+      }
+      return { ...f, foodTypes };
+    });
+  }
+
+  const steps = [
+    {
+      label: `Please select the type of food ${petName} eats on a daily basis`,
+      content: (
+        <div>
+          <div className="mb-4">Select all that apply:</div>
+          <div className="flex flex-col gap-2">
+            {FOOD_TYPE_OPTIONS.map(opt => (
+              <label key={opt.value} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  value={opt.value}
+                  checked={form.foodTypes.includes(opt.value)}
+                  onChange={handleFoodTypeChange}
+                  className="checkbox"
+                />
+                <span>{opt.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )
+    },
+    {
+      label: 'Select the brand for each food type',
+      content: (
+        <div>
+          <div className="mb-4">Select a brand for each food type:</div>
+          <div className="flex flex-col gap-4">
+            {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+            {form.foodTypes.map(type => (
+              <div key={type} className="flex flex-col gap-1">
+                <label className="font-medium">{FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type}</label>
+                <select
+                  className="select select-bordered"
+                  value={form.brands[type] || ''}
+                  onChange={e => {
+                    const brand = e.target.value;
+                    setForm(f => ({
+                      ...f,
+                      brands: { ...f.brands, [type]: brand },
+                      foods: { ...f.foods, [type]: '' }
+                    }));
+                  }}
+                >
+                  <option value="" disabled>Select brand...</option>
+                  {BRAND_OPTIONS[type]?.map(brand => (
+                    <option key={brand} value={brand}>{brand}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    },
+    {
+      label: 'Select the specific food for each brand/type',
+      content: (
+        <div>
+          <div className="mb-4">Select a specific food for each brand/type:</div>
+          <div className="flex flex-col gap-4">
+            {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+            {form.foodTypes.map(type => {
+              const brand = form.brands[type];
+              if (!brand) return (
+                <div key={type} className="text-sm text-gray-400">No brand selected for {FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type}.</div>
+              );
+              const foodList = FOOD_OPTIONS[brand] || ['Other'];
+              return (
+                <div key={type} className="flex flex-col gap-1">
+                  <label className="font-medium">{brand} ({FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type})</label>
+                  <select
+                    className="select select-bordered"
+                    value={form.foods[type] || ''}
+                    onChange={e => {
+                      const food = e.target.value;
+                      setForm(f => ({
+                        ...f,
+                        foods: { ...f.foods, [type]: food }
+                      }));
+                    }}
+                  >
+                    <option value="" disabled>Select food...</option>
+                    {foodList.map(food => (
+                      <option key={food} value={food}>{food}</option>
+                    ))}
+                  </select>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )
+    },
+    {
+      label: 'Enter your current stock for each food type',
+      content: (
+        <div className="flex flex-col gap-6">
+          {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+          {form.foodTypes.map(type => (
+            <div key={type} className="flex flex-col gap-2 p-2 border rounded-md">
+              <label className="font-medium text-base">{FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type}</label>
+              <label className="text-sm">How many full bags/units do you currently have? (e.g. 3, 10, etc.)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                className="input input-bordered w-full"
+                placeholder="e.g. 5"
+                value={form.units[type] || ''}
+                onChange={e => {
+                  const val = e.target.value;
+                  setForm(f => ({ ...f, units: { ...f.units, [type]: val } }));
+                }}
+              />
+              <label className="text-sm mt-2">What is the weight of a full bag/unit? (kg)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                className="input input-bordered w-full"
+                placeholder="e.g. 5"
+                value={form.weights[type] || ''}
+                onChange={e => {
+                  const val = e.target.value;
+                  setForm(f => ({ ...f, weights: { ...f.weights, [type]: val } }));
+                }}
+              />
+              <label className="text-sm mt-2">How full is your current open bag?</label>
+              <select
+                className="select select-bordered"
+                value={form.bagFullness[type] || ''}
+                onChange={e => {
+                  const val = e.target.value;
+                  setForm(f => ({ ...f, bagFullness: { ...f.bagFullness, [type]: val } }));
+                }}
+              >
+                <option value="" disabled>Select fullness...</option>
+                <option value="full">Full</option>
+                <option value="three-quarters">3/4 Full</option>
+                <option value="half">Half</option>
+                <option value="quarter">1/4 Full</option>
+              </select>
+            </div>
+          ))}
+        </div>
+      )
+    },
+    {
+      label: 'How many meals per day for each food?',
+      content: (
+        <div className="flex flex-col gap-4">
+          {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+          {form.foodTypes.map(type => (
+            <div key={type} className="flex flex-col gap-1">
+              <label className="font-medium">{FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type} meals per day</label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                className="input input-bordered w-full"
+                placeholder="e.g. 2"
+                value={form.mealFrequencies[type] || ''}
+                onChange={e => {
+                  const val = e.target.value;
+                  setForm(f => ({ ...f, mealFrequencies: { ...f.mealFrequencies, [type]: val } }));
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      )
+    }
+  ];
+
+  function next() {
+    if (step < steps.length - 1) setStep(step + 1);
+    else {
+      onComplete(form);
+      onClose();
+    }
+  }
+  function prev() {
+    if (step > 0) setStep(step - 1);
+  }
+
+  return (
+    <div>
+      <h2 className="text-xl font-bold mb-4">{steps[step].label}</h2>
+      <div className="mb-6">{steps[step].content}</div>
+      <div className="flex justify-between">
+        <button className="btn" onClick={onClose}>Cancel</button>
+        <div>
+          {step > 0 && <button className="btn mr-2" onClick={prev}>Back</button>}
+          <button className="btn btn-accent" onClick={next}>{step === steps.length - 1 ? 'Finish' : 'Next'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PetFood() {
+  // Removed duplicate useEffect that referenced petId before declaration
   const { petId } = useParams();
   const [food, setFood] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  
 
   useEffect(() => {
     async function fetchFood() {
@@ -26,50 +278,120 @@ export default function PetFood() {
     }
     fetchFood();
   }, [petId]);
-
   return (
     <div className="max-w-xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Food Inventory</h1>
       {loading ? (
         <div>Loading...</div>
-      ) : food ? (
-        <div className="space-y-4">
-          <div><b>Food:</b> {food.name}</div>
-          <div><b>Brand:</b> {food.brand}</div>
-          <div><b>Amount:</b> {food.amountKg} kg</div>
-          <div><b>Meal Frequency:</b> {food.mealFrequency} per day</div>
-          <button className="btn btn-accent" onClick={() => setShowModal(true)}>Edit Food</button>
-        </div>
       ) : (
-        <div>
-          <div>No food data entered yet.</div>
-          <button className="btn btn-accent mt-4" onClick={() => setShowModal(true)}>Add Food</button>
-        </div>
+        <>
+          {food ? (
+            <div className="space-y-8">
+              {food.foodTypes && food.foodTypes.length > 0 ? (
+                food.foodTypes.map(type => {
+                  const units = parseInt(food.units && food.units[type] ? food.units[type] : 0, 10) || 0;
+                  const fullnessMap = {
+                    'full': 100,
+                    'three-quarters': 75,
+                    'half': 50,
+                    'quarter': 25
+                  };
+                  const openBagFullness = food.bagFullness && food.bagFullness[type] ? fullnessMap[food.bagFullness[type]] || 0 : 0;
+                  let bars = [];
+                  if (units > 0) {
+                    if (openBagFullness > 0 && openBagFullness < 100) {
+                      bars.push(openBagFullness);
+                      for (let i = 0; i < units - 1; i++) {
+                        bars.push(100);
+                      }
+                    } else {
+                      for (let i = 0; i < units; i++) {
+                        bars.push(100);
+                      }
+                    }
+                  } else if (openBagFullness > 0) {
+                    bars.push(openBagFullness);
+                  }
+                  return (
+                    <div key={type} className="border-b pb-4 mb-4 flex flex-row items-stretch">
+                      <div className="flex-1">
+                        <h3 className="text-xl font-semibold mb-2">{type.charAt(0).toUpperCase() + type.slice(1)}</h3>
+                        <div className="ml-4 space-y-1">
+                          <div><b>Brand:</b> {food.brands && food.brands[type] ? food.brands[type] : '-'}</div>
+                          <div><b>Specific Food:</b> {food.foods && food.foods[type] ? food.foods[type] : '-'}</div>
+                          <div><b>Stock:</b> {food.units && food.units[type] ? `${food.units[type]} full bags/units` : '-'}</div>
+                          <div><b>Full Bag Weight:</b> {food.weights && food.weights[type] ? `${food.weights[type]} kg` : '-'}</div>
+                          <div><b>Open Bag Fullness:</b> {food.bagFullness && food.bagFullness[type] ? food.bagFullness[type].replace('three-quarters','3/4').replace('quarter','1/4').replace('full','Full').replace('half','Half') : '-'}</div>
+                          <div><b>Meal Frequency:</b> {food.mealFrequencies && food.mealFrequencies[type] ? `${food.mealFrequencies[type]} per day` : '-'}</div>
+                          <div className="mt-2"><b>Stock Levels:</b></div>
+                          <div className="flex flex-row gap-2 mt-1">
+                            {(() => {
+                              const units = parseInt(food.units && food.units[type] ? food.units[type] : 0, 10) || 0;
+                              const fullnessMap = {
+                                'full': 100,
+                                'three-quarters': 75,
+                                'half': 50,
+                                'quarter': 25
+                              };
+                              const openBagFullness = food.bagFullness && food.bagFullness[type] ? fullnessMap[food.bagFullness[type]] || 0 : 0;
+                              let bars = [];
+                              if (units > 0) {
+                                if (openBagFullness > 0 && openBagFullness < 100) {
+                                  bars.push(openBagFullness);
+                                  for (let i = 0; i < units - 1; i++) {
+                                    bars.push(100);
+                                  }
+                                } else {
+                                  for (let i = 0; i < units; i++) {
+                                    bars.push(100);
+                                  }
+                                }
+                              } else if (openBagFullness > 0) {
+                                bars.push(openBagFullness);
+                              }
+                              return bars.map((percent, idx) => {
+                                const fillColor = percent <= 25 ? 'bg-red-500' : 'bg-green-500';
+                                return (
+                                  <span key={idx} className="w-6 h-8 bg-gray-200 rounded overflow-hidden border border-gray-300 flex flex-col items-end my-0.5">
+                                    <span
+                                      className={`block w-full ${fillColor}`}
+                                      style={{ height: percent + '%', minHeight: 0, transition: 'height 0.5s' }}
+                                      title={percent + '% full'}
+                                    />
+                                  </span>
+                                );
+                              });
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+                       {/* Removed old side stock level pills. Pills now appear under 'Stock Levels:' label. */}
+                    </div>
+                  );
+                })
+              ) : (
+                <span className="ml-2 text-gray-500">No food types selected.</span>
+              )}
+              <button className="btn btn-accent" onClick={() => setShowModal(true)}>Edit Food</button>
+            </div>
+          ) : (
+            <div>
+              <div>No food data entered yet.</div>
+              <button className="btn btn-accent mt-4" onClick={() => setShowModal(true)}>Add Food</button>
+            </div>
+          )}
+        </>
       )}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6 relative">
             <button className="absolute top-3 right-3 text-2xl font-bold text-gray-400" onClick={() => setShowModal(false)}>&times;</button>
-            <WizardModal petName={food?.petName || 'your pet'} onClose={() => setShowModal(false)} onComplete={setFood} initialData={food} />
+            <FoodWizardModal petName={food?.petName || 'your pet'} onClose={() => setShowModal(false)} onComplete={setFood} initialData={food} />
           </div>
         </div>
       )}
     </div>
   );
-}
-
-// Modal wizard component (moved outside main component)
-
-function WizardModal({ petName, onClose, onComplete, initialData }) {
-  const [step, setStep] = useState(0);
-  const [form, setForm] = useState({
-    foodTypes: [],
-    brands: [],
-    foods: [],
-    weight: '',
-    mealFrequency: '',
-    ...initialData
-  });
 
   // Dummy data for dropdowns
   const FOOD_TYPE_OPTIONS = [
@@ -141,8 +463,33 @@ function WizardModal({ petName, onClose, onComplete, initialData }) {
       label: 'Select the brand for each food type',
       content: (
         <div>
-          <div className="mb-4">Brand selection for each type (dynamic)</div>
-          {/* TODO: Implement brand dropdowns per selected food type */}
+          <div className="mb-4">Select a brand for each food type:</div>
+          <div className="flex flex-col gap-4">
+            {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+            {form.foodTypes.map(type => (
+              <div key={type} className="flex flex-col gap-1">
+                <label className="font-medium">{FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type}</label>
+                <select
+                  className="select select-bordered"
+                  value={form.brands[type] || ''}
+                  onChange={e => {
+                    const brand = e.target.value;
+                    setForm(f => ({
+                      ...f,
+                      brands: { ...f.brands, [type]: brand },
+                      // Reset food selection for this type if brand changes
+                      foods: { ...f.foods, [type]: '' }
+                    }));
+                  }}
+                >
+                  <option value="" disabled>Select brand...</option>
+                  {BRAND_OPTIONS[type]?.map(brand => (
+                    <option key={brand} value={brand}>{brand}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
         </div>
       )
     },
@@ -150,24 +497,117 @@ function WizardModal({ petName, onClose, onComplete, initialData }) {
       label: 'Select the specific food for each brand/type',
       content: (
         <div>
-          <div className="mb-4">Specific food selection (dynamic)</div>
-          {/* TODO: Implement food dropdowns per selected brand/type */}
+          <div className="mb-4">Select a specific food for each brand/type:</div>
+          <div className="flex flex-col gap-4">
+            {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+            {form.foodTypes.map(type => {
+              const brand = form.brands[type];
+              if (!brand) return (
+                <div key={type} className="text-sm text-gray-400">No brand selected for {FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type}.</div>
+              );
+              const foodList = FOOD_OPTIONS[brand] || ['Other'];
+              return (
+                <div key={type} className="flex flex-col gap-1">
+                  <label className="font-medium">{brand} ({FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type})</label>
+                  <select
+                    className="select select-bordered"
+                    value={form.foods[type] || ''}
+                    onChange={e => {
+                      const food = e.target.value;
+                      setForm(f => ({
+                        ...f,
+                        foods: { ...f.foods, [type]: food }
+                      }));
+                    }}
+                  >
+                    <option value="" disabled>Select food...</option>
+                    {foodList.map(food => (
+                      <option key={food} value={food}>{food}</option>
+                    ))}
+                  </select>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )
     },
     {
-      label: 'Enter the weight of the food (kg)',
+      label: 'Enter your current stock for each food type',
       content: (
-        <div>
-          <input type="number" min="0" step="0.1" className="input input-bordered w-full" placeholder="e.g. 5" value={form.weight} onChange={e => setForm(f => ({ ...f, weight: e.target.value }))} />
+        <div className="flex flex-col gap-6">
+          {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+          {form.foodTypes.map(type => (
+            <div key={type} className="flex flex-col gap-2 p-2 border rounded-md">
+              <label className="font-medium text-base">{FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type}</label>
+              <label className="text-sm">How many full bags/units do you currently have? (e.g. 3, 10, etc.)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                className="input input-bordered w-full"
+                placeholder="e.g. 5"
+                value={form.units[type] || ''}
+                onChange={e => {
+                  const val = e.target.value;
+                  setForm(f => ({ ...f, units: { ...f.units, [type]: val } }));
+                }}
+              />
+              <label className="text-sm mt-2">What is the weight of a full bag/unit? (kg)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                className="input input-bordered w-full"
+                placeholder="e.g. 5"
+                value={form.weights[type] || ''}
+                onChange={e => {
+                  const val = e.target.value;
+                  setForm(f => ({ ...f, weights: { ...f.weights, [type]: val } }));
+                }}
+              />
+              <label className="text-sm mt-2">How full is your current open bag?</label>
+              <select
+                className="select select-bordered"
+                value={form.bagFullness[type] || ''}
+                onChange={e => {
+                  const val = e.target.value;
+                  setForm(f => ({ ...f, bagFullness: { ...f.bagFullness, [type]: val } }));
+                }}
+              >
+                <option value="" disabled>Select fullness...</option>
+                <option value="full">Full</option>
+                <option value="three-quarters">3/4 Full</option>
+                <option value="half">Half</option>
+                <option value="quarter">1/4 Full</option>
+              </select>
+            </div>
+          ))}
         </div>
       )
     },
     {
-      label: 'How many meals per day?',
+      label: 'How many meals per day for each food?',
       content: (
-        <div>
-          <input type="number" min="1" step="1" className="input input-bordered w-full" placeholder="e.g. 2" value={form.mealFrequency} onChange={e => setForm(f => ({ ...f, mealFrequency: e.target.value }))} />
+        <div className="flex flex-col gap-4">
+          {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+          {form.foodTypes.map(type => (
+            <div key={type} className="flex flex-col gap-1">
+              <label className="font-medium">{FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type} meals per day</label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                className="input input-bordered w-full"
+                placeholder="e.g. 2"
+                value={form.mealFrequencies[type] || ''}
+                onChange={e => {
+                  const val = e.target.value;
+                  setForm(f => ({ ...f, mealFrequencies: { ...f.mealFrequencies, [type]: val } }));
+                }}
+              />
+            </div>
+          ))}
         </div>
       )
     }
