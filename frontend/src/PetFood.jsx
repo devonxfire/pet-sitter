@@ -3,13 +3,15 @@ import { useParams } from 'react-router-dom';
 import { apiUrl } from './api';
 
 // Move FoodWizardModal above PetFood so it is defined before use
-function FoodWizardModal({ petName, onClose, onComplete, initialData }) {
+function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
   const [form, setForm] = useState(() => initialData || {
     foodTypes: [], brands: {}, foods: {}, units: {}, weights: {}, bagFullness: {}, mealFrequencies: {}
   });
   const [step, setStep] = useState(0);
 
   const FOOD_TYPE_OPTIONS = [
+  
+  // fullnessMap must be inside the FoodWizardModal, not at top-level
     { value: 'pellets', label: 'Pellets' },
     { value: 'raw', label: 'Raw' },
     { value: 'wet', label: 'Wet Food' },
@@ -65,6 +67,7 @@ function FoodWizardModal({ petName, onClose, onComplete, initialData }) {
                   checked={form.foodTypes.includes(opt.value)}
                   onChange={handleFoodTypeChange}
                   className="checkbox"
+                  required
                 />
                 <span>{opt.label}</span>
               </label>
@@ -94,6 +97,7 @@ function FoodWizardModal({ petName, onClose, onComplete, initialData }) {
                       foods: { ...f.foods, [type]: '' }
                     }));
                   }}
+                  required
                 >
                   <option value="" disabled>Select brand...</option>
                   {BRAND_OPTIONS[type]?.map(brand => (
@@ -132,6 +136,7 @@ function FoodWizardModal({ petName, onClose, onComplete, initialData }) {
                         foods: { ...f.foods, [type]: food }
                       }));
                     }}
+                    required
                   >
                     <option value="" disabled>Select food...</option>
                     {foodList.map(food => (
@@ -165,6 +170,7 @@ function FoodWizardModal({ petName, onClose, onComplete, initialData }) {
                   const val = e.target.value;
                   setForm(f => ({ ...f, units: { ...f.units, [type]: val } }));
                 }}
+                required
               />
               <label className="text-sm mt-2">What is the weight of a full bag/unit? (kg)</label>
               <input
@@ -178,6 +184,7 @@ function FoodWizardModal({ petName, onClose, onComplete, initialData }) {
                   const val = e.target.value;
                   setForm(f => ({ ...f, weights: { ...f.weights, [type]: val } }));
                 }}
+                required
               />
               <label className="text-sm mt-2">How full is your current open bag?</label>
               <select
@@ -187,8 +194,10 @@ function FoodWizardModal({ petName, onClose, onComplete, initialData }) {
                   const val = e.target.value;
                   setForm(f => ({ ...f, bagFullness: { ...f.bagFullness, [type]: val } }));
                 }}
+                required
               >
                 <option value="" disabled>Select fullness...</option>
+                <option value="none">No open bags</option>
                 <option value="full">Full</option>
                 <option value="three-quarters">3/4 Full</option>
                 <option value="half">Half</option>
@@ -218,6 +227,7 @@ function FoodWizardModal({ petName, onClose, onComplete, initialData }) {
                   const val = e.target.value;
                   setForm(f => ({ ...f, mealFrequencies: { ...f.mealFrequencies, [type]: val } }));
                 }}
+                required
               />
             </div>
           ))}
@@ -226,9 +236,47 @@ function FoodWizardModal({ petName, onClose, onComplete, initialData }) {
     }
   ];
 
-  function next() {
+  // Validation for each step
+  function isStepValid() {
+    if (step === 0) {
+      // Must select at least one food type
+      return form.foodTypes && form.foodTypes.length > 0;
+    }
+    if (step === 1) {
+      // Must select a brand for each food type
+      return form.foodTypes.every(type => form.brands[type]);
+    }
+    if (step === 2) {
+      // Must select a food for each type
+      return form.foodTypes.every(type => form.foods[type]);
+    }
+    if (step === 3) {
+      // Must fill all stock fields for each type
+      return form.foodTypes.every(type =>
+        form.units[type] && form.weights[type] && form.bagFullness[type]
+      );
+    }
+    if (step === 4) {
+      // Must fill meal frequency for each type
+      return form.foodTypes.every(type => form.mealFrequencies[type]);
+    }
+    return true;
+  }
+
+  async function next() {
+    if (!isStepValid()) return;
     if (step < steps.length - 1) setStep(step + 1);
     else {
+      // Persist food data to backend
+      try {
+        await fetch(apiUrl(`/api/pets/${petId}/food`), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', ...(localStorage.getItem('token') ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : {}) },
+          body: JSON.stringify(form)
+        });
+      } catch (e) {
+        // Optionally show error
+      }
       onComplete(form);
       onClose();
     }
@@ -242,10 +290,16 @@ function FoodWizardModal({ petName, onClose, onComplete, initialData }) {
       <h2 className="text-xl font-bold mb-4">{steps[step].label}</h2>
       <div className="mb-6">{steps[step].content}</div>
       <div className="flex justify-between">
-        <button className="btn" onClick={onClose}>Cancel</button>
+        <button className="btn cursor-pointer" onClick={onClose}>Cancel</button>
         <div>
-          {step > 0 && <button className="btn mr-2" onClick={prev}>Back</button>}
-          <button className="btn btn-accent" onClick={next}>{step === steps.length - 1 ? 'Finish' : 'Next'}</button>
+          {step > 0 && <button className="btn mr-2 cursor-pointer" onClick={prev}>Back</button>}
+          <button
+            className={`btn btn-accent cursor-pointer${!isStepValid() ? ' opacity-50 cursor-not-allowed' : ''}`}
+            onClick={next}
+            disabled={!isStepValid()}
+          >
+            {step === steps.length - 1 ? 'Finish' : 'Next'}
+          </button>
         </div>
       </div>
     </div>
@@ -264,7 +318,9 @@ export default function PetFood() {
     async function fetchFood() {
       setLoading(true);
       try {
-        const res = await fetch(apiUrl(`/api/pets/${petId}/food`));
+        const res = await fetch(apiUrl(`/api/pets/${petId}/food`), {
+          headers: localStorage.getItem('token') ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : {}
+        });
         if (res.ok) {
           const data = await res.json();
           setFood(data);
@@ -291,6 +347,7 @@ export default function PetFood() {
                 food.foodTypes.map(type => {
                   const units = parseInt(food.units && food.units[type] ? food.units[type] : 0, 10) || 0;
                   const fullnessMap = {
+                    'none': 0,
                     'full': 100,
                     'three-quarters': 75,
                     'half': 50,
@@ -321,7 +378,7 @@ export default function PetFood() {
                           <div><b>Specific Food:</b> {food.foods && food.foods[type] ? food.foods[type] : '-'}</div>
                           <div><b>Stock:</b> {food.units && food.units[type] ? `${food.units[type]} full bags/units` : '-'}</div>
                           <div><b>Full Bag Weight:</b> {food.weights && food.weights[type] ? `${food.weights[type]} kg` : '-'}</div>
-                          <div><b>Open Bag Fullness:</b> {food.bagFullness && food.bagFullness[type] ? food.bagFullness[type].replace('three-quarters','3/4').replace('quarter','1/4').replace('full','Full').replace('half','Half') : '-'}</div>
+                          <div><b>Open Bag Fullness:</b> {food.bagFullness && food.bagFullness[type] ? food.bagFullness[type].replace('none','No open bags').replace('three-quarters','3/4').replace('quarter','1/4').replace('full','Full').replace('half','Half') : '-'}</div>
                           <div><b>Meal Frequency:</b> {food.mealFrequencies && food.mealFrequencies[type] ? `${food.mealFrequencies[type]} per day` : '-'}</div>
                           <div className="mt-2"><b>Stock Levels:</b></div>
                           <div className="flex flex-row gap-2 mt-1">
@@ -349,15 +406,30 @@ export default function PetFood() {
                               } else if (openBagFullness > 0) {
                                 bars.push(openBagFullness);
                               }
+                              // Render pills bottom-up by reversing the array
+                              // Do NOT reverse the bars array; render as-is so open bag is leftmost
                               return bars.map((percent, idx) => {
-                                const fillColor = percent <= 25 ? 'bg-red-500' : 'bg-green-500';
+                                let fillColor = 'bg-green-500';
+                                if (percent <= 25) fillColor = 'bg-red-500';
+                                else if (percent === 50) fillColor = 'bg-yellow-400';
+                                // The first pill (idx === 0) is the current open bag if openBagFullness < 100
+                                const isCurrentBag = idx === 0 && openBagFullness > 0 && openBagFullness < 100;
+                                const isExtraStock = !isCurrentBag;
                                 return (
-                                  <span key={idx} className="w-6 h-8 bg-gray-200 rounded overflow-hidden border border-gray-300 flex flex-col items-end my-0.5">
-                                    <span
-                                      className={`block w-full ${fillColor}`}
-                                      style={{ height: percent + '%', minHeight: 0, transition: 'height 0.5s' }}
-                                      title={percent + '% full'}
-                                    />
+                                  <span key={idx} className="relative flex flex-col items-center w-6">
+                                    <span className="w-6 h-8 bg-gray-200 rounded overflow-hidden border border-gray-300 flex flex-col justify-end items-end my-0.5">
+                                      <span
+                                        className={`block w-full ${fillColor}`}
+                                        style={{ height: percent + '%', minHeight: 0, transition: 'height 0.5s', alignSelf: 'flex-end' }}
+                                        title={percent + '% full'}
+                                      />
+                                    </span>
+                                    {isCurrentBag && (
+                                      <span className="text-xs text-gray-700 mt-0.5">{percent}%</span>
+                                    )}
+                                    {isExtraStock && (
+                                      <span className="text-xs text-gray-500 mt-0.5">extra stock</span>
+                                    )}
                                   </span>
                                 );
                               });
@@ -372,12 +444,12 @@ export default function PetFood() {
               ) : (
                 <span className="ml-2 text-gray-500">No food types selected.</span>
               )}
-              <button className="btn btn-accent" onClick={() => setShowModal(true)}>Edit Food</button>
+               <button className="btn btn-accent cursor-pointer" onClick={() => setShowModal(true)}>Edit Food</button>
             </div>
           ) : (
             <div>
               <div>No food data entered yet.</div>
-              <button className="btn btn-accent mt-4" onClick={() => setShowModal(true)}>Add Food</button>
+              <button className="btn btn-accent mt-4 cursor-pointer" onClick={() => setShowModal(true)}>Add Food</button>
             </div>
           )}
         </>
@@ -385,8 +457,8 @@ export default function PetFood() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6 relative">
-            <button className="absolute top-3 right-3 text-2xl font-bold text-gray-400" onClick={() => setShowModal(false)}>&times;</button>
-            <FoodWizardModal petName={food?.petName || 'your pet'} onClose={() => setShowModal(false)} onComplete={setFood} initialData={food} />
+            <button className="absolute top-3 right-3 text-2xl font-bold text-gray-400 cursor-pointer" onClick={() => setShowModal(false)}>&times;</button>
+            <FoodWizardModal petId={petId} petName={food?.petName || 'your pet'} onClose={() => setShowModal(false)} onComplete={setFood} initialData={food} />
           </div>
         </div>
       )}

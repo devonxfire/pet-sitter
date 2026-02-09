@@ -1,4 +1,3 @@
-// ...existing code...
 // --- ENVIRONMENT & MAILGUN SETUP ---
 const dotenv = require('dotenv');
 dotenv.config();
@@ -1025,6 +1024,40 @@ app.post('/api/pets/:petId/activities/photo', authenticateToken, upload.single('
   } catch (error) {
     console.error('Activity photo upload error:', error);
     res.status(500).json({ error: error.message || 'Failed to upload activity photo' });
+  }
+});
+
+
+// --- FOOD DATA ENDPOINTS ---
+app.get('/api/pets/:petId/food', authenticateToken, async (req, res) => {
+  try {
+    const { petId } = req.params;
+    const pet = await prisma.pet.findUnique({
+      where: { id: parseInt(petId) },
+      select: { foodData: true, name: true }
+    });
+    if (!pet) return res.status(404).json({ error: 'Pet not found' });
+    res.json({ ...(pet.foodData || {}), petName: pet.name });
+  } catch (error) {
+    console.error('Get food data error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.patch('/api/pets/:petId/food', authenticateToken, async (req, res) => {
+  try {
+    const { petId } = req.params;
+    const foodData = req.body;
+    console.log(`[FOOD PATCH] Saving foodData for pet ${petId}:`, foodData);
+    const pet = await prisma.pet.update({
+      where: { id: parseInt(petId) },
+      data: { foodData },
+      select: { foodData: true }
+    });
+    res.json(pet.foodData);
+  } catch (error) {
+    console.error('Update food data error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
