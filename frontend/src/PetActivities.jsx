@@ -724,7 +724,7 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
                   </button>
 
                   <button
-                    onClick={() => setShowLogActivity('food')}
+                    onClick={() => navigate(`/pet/${petId}/food`)}
                     className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
                     ref={el => {
                       if (el) {
@@ -743,7 +743,7 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
                       e.currentTarget.style.setProperty('background', '#C3001F', 'important');
                       e.currentTarget.style.setProperty('background-color', '#C3001F', 'important');
                     }}
-                    aria-label="Log Food"
+                    aria-label="View Food Inventory"
                     type="button"
                   >
                     <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
@@ -1032,7 +1032,9 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
         </div>
       </div>
 
-      {showLogActivity && (
+
+      {/* Only render one LogActivity modal at a time to prevent React hook order issues */}
+      {(!editingActivity && showLogActivity) ? (
         <LogActivity
           petId={petId}
           household={household}
@@ -1058,9 +1060,9 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
           }}
           onFavouritesUpdated={loadFavourites}
         />
-      )}
+      ) : null}
 
-      {editingActivity && (
+      {editingActivity ? (
         <LogActivity
           petId={petId}
           household={household}
@@ -1080,7 +1082,7 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
           onClose={() => setEditingActivity(null)}
           onFavouritesUpdated={loadFavourites}
         />
-      )}
+      ) : null}
 
       {viewingActivity && (
         <ActivityView activity={viewingActivity} onClose={() => setViewingActivity(null)} onEdit={(act) => { setViewingActivity(null); setEditingActivity(act); }} onDelete={(id) => { setViewingActivity(null); setActivities(prev => prev.filter(a => String(a.id) !== String(id))); }} />

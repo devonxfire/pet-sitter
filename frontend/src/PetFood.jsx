@@ -5,7 +5,7 @@ import { apiUrl } from './api';
 // Move FoodWizardModal above PetFood so it is defined before use
 function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
   const [form, setForm] = useState(() => initialData || {
-    foodTypes: [], brands: {}, foods: {}, units: {}, weights: {}, bagFullness: {}, mealFrequencies: {}
+    foodTypes: [], brands: {}, foods: {}, units: {}, weights: {}, bagFullness: {}, mealFrequencies: {}, servingAmounts: {}, servingUnits: {}
   });
   const [step, setStep] = useState(0);
 
@@ -209,7 +209,7 @@ function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
       )
     },
     {
-      label: 'How many meals per day for each food?',
+      label: 'How many meals per day for each food? And amount per serving',
       content: (
         <div className="flex flex-col gap-4">
           {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
@@ -229,6 +229,35 @@ function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
                 }}
                 required
               />
+              <div className="flex gap-2 items-center mt-1">
+                <label className="text-sm">Amount per serving:</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="input input-bordered w-24"
+                  placeholder="e.g. 250"
+                  value={form.servingAmounts[type] || ''}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setForm(f => ({ ...f, servingAmounts: { ...f.servingAmounts, [type]: val } }));
+                  }}
+                  required
+                />
+                <select
+                  className="select select-bordered w-24"
+                  value={form.servingUnits[type] || 'g'}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setForm(f => ({ ...f, servingUnits: { ...f.servingUnits, [type]: val } }));
+                  }}
+                >
+                  <option value="g">grams</option>
+                  <option value="kg">kg</option>
+                  <option value="cup">cup</option>
+                  <option value="ml">ml</option>
+                </select>
+              </div>
             </div>
           ))}
         </div>
