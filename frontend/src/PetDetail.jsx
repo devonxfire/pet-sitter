@@ -17,26 +17,42 @@ import { Link } from 'react-router-dom';
 function AvatarWithLoader({ src, alt }) {
   const [loading, setLoading] = useState(true);
   const [minDelayPassed, setMinDelayPassed] = useState(false);
+  const [fallbackPassed, setFallbackPassed] = useState(false);
+  const [imgError, setImgError] = useState(false);
+  // Always add cache-busting param
+  const cacheBustedSrc = src ? src + (src.includes('?') ? '&' : '?') + 't=' + Date.now() : '';
   useEffect(() => {
     setLoading(true);
     setMinDelayPassed(false);
+    setFallbackPassed(false);
+    setImgError(false);
     const timer = setTimeout(() => setMinDelayPassed(true), 400);
-    return () => clearTimeout(timer);
+    const fallbackTimer = setTimeout(() => setFallbackPassed(true), 5000); // fallback after 5s
+    return () => { clearTimeout(timer); clearTimeout(fallbackTimer); };
   }, [src]);
 
   return (
     <div className="relative w-full h-full flex items-center justify-center">
-      <img
-        src={src}
-        alt={alt}
-        className={`object-cover w-full h-full transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}
-        onLoad={() => setLoading(false)}
-        onError={() => setLoading(false)}
-        style={{ display: loading && !minDelayPassed ? 'none' : undefined }}
-      />
-      {(loading || !minDelayPassed) && (
+      {!imgError ? (
+        <img
+          src={cacheBustedSrc}
+          alt={alt}
+          className={`object-cover w-full h-full transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}
+          onLoad={() => setLoading(false)}
+          onError={() => { setLoading(false); setImgError(true); }}
+          style={{ display: loading && !minDelayPassed ? 'none' : undefined }}
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-60 z-10 text-4xl text-gray-400">📷</div>
+      )}
+      {(loading || !minDelayPassed) && !fallbackPassed && !imgError && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-60 z-10">
           <ThemeSpinner size={32} />
+        </div>
+      )}
+      {fallbackPassed && loading && !imgError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-60 z-10">
+          <span className="text-xs text-gray-500">Image failed to load.</span>
         </div>
       )}
     </div>
@@ -768,6 +784,11 @@ export default function PetDetail({ household, user, onSignOut }) {
       }
 
       console.log('Updated pet with photo:', data);
+      // Add cache-busting param to photoUrl if present
+      if (data && data.photoUrl) {
+        data.photoUrl = data.photoUrl + (data.photoUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+        console.log('New photoUrl set in state:', data.photoUrl);
+      }
       setPet(data);
       // Reset file input
       if (fileInputRef.current) {

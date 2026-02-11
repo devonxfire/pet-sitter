@@ -31,7 +31,7 @@ export default function AddPet({ user, household, onSignOut }) {
 	const [vetLocation, setVetLocation] = useState(wizardData?.vetLocation || '');
 	const [vetContact, setVetContact] = useState(wizardData?.vetContact || '');
 	// Places/Mapbox removed — users enter address text manually
-	const [primaryFood, setPrimaryFood] = useState(wizardData?.primaryFood || '');
+	// const [primaryFood, setPrimaryFood] = useState(wizardData?.primaryFood || '');
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
 
@@ -72,7 +72,7 @@ export default function AddPet({ user, household, onSignOut }) {
 					vetName: vetName || null,
 					vetLocation: vetLocation || null,
 					vetContact: vetContact || null,
-					primaryFood: primaryFood || null,
+	//          primaryFood: primaryFood || null,
 				}),
 			});
 			console.log('✅ Pet created:', data);
@@ -448,21 +448,7 @@ export default function AddPet({ user, household, onSignOut }) {
 							</div>
 						</div>
 
-						{/* Food Information */}
-						<div style={{ marginBottom: '12px', paddingBottom: '12px' }} className="border-b border-gray-200 pt-4">
-							<h2 className="text-2xl font-bold text-gray-900 mb-8">Food Information</h2>
 
-							<div>
-								<label className="block text-sm font-medium text-gray-900 mb-2">Primary Food (optional)</label>
-								<input
-									type="text"
-									value={primaryFood}
-									onChange={(e) => setPrimaryFood(e.target.value)}
-									placeholder="e.g., Kibble, Wet food, Raw"
-									className="w-full px-4 py-2 rounded-none border border-gray-200 focus:border-accent focus:outline-none"
-								/>
-							</div>
-						</div>
 
 						{error && <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">{error}</div>}
 

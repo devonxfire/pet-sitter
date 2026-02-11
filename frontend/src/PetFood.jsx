@@ -64,7 +64,7 @@ function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
                 <input
                   type="checkbox"
                   value={opt.value}
-                  checked={form.foodTypes.includes(opt.value)}
+                  checked={(form.foodTypes || []).includes(opt.value)}
                   onChange={handleFoodTypeChange}
                   className="checkbox"
                   required
@@ -82,13 +82,13 @@ function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
         <div>
           <div className="mb-4">Select a brand for each food type:</div>
           <div className="flex flex-col gap-4">
-            {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
-            {form.foodTypes.map(type => (
+            {(form.foodTypes || []).length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+            {(form.foodTypes || []).map(type => (
               <div key={type} className="flex flex-col gap-1">
                 <label className="font-medium">{FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type}</label>
                 <select
                   className="select select-bordered"
-                  value={form.brands[type] || ''}
+                  value={(form.brands?.[type] || '')}
                   onChange={e => {
                     const brand = e.target.value;
                     setForm(f => ({
@@ -116,19 +116,19 @@ function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
         <div>
           <div className="mb-4">Select a specific food for each brand/type:</div>
           <div className="flex flex-col gap-4">
-            {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
-            {form.foodTypes.map(type => {
-              const brand = form.brands[type];
+            {(form.foodTypes || []).length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+            {(form.foodTypes || []).map(type => {
+              const brand = form.brands?.[type];
               if (!brand) return (
                 <div key={type} className="text-sm text-gray-400">No brand selected for {FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type}.</div>
               );
-              const foodList = FOOD_OPTIONS[brand] || ['Other'];
+              const foodList = FOOD_OPTIONS?.[brand] || ['Other'];
               return (
                 <div key={type} className="flex flex-col gap-1">
                   <label className="font-medium">{brand} ({FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type})</label>
                   <select
                     className="select select-bordered"
-                    value={form.foods[type] || ''}
+                    value={(form.foods?.[type] || '')}
                     onChange={e => {
                       const food = e.target.value;
                       setForm(f => ({
@@ -154,8 +154,8 @@ function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
       label: 'Enter your current stock for each food type',
       content: (
         <div className="flex flex-col gap-6">
-          {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
-          {form.foodTypes.map(type => (
+          {(form.foodTypes || []).length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+          {(form.foodTypes || []).map(type => (
             <div key={type} className="flex flex-col gap-2 p-2 border rounded-md">
               <label className="font-medium text-base">{FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type}</label>
               <label className="text-sm">How many full bags/units do you currently have? (e.g. 3, 10, etc.)</label>
@@ -165,7 +165,7 @@ function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
                 step="1"
                 className="input input-bordered w-full"
                 placeholder="e.g. 5"
-                value={form.units[type] || ''}
+                value={(form.units?.[type] || '')}
                 onChange={e => {
                   const val = e.target.value;
                   setForm(f => ({ ...f, units: { ...f.units, [type]: val } }));
@@ -179,7 +179,7 @@ function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
                 step="0.1"
                 className="input input-bordered w-full"
                 placeholder="e.g. 5"
-                value={form.weights[type] || ''}
+                value={(form.weights?.[type] || '')}
                 onChange={e => {
                   const val = e.target.value;
                   setForm(f => ({ ...f, weights: { ...f.weights, [type]: val } }));
@@ -189,7 +189,7 @@ function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
               <label className="text-sm mt-2">How full is your current open bag?</label>
               <select
                 className="select select-bordered"
-                value={form.bagFullness[type] || ''}
+                value={(form.bagFullness?.[type] || '')}
                 onChange={e => {
                   const val = e.target.value;
                   setForm(f => ({ ...f, bagFullness: { ...f.bagFullness, [type]: val } }));
@@ -212,8 +212,8 @@ function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
       label: 'How many meals per day for each food? And amount per serving',
       content: (
         <div className="flex flex-col gap-4">
-          {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
-          {form.foodTypes.map(type => (
+          {(form.foodTypes || []).length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+          {(form.foodTypes || []).map(type => (
             <div key={type} className="flex flex-col gap-1">
               <label className="font-medium">{FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type} meals per day</label>
               <input
@@ -222,7 +222,7 @@ function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
                 step="1"
                 className="input input-bordered w-full"
                 placeholder="e.g. 2"
-                value={form.mealFrequencies[type] || ''}
+                value={(form.mealFrequencies?.[type] || '')}
                 onChange={e => {
                   const val = e.target.value;
                   setForm(f => ({ ...f, mealFrequencies: { ...f.mealFrequencies, [type]: val } }));
@@ -237,7 +237,7 @@ function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
                   step="0.01"
                   className="input input-bordered w-24"
                   placeholder="e.g. 250"
-                  value={form.servingAmounts[type] || ''}
+                  value={(form.servingAmounts?.[type] || '')}
                   onChange={e => {
                     const val = e.target.value;
                     setForm(f => ({ ...f, servingAmounts: { ...f.servingAmounts, [type]: val } }));
@@ -246,7 +246,7 @@ function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
                 />
                 <select
                   className="select select-bordered w-24"
-                  value={form.servingUnits[type] || 'g'}
+                  value={(form.servingUnits?.[type] || 'g')}
                   onChange={e => {
                     const val = e.target.value;
                     setForm(f => ({ ...f, servingUnits: { ...f.servingUnits, [type]: val } }));
@@ -269,25 +269,25 @@ function FoodWizardModal({ petId, petName, onClose, onComplete, initialData }) {
   function isStepValid() {
     if (step === 0) {
       // Must select at least one food type
-      return form.foodTypes && form.foodTypes.length > 0;
+      return (form.foodTypes || []).length > 0;
     }
     if (step === 1) {
       // Must select a brand for each food type
-      return form.foodTypes.every(type => form.brands[type]);
+      return (form.foodTypes || []).every(type => form.brands?.[type]);
     }
     if (step === 2) {
       // Must select a food for each type
-      return form.foodTypes.every(type => form.foods[type]);
+      return (form.foodTypes || []).every(type => form.foods?.[type]);
     }
     if (step === 3) {
       // Must fill all stock fields for each type
-      return form.foodTypes.every(type =>
-        form.units[type] && form.weights[type] && form.bagFullness[type]
+      return (form.foodTypes || []).every(type =>
+        form.units?.[type] && form.weights?.[type] && form.bagFullness?.[type]
       );
     }
     if (step === 4) {
       // Must fill meal frequency for each type
-      return form.foodTypes.every(type => form.mealFrequencies[type]);
+      return (form.foodTypes || []).every(type => form.mealFrequencies?.[type]);
     }
     return true;
   }
@@ -471,13 +471,17 @@ export default function PetFood() {
                   );
                 })
               ) : (
-                <span className="ml-2 text-gray-500">No food types selected.</span>
+                <>
+                  <span className="ml-2 text-gray-500">No food types selected.</span>
+                  <div className="mt-4">
+                    <button className="btn btn-accent cursor-pointer" onClick={() => setShowModal(true)}>Add Food</button>
+                  </div>
+                </>
               )}
-               <button className="btn btn-accent cursor-pointer" onClick={() => setShowModal(true)}>Edit Food</button>
             </div>
           ) : (
             <div>
-              <div>No food data entered yet.</div>
+              <div className="text-gray-500">Add Food Source</div>
               <button className="btn btn-accent mt-4 cursor-pointer" onClick={() => setShowModal(true)}>Add Food</button>
             </div>
           )}
@@ -549,7 +553,7 @@ export default function PetFood() {
                 <input
                   type="checkbox"
                   value={opt.value}
-                  checked={form.foodTypes.includes(opt.value)}
+                  checked={(form.foodTypes || []).includes(opt.value)}
                   onChange={handleFoodTypeChange}
                   className="checkbox"
                 />
@@ -566,8 +570,8 @@ export default function PetFood() {
         <div>
           <div className="mb-4">Select a brand for each food type:</div>
           <div className="flex flex-col gap-4">
-            {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
-            {form.foodTypes.map(type => (
+            {(form.foodTypes || []).length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+            {(form.foodTypes || []).map(type => (
               <div key={type} className="flex flex-col gap-1">
                 <label className="font-medium">{FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type}</label>
                 <select
@@ -600,8 +604,8 @@ export default function PetFood() {
         <div>
           <div className="mb-4">Select a specific food for each brand/type:</div>
           <div className="flex flex-col gap-4">
-            {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
-            {form.foodTypes.map(type => {
+            {(form.foodTypes || []).length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+            {(form.foodTypes || []).map(type => {
               const brand = form.brands[type];
               if (!brand) return (
                 <div key={type} className="text-sm text-gray-400">No brand selected for {FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type}.</div>
@@ -637,8 +641,8 @@ export default function PetFood() {
       label: 'Enter your current stock for each food type',
       content: (
         <div className="flex flex-col gap-6">
-          {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
-          {form.foodTypes.map(type => (
+          {(form.foodTypes || []).length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+          {(form.foodTypes || []).map(type => (
             <div key={type} className="flex flex-col gap-2 p-2 border rounded-md">
               <label className="font-medium text-base">{FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type}</label>
               <label className="text-sm">How many full bags/units do you currently have? (e.g. 3, 10, etc.)</label>
@@ -691,8 +695,8 @@ export default function PetFood() {
       label: 'How many meals per day for each food?',
       content: (
         <div className="flex flex-col gap-4">
-          {form.foodTypes.length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
-          {form.foodTypes.map(type => (
+          {(form.foodTypes || []).length === 0 && <div className="text-sm text-gray-500">No food types selected.</div>}
+          {(form.foodTypes || []).map(type => (
             <div key={type} className="flex flex-col gap-1">
               <label className="font-medium">{FOOD_TYPE_OPTIONS.find(opt => opt.value === type)?.label || type} meals per day</label>
               <input
