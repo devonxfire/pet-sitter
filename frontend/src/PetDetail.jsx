@@ -1462,7 +1462,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 </>
               ) : (
                 <button
-                  onClick={() => { if (isHouseholdMember) startEditingSection('food'); }}
+                  onClick={() => { if (isHouseholdMember) navigate(`/pet/${petId}/food`); }}
                   disabled={!isHouseholdMember}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover ${isHouseholdMember ? 'text-gray-600 hover:bg-gray-100 cursor-pointer' : 'text-gray-400 opacity-50 cursor-not-allowed'}`}
                   style={{ cursor: isHouseholdMember ? 'pointer' : 'not-allowed' }}
