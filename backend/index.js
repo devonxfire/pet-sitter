@@ -1029,6 +1029,112 @@ app.post('/api/pets/:petId/activities/photo', authenticateToken, upload.single('
 
 
 // --- FOOD DATA ENDPOINTS ---
+// --- HOUSEHOLD FOOD INVENTORY ENDPOINTS ---
+// Get all food inventory for a household
+app.get('/api/households/:householdId/food-inventory', authenticateToken, async (req, res) => {
+  try {
+    const { householdId } = req.params;
+    const inventory = await prisma.foodInventory.findMany({
+      where: { householdId: parseInt(householdId) },
+      include: { petLinks: true }
+    });
+    res.json(inventory);
+  } catch (error) {
+    console.error('Get food inventory error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Add new food inventory item
+app.post('/api/households/:householdId/food-inventory', authenticateToken, async (req, res) => {
+  try {
+    const { householdId } = req.params;
+    const { foodType, brand, description, totalStock, unit } = req.body;
+    const item = await prisma.foodInventory.create({
+      data: {
+        householdId: parseInt(householdId),
+        foodType,
+        brand,
+        description,
+        totalStock,
+        unit
+      }
+    });
+    res.json(item);
+  } catch (error) {
+    console.error('Create food inventory error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update food inventory item (stock, etc.)
+app.patch('/api/food-inventory/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { totalStock, description, brand, unit } = req.body;
+    const item = await prisma.foodInventory.update({
+      where: { id: parseInt(id) },
+      data: { totalStock, description, brand, unit }
+    });
+    res.json(item);
+  } catch (error) {
+    console.error('Update food inventory error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// --- FEEDING ACTIVITY WITH STOCK DEDUCTION ---
+// Log feeding for multiple pets and deduct stock
+app.post('/api/households/:householdId/feed', authenticateToken, async (req, res) => {
+  try {
+    const { householdId } = req.params;
+    const { foodInventoryId, petIds, portions, timestamp, notes } = req.body;
+    // Validate input
+    if (!foodInventoryId || !petIds || !portions) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    // Fetch food inventory
+    const foodItem = await prisma.foodInventory.findUnique({
+      where: { id: parseInt(foodInventoryId) }
+    });
+    if (!foodItem) return res.status(404).json({ error: 'Food inventory not found' });
+    // Calculate total deduction
+    let totalDeduct = 0;
+    for (const pid of petIds) {
+      const portion = portions[pid];
+      if (typeof portion === 'number' && portion > 0) totalDeduct += portion;
+    }
+    // Deduct stock
+    const newStock = Math.max(0, foodItem.totalStock - totalDeduct);
+    await prisma.foodInventory.update({
+      where: { id: foodItem.id },
+      data: { totalStock: newStock }
+    });
+    // Log feeding activity for each pet
+    const results = [];
+    for (const pid of petIds) {
+      const portion = portions[pid];
+      const activity = await prisma.activity.create({
+        data: {
+          petId: parseInt(pid),
+          activityTypeId: null, // Set correct feeding activityTypeId if available
+          userId: req.user.userId,
+          timestamp: timestamp ? new Date(timestamp) : new Date(),
+          notes: notes || null,
+          data: {
+            foodInventoryId: foodItem.id,
+            portion
+          }
+        }
+      });
+      results.push(activity);
+    }
+    res.json({ success: true, newStock, activities: results });
+  } catch (error) {
+    console.error('Feed pets error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 app.get('/api/pets/:petId/food', authenticateToken, async (req, res) => {
   try {
     const { petId } = req.params;

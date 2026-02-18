@@ -13,6 +13,45 @@ datasource db {
 // ============================================================================
 // CORE MODELS
 // ============================================================================
+// FOOD INVENTORY MODELS
+// ============================================================================
+
+model FoodInventory {
+  id           Int      @id @default(autoincrement())
+  householdId  Int      @map("household_id")
+  foodType     String   // pellets, wet, raw, etc.
+  brand        String?
+  description  String?
+  totalStock   Float    // grams, bags, etc.
+  unit         String?  // g, kg, bags, cans
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  petLinks  PetFoodLink[]
+
+  @@index([householdId, foodType])
+  @@map("food_inventory")
+}
+
+model PetFoodLink {
+  id             Int      @id @default(autoincrement())
+  petId          Int      @map("pet_id")
+  foodInventoryId Int     @map("food_inventory_id")
+  portionSize    Float    // grams per meal
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  pet         Pet         @relation(fields: [petId], references: [id], onDelete: Cascade)
+  foodInventory FoodInventory @relation(fields: [foodInventoryId], references: [id], onDelete: Cascade)
+
+  @@index([petId, foodInventoryId])
+  @@map("pet_food_link")
+}
+// ============================================================================
 
 model User {
   id           Int      @id @default(autoincrement())
@@ -53,6 +92,7 @@ model Household {
   members      HouseholdMember[]
   pets         Pet[]
   favourites   Favourite[]
+  foodInventory FoodInventory[]
 
   @@map("households")
 }
@@ -105,6 +145,7 @@ model Pet {
   household     Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
   activities    Activity[]
   activityTypes ActivityType[]
+  foodLinks     PetFoodLink[]
 
   @@map("pets")
 }
