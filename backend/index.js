@@ -1055,13 +1055,16 @@ app.get('/api/households/:householdId/food-inventory', authenticateToken, async 
 app.post('/api/households/:householdId/food-inventory', authenticateToken, async (req, res) => {
   try {
     const { householdId } = req.params;
-    const { foodType, brand, description, totalStock, unit } = req.body;
+    const { foodType, brand, other, weightKg, unitPerServing, unitPerServingType, totalStock, unit } = req.body;
     const item = await prisma.foodInventory.create({
       data: {
         householdId: parseInt(householdId),
         foodType,
         brand,
-        description,
+        other,
+        weightKg: weightKg !== undefined ? parseFloat(weightKg) : null,
+        unitPerServing: unitPerServing !== undefined ? parseFloat(unitPerServing) : null,
+        unitPerServingType,
         totalStock,
         unit
       }
@@ -1077,10 +1080,18 @@ app.post('/api/households/:householdId/food-inventory', authenticateToken, async
 app.patch('/api/food-inventory/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { totalStock, description, brand, unit } = req.body;
+    const { totalStock, brand, other, weightKg, unitPerServing, unitPerServingType, unit } = req.body;
     const item = await prisma.foodInventory.update({
       where: { id: parseInt(id) },
-      data: { totalStock, description, brand, unit }
+      data: {
+        totalStock,
+        brand,
+        other,
+        weightKg: weightKg !== undefined ? parseFloat(weightKg) : null,
+        unitPerServing: unitPerServing !== undefined ? parseFloat(unitPerServing) : null,
+        unitPerServingType,
+        unit
+      }
     });
     res.json(item);
   } catch (error) {

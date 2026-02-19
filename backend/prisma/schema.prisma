@@ -20,8 +20,11 @@ model FoodInventory {
   id           Int      @id @default(autoincrement())
   householdId  Int      @map("household_id")
   foodType     String   // pellets, wet, raw, etc.
-  brand        String?
-  description  String?
+    brand        String?
+    other        String?  // custom brand or notes if not in dropdown
+    weightKg     Float?
+    unitPerServing Float?
+    unitPerServingType String?
   totalStock   Float    // grams, bags, etc.
   unit         String?  // g, kg, bags, cans
   createdAt    DateTime @default(now()) @map("created_at")

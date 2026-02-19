@@ -44,7 +44,7 @@ export default function FoodInventoryManager({ householdId }) {
   const [member, setMember] = useState(null); // null = not a member, object = member
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [newItem, setNewItem] = useState({ foodType: '', brand: '', description: '', totalStock: '', weightKg: '', unitPerServing: '', unitPerServingType: 'g', openBag: false, openBagFullness: '' });
+  const [newItem, setNewItem] = useState({ foodType: '', brand: '', other: '', totalStock: '', weightKg: '', unitPerServing: '', unitPerServingType: 'g', openBag: false, openBagFullness: '' });
   const [editingId, setEditingId] = useState(null);
   const [editFields, setEditFields] = useState(null);
   // Demo: food-to-pet linking state (UI only)
@@ -88,7 +88,7 @@ export default function FoodInventoryManager({ householdId }) {
         method: 'POST',
         body: JSON.stringify({ ...newItem, totalStock: parseFloat(newItem.totalStock) })
       });
-      setNewItem({ foodType: '', brand: '', description: '', totalStock: '', weightKg: '', unitPerServing: '', unitPerServingType: 'g', openBag: false, openBagFullness: '' });
+      setNewItem({ foodType: '', brand: '', other: '', totalStock: '', weightKg: '', unitPerServing: '', unitPerServingType: 'g', openBag: false, openBagFullness: '' });
       // Refetch inventory and member
       const data = await apiFetch(`/api/households/${householdId}/food-inventory`);
       setInventory(data.inventory || []);
@@ -106,7 +106,7 @@ export default function FoodInventoryManager({ householdId }) {
         body: JSON.stringify({
           foodType: editFields.foodType,
           brand: editFields.brand,
-          description: editFields.description,
+          other: editFields.other,
           totalStock: parseFloat(editFields.totalStock),
           weightKg: parseFloat(editFields.weightKg),
           unitPerServing: parseFloat(editFields.unitPerServing),
@@ -165,16 +165,22 @@ export default function FoodInventoryManager({ householdId }) {
             )}
             {Array.isArray(inventory) && inventory.map(item => {
               // ...existing code for rendering each item...
-              const percent = Math.max(0, Math.min(100, Math.round((parseFloat(item.totalStock) || 0) / 20 * 100)));
-              let fillColor = 'bg-green-500';
-              if (percent <= 25) fillColor = 'bg-red-500';
-              else if (percent <= 50) fillColor = 'bg-yellow-400';
               const iconSrc = FOOD_TYPE_ICONS[item.foodType?.toLowerCase()] || otherFoodIcon;
               const linkedPetIds = foodPetLinks[item.id] || [];
+              // Stock meters: one per full unopened bag, each 100%. If open bag, show meter for its fullness.
+              const fullBags = Math.floor(Number(item.totalStock) || 0);
+              const openBagFullnessMap = {
+                'full': 100,
+                'three-quarters': 75,
+                'half': 50,
+                'quarter': 25,
+                'almost-empty': 10
+              };
+              const openBagPercent = item.openBag ? (openBagFullnessMap[item.openBagFullness] || 0) : 0;
               return (
                 <div key={item.id} className="flex flex-col md:flex-row items-center gap-4 p-4 border rounded-lg shadow-sm bg-white relative">
                   {/* ...existing JSX for each item... */}
-                  <div className="flex items-center gap-3 w-56 min-w-[12rem]">
+                  <div className="flex items-center gap-3 w-56 min-w-48">
                     <img src={iconSrc} alt={item.foodType || 'food'} className="w-7 h-7 inline-block align-middle mr-2" />
                     <div>
                       <div className="font-semibold text-lg">{item.brand || 'Brand'} <span className="text-gray-400 text-base font-normal">{item.foodType}</span></div>
@@ -185,7 +191,7 @@ export default function FoodInventoryManager({ householdId }) {
                     {/* Show all fields in read-only mode */}
                     {(!canEdit || editingId !== item.id) && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1 text-sm w-full mb-2">
-                        <div><span className="font-medium">Description:</span> {item.description}</div>
+                        <div><span className="font-medium">Other:</span> {item.other}</div>
                         <div><span className="font-medium">Extra stock (full, unopened bags):</span> {item.totalStock}</div>
                         <div><span className="font-medium">Weight per bag (kg):</span> {item.weightKg}</div>
                         <div><span className="font-medium">Unit per serving:</span> {item.unitPerServing} {item.unitPerServingType}</div>
@@ -217,7 +223,7 @@ export default function FoodInventoryManager({ householdId }) {
                         <select
                           className="input input-bordered"
                           value={editFields.brand}
-                          onChange={e => setEditFields(f => ({ ...f, brand: e.target.value }))}
+                          onChange={e => setEditFields(f => ({ ...f, brand: e.target.value, other: '' }))}
                           required
                           disabled={!editFields.foodType}
                         >
@@ -225,7 +231,9 @@ export default function FoodInventoryManager({ householdId }) {
                             <option key={b || idx} value={b}>{b || 'Select brand'}</option>
                           ))}
                         </select>
-                        <input className="input input-bordered" placeholder="Description" value={editFields.description} onChange={e => setEditFields(f => ({ ...f, description: e.target.value }))} />
+                        {editFields.brand === 'Custom/Other' && (
+                          <input className="input input-bordered" placeholder="Other (custom brand or notes)" value={editFields.other} onChange={e => setEditFields(f => ({ ...f, other: e.target.value }))} />
+                        )}
                         <label className="font-medium">Extra stock (full, unopened bags)</label>
                         <input className="input input-bordered" type="number" min="0" value={editFields.totalStock} onChange={e => setEditFields(f => ({ ...f, totalStock: e.target.value }))} required />
                         <label className="font-medium">Weight per bag (kg)</label>
@@ -304,11 +312,30 @@ export default function FoodInventoryManager({ householdId }) {
                         </div>
                       </div>
                     )}
-                    {/* Stock level bar */}
-                    <div className="w-48 h-4 bg-gray-200 rounded overflow-hidden border border-gray-300 flex items-center">
-                      <div className={`${fillColor} h-full transition-all`} style={{ width: percent + '%' }} />
+                    {/* Stock level meters: one per full unopened bag, each 100% */}
+                    <div className="flex flex-col gap-1">
+                      {Array.from({ length: fullBags }).map((_, idx) => (
+                        <div key={idx} className="w-48 h-4 bg-gray-200 rounded overflow-hidden border border-gray-300 flex items-center mb-1">
+                          <div className="bg-green-500 h-full transition-all" style={{ width: '100%' }} />
+                        </div>
+                      ))}
+                      {/* Open bag meter, if exists */}
+                      {item.openBag && openBagPercent > 0 && (
+                        <div className="w-48 h-4 bg-gray-200 rounded overflow-hidden border border-gray-300 flex items-center mb-1">
+                          <div className="bg-yellow-400 h-full transition-all" style={{ width: openBagPercent + '%' }} />
+                        </div>
+                      )}
                     </div>
-                    <div className="text-xs text-gray-500">Stock level: {percent}%</div>
+                    <div className="text-xs text-gray-500">
+                      {fullBags > 0 && `${fullBags} unopened bag${fullBags > 1 ? 's' : ''} (100%)`}
+                      {item.openBag && openBagPercent > 0 && (
+                        <>
+                          {fullBags > 0 && ' + '}
+                          {`open bag (${openBagPercent}%)`}
+                        </>
+                      )}
+                      {fullBags === 0 && (!item.openBag || openBagPercent === 0) && 'No stock'}
+                    </div>
                     {/* Pet linking UI (demo only) */}
                     <div className="flex items-center gap-2 mt-2">
                       <span className="text-sm font-medium text-gray-700">Linked pets:</span>
@@ -362,7 +389,7 @@ export default function FoodInventoryManager({ householdId }) {
           <select
             className="input input-bordered"
             value={newItem.brand}
-            onChange={e => setNewItem(i => ({ ...i, brand: e.target.value }))}
+            onChange={e => setNewItem(i => ({ ...i, brand: e.target.value, other: '' }))}
             required
             disabled={!newItem.foodType}
           >
@@ -370,7 +397,9 @@ export default function FoodInventoryManager({ householdId }) {
               <option key={b || idx} value={b}>{b || 'Select brand'}</option>
             ))}
           </select>
-          <input className="input input-bordered" placeholder="Description" value={newItem.description} onChange={e => setNewItem(i => ({ ...i, description: e.target.value }))} />
+          {newItem.brand === 'Custom/Other' && (
+            <input className="input input-bordered" placeholder="Other (custom brand or notes)" value={newItem.other} onChange={e => setNewItem(i => ({ ...i, other: e.target.value }))} />
+          )}
           {/* Stock input */}
           <label className="font-medium">Extra stock (full, unopened bags)</label>
           <input className="input input-bordered" type="number" min="0" placeholder="e.g. 2" value={newItem.totalStock} onChange={e => setNewItem(i => ({ ...i, totalStock: e.target.value }))} required />
@@ -403,34 +432,6 @@ export default function FoodInventoryManager({ householdId }) {
           <hr className="my-2" />
           <label className="font-medium mt-2">Current stock</label>
           <div className="mb-2 text-sm text-gray-500">Do you have an open bag?</div>
-          <div className="flex gap-4 items-center">
-            <label className="flex items-center gap-1">
-              <input type="radio" name="openBag" checked={!!newItem.openBag} onChange={() => setNewItem(i => ({ ...i, openBag: true }))} /> Yes
-            </label>
-            <label className="flex items-center gap-1">
-              <input type="radio" name="openBag" checked={!newItem.openBag} onChange={() => setNewItem(i => ({ ...i, openBag: false, openBagFullness: '' }))} /> No
-            </label>
-          </div>
-          {newItem.openBag && (
-            <div className="flex flex-col gap-1">
-              <label className="font-medium">How full is the open bag?</label>
-              <select
-                className="input input-bordered"
-                value={newItem.openBagFullness}
-                onChange={e => setNewItem(i => ({ ...i, openBagFullness: e.target.value }))}
-                required
-              >
-                <option value="">Select fullness</option>
-                <option value="full">Full</option>
-                <option value="three-quarters">Three-quarters</option>
-                <option value="half">Half</option>
-                <option value="quarter">Quarter</option>
-                <option value="almost-empty">Almost empty</option>
-              </select>
-            </div>
-          )}
-          {/* Open bag question */}
-          <label className="font-medium mt-2">Do you have an open bag?</label>
           <div className="flex gap-4 items-center">
             <label className="flex items-center gap-1">
               <input type="radio" name="openBag" checked={!!newItem.openBag} onChange={() => setNewItem(i => ({ ...i, openBag: true }))} /> Yes
