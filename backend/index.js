@@ -1089,6 +1089,18 @@ app.patch('/api/food-inventory/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Delete food inventory item
+app.delete('/api/food-inventory/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.foodInventory.delete({ where: { id: parseInt(id) } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete food inventory error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // --- FEEDING ACTIVITY WITH STOCK DEDUCTION ---
 // Log feeding for multiple pets and deduct stock
 app.post('/api/households/:householdId/feed', authenticateToken, async (req, res) => {
