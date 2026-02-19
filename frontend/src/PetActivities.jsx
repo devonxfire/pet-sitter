@@ -724,7 +724,7 @@ export default function PetActivities({ household, user, onSignOut, pet: propPet
                   </button>
 
                   <button
-                    onClick={() => navigate(`/pet/${petId}/food`)}
+                    onClick={() => navigate(`/household/${pet?.householdId || householdId}/food-inventory`)}
                     className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
                     ref={el => {
                       if (el) {

@@ -1028,7 +1028,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                     </button>
 
                     <button
-                      onClick={() => navigate(`/pet/${petId}/food`)}
+                      onClick={() => navigate(`/household/${pet?.householdId || householdId}/food-inventory`)}
                       className="flex items-center gap-2 px-4 py-2 text-base font-normal transition cursor-pointer petdetail-action-btn shadow"
                       ref={el => {
                         if (el) {
@@ -1483,7 +1483,7 @@ export default function PetDetail({ household, user, onSignOut }) {
                 </>
               ) : (
                 <button
-                  onClick={() => { if (isHouseholdMember) navigate(`/pet/${petId}/food`); }}
+                  onClick={() => { if (isHouseholdMember) navigate(`/household/${pet?.householdId || householdId}/food-inventory`); }}
                   disabled={!isHouseholdMember}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition no-global-accent no-accent-hover ${isHouseholdMember ? 'text-gray-600 hover:bg-gray-100 cursor-pointer' : 'text-gray-400 opacity-50 cursor-not-allowed'}`}
                   style={{ cursor: isHouseholdMember ? 'pointer' : 'not-allowed' }}

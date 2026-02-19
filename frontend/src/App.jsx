@@ -18,6 +18,7 @@ import Terms from './Terms';
 import Privacy from './Privacy';
 import Contact from './Contact';
 import PlansPage from './Plans';
+import HouseholdFoodInventoryPage from './HouseholdFoodInventoryPage';
 import HouseholdCalendarPage from './HouseholdCalendarPage';
 import PetFood from './PetFood';
 
@@ -158,9 +159,14 @@ function App() {
             )
           }
         />
+        {/* Old pet food route removed. Use household food inventory instead. */}
         <Route
-          path="/pet/:petId/food"
-          element={<PetFood />}
+          path="/household/:householdId/food-inventory"
+          element={<HouseholdFoodInventoryPage />}
+        />
+        <Route
+          path="/household/:householdId/food-inventory"
+          element={<HouseholdFoodInventoryPage />}
         />
         <Route
           path="/activities"

@@ -1,9 +1,22 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { generateGroupId } from './groupId';
 import { apiFetch, apiUrl } from './api';
 import ACTIVITY_TYPES from './activityTypes';
 import { theme } from './theme';
 import ModalClose from './ModalClose';
+
+// Helper to fetch food inventory for a household
+async function fetchFoodInventory(householdId) {
+  if (!householdId) return [];
+  try {
+    const res = await apiFetch(`/api/households/${householdId}/food-inventory`);
+    return Array.isArray(res) ? res : [];
+  } catch (e) {
+    console.warn('Failed to fetch food inventory', e);
+    return [];
+  }
+}
 
 export default function LogActivity({ petId, household, user, activity, onActivityLogged, onActivityDeleted, onClose, onFavouritesUpdated, step, setStep }) {
     // ...existing code...
@@ -67,6 +80,19 @@ export default function LogActivity({ petId, household, user, activity, onActivi
   const [error, setError] = useState('');
   const [addToFavourites, setAddToFavourites] = useState(false);
 
+  // Food inventory state (for feeding activity only)
+  const [foodInventory, setFoodInventory] = useState([]);
+  // Per-pet food/portion selection: { [petId]: { foodId, portion } }
+  const [feedingSelections, setFeedingSelections] = useState({});
+  const [feedingError, setFeedingError] = useState('');
+
+  // Load food inventory when feeding activity is selected
+  useEffect(() => {
+    if (selectedType === 'feeding' && household?.id) {
+      fetchFoodInventory(household.id).then(setFoodInventory);
+    }
+  }, [selectedType, household?.id]);
+
   const handleScheduleSubmit = () => {
     console.log('[LogActivity] handleScheduleSubmit', { timing, step: currentStep });
     if (timing === 'upcoming') {
@@ -94,7 +120,6 @@ export default function LogActivity({ petId, household, user, activity, onActivi
       console.log('[LogActivity] Set step to happened');
     } else {
       setStepLocal('schedule');
-      console.log('[LogActivity] Set step to schedule');
       setTimeout(() => forceRerender(n => n + 1), 0);
     }
   };
@@ -111,27 +136,45 @@ export default function LogActivity({ petId, household, user, activity, onActivi
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setFeedingError('');
     setLoading(true);
-    // Debug: log timestamp values
-    console.log('[LogActivity] Raw timestamp input:', timestamp);
     let groupId = null;
-    // If multi-pet, generate a groupId
     if (Array.isArray(selectedPetIds) && selectedPetIds.length > 1) {
       groupId = generateGroupId();
     }
     try {
-      const iso = new Date(timestamp).toISOString();
-      console.log('[LogActivity] Converted to ISO:', iso);
-    } catch (err) {
-      console.warn('[LogActivity] Error converting timestamp to ISO:', err);
-    }
+      if (selectedType === 'feeding') {
+        for (const pid of selectedPetIds) {
+          const sel = feedingSelections[pid];
+          if (!sel || !sel.foodId || !sel.portion || Number(sel.portion) <= 0) {
+            setFeedingError('Please select food and portion for each pet.');
+            setLoading(false);
+            return;
+          }
+        }
+        for (const pid of selectedPetIds) {
+          const sel = feedingSelections[pid];
+          try {
+            const res = await apiFetch(`/api/households/${household.id}/feed`, {
+              method: 'POST',
+              body: JSON.stringify({ petId: pid, foodId: sel.foodId, portion: sel.portion })
+            });
+            if (!res || res.error) {
+              setFeedingError(res?.error || 'Failed to deduct food stock.');
+              setLoading(false);
+              return;
+            }
+          } catch (err) {
+            setFeedingError('Failed to deduct food stock.');
+            setLoading(false);
+            return;
+          }
+        }
+      }
 
-    try {
-      // derive client-side type info so we can label notifications immediately
       const typeDef = ACTIVITY_TYPES.find(t => t.id === selectedType) || {};
 
       if (isEditing) {
-        // PATCH the original activity, POST new activities for other selected pets
         let photoUrlForThis = null;
         try {
           if (photoFile) {
@@ -161,8 +204,8 @@ export default function LogActivity({ petId, household, user, activity, onActivi
         };
         if (selectedType) patchPayload.activityTypeId = selectedType;
         if (photoUrlForThis) patchPayload.photoUrl = photoUrlForThis;
+        if (selectedType === 'feeding') patchPayload.data = { ...(patchPayload.data || {}), feedingSelections };
 
-        // PATCH the original activity
         const data = await apiFetch(`/api/activities/${activity.id}`, {
           method: 'PATCH',
           body: JSON.stringify(patchPayload)
@@ -180,19 +223,18 @@ export default function LogActivity({ petId, household, user, activity, onActivi
           localStorage.setItem('petSitter:latestActivity', JSON.stringify(payload));
         } catch (e) {}
 
-        // POST new activities for other selected pets
         const originalPetId = activity.petId || activity.pet?.id || petId;
         const otherPetIds = Array.from(new Set(selectedPetIds.map(id => parseInt(id)))).filter(pid => pid !== originalPetId);
         if (otherPetIds.length > 0) {
           const promises = otherPetIds.map(async (pid) => {
             let photoUrlForThisOther = photoUrlForThis;
-            // Optionally upload photo for each pet (skip for now, reuse)
             const payload = {
               activityTypeId: selectedType,
               timestamp: new Date(timestamp).toISOString(),
               notes: notes || null,
               data: { petNames: pets.filter(p => selectedPetIds.includes(p.id)).map(p => p.name) }
             };
+            if (selectedType === 'feeding') payload.data.feedingSelections = feedingSelections;
             if (photoUrlForThisOther) payload.photoUrl = photoUrlForThisOther;
             return apiFetch(`/api/pets/${pid}/activities`, {
               method: 'POST',
@@ -213,8 +255,6 @@ export default function LogActivity({ petId, household, user, activity, onActivi
           });
         }
       } else {
-        // Create new activity(s) for selected pet(s)
-        // Deduplicate pet IDs to avoid double-logging
         const petIdsToSend = (selectedPetIds && selectedPetIds.length > 0)
           ? Array.from(new Set(selectedPetIds.map(id => parseInt(id))))
           : (petId ? [parseInt(petId)] : []);
@@ -228,7 +268,6 @@ export default function LogActivity({ petId, household, user, activity, onActivi
             try {
               const formData = new FormData();
               formData.append('photo', photoFile);
-              // Use direct fetch so browser sets multipart boundaries correctly
               const token = localStorage.getItem('token');
               const uploadRes = await fetch(apiUrl(`/api/pets/${pid}/activities/photo`), {
                 method: 'POST',
@@ -242,13 +281,11 @@ export default function LogActivity({ petId, household, user, activity, onActivi
                 console.warn('[LogActivity] Photo upload failed for pet', pid, uploadRes.status, txt);
               } else {
                 const uploadJson = await uploadRes.json().catch(() => null);
-                // Confirm the response came from the activity upload endpoint
                 const finalUrl = (uploadRes && uploadRes.url) || '';
                 const cameFromActivityEndpoint = finalUrl.includes('/activities/photo');
                 if (!cameFromActivityEndpoint) {
                   console.warn('[LogActivity] Photo upload returned from unexpected endpoint', finalUrl, '— ignoring as activity photo to avoid updating pet avatar. Response:', uploadJson);
                 } else {
-                  // Accept either { photoPath } (activity upload) or { photoUrl }
                   photoUrlForThis = (uploadJson && (uploadJson.photoPath || uploadJson.photoUrl)) || null;
                   console.log('[LogActivity] Photo upload response for pet', pid, uploadRes.status, uploadJson, ' -> using', photoUrlForThis);
                 }
@@ -268,10 +305,9 @@ export default function LogActivity({ petId, household, user, activity, onActivi
               ...(groupId ? { groupId } : {})
             }
           };
+          if (selectedType === 'feeding') payload.data.feedingSelections = feedingSelections;
           if (photoUrlForThis) payload.photoUrl = photoUrlForThis;
-          // Add reminder if enabled
           if (reminderEnabled && reminderMethod === 'email') {
-            // Calculate remindAt: timestamp minus reminderTime (in minutes)
             const activityTime = new Date(timestamp);
             const remindAt = new Date(activityTime.getTime() - parseInt(reminderTime, 10) * 60000).toISOString();
             payload.reminder = {
@@ -289,11 +325,9 @@ export default function LogActivity({ petId, household, user, activity, onActivi
 
         const results = await Promise.all(promises);
         results.forEach((res) => {
-          // augment with client-side action label so notifications display correctly immediately
           const clientLabel = typeDef.label || selectedType;
           const augmented = { ...res, _clientActionLabel: clientLabel };
           try { if (!augmented.user && user) augmented.user = user; } catch (e) {}
-          // Only dispatch event, do not call onActivityLogged directly (prevents duplicate)
           try { window.dispatchEvent(new CustomEvent('petSitter:newActivity', { detail: { activity: augmented } })); } catch (e) {}
           try {
             const payload = { householdId: household?.id, activity: augmented, ts: Date.now() };
@@ -301,11 +335,9 @@ export default function LogActivity({ petId, household, user, activity, onActivi
           } catch (e) {}
         });
 
-        // Optionally save as a server-backed Favourite
         if (addToFavourites && selectedType) {
           if (household?.id) {
             const typeDef = ACTIVITY_TYPES.find(t => t.id === selectedType) || {};
-            // Get all pet names for the selectedPetIds
             let allPetNames = [];
             if (Array.isArray(pets) && pets.length > 0 && Array.isArray(selectedPetIds)) {
               allPetNames = pets.filter(p => selectedPetIds.includes(p.id)).map(p => p.name);
@@ -322,6 +354,7 @@ export default function LogActivity({ petId, household, user, activity, onActivi
                 ...(groupId ? { groupId } : {})
               }
             };
+            if (selectedType === 'feeding') snapshot.data.feedingSelections = feedingSelections;
             try {
               await apiFetch(`/api/households/${household.id}/favourites`, {
                 method: 'POST',
@@ -912,6 +945,80 @@ export default function LogActivity({ petId, household, user, activity, onActivi
             <p className="text-xl font-semibold text-gray-900 mt-4">{selectedActivity?.label}</p>
           </div>
 
+          {/* Feeding activity: food/portion selection UI */}
+          {selectedType === 'feeding' && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-2">Select food and portion for each pet</h3>
+              {/* If no food inventory, show warning and button to open inventory manager */}
+              {foodInventory.length === 0 ? (
+                <div className="p-4 mb-4 bg-yellow-100 border-l-4 border-yellow-500 rounded">
+                  <div className="font-semibold text-yellow-800 mb-2">No food inventory found for this household.</div>
+                  <div className="text-yellow-700 text-sm mb-2">
+                    You must add food stock before logging a feeding activity.<br/>
+                    <span className="font-medium">Food stock is managed at the household level, and can be linked to one or more pets when logging a feeding activity.</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="mt-2 px-4 py-2 bg-accent text-white rounded font-semibold hover:bg-accent/80 transition"
+                    onClick={() => {
+                      // Prefer household from prop, fallback to localStorage
+                      const householdId = household?.id || (JSON.parse(localStorage.getItem('household') || '{}').id);
+                      if (householdId) {
+                        window.location.href = `/household/${householdId}/food-inventory`;
+                      } else {
+                        alert('No household found. Please select or create a household first.');
+                      }
+                    }}
+                  >
+                    Add Food Stock
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {feedingError && <div className="text-red-600 text-sm mb-2">{feedingError}</div>}
+                  {selectedPetIds.map(pid => {
+                    const pet = pets.find(p => p.id === pid);
+                    const sel = feedingSelections[pid] || {};
+                    return (
+                      <div key={pid} className="mb-4 p-3 border rounded-lg bg-gray-50">
+                        <div className="font-medium mb-1">{pet?.name || `Pet ${pid}`}</div>
+                        <div className="flex gap-2 items-center">
+                          <select
+                            className="px-2 py-1 rounded border"
+                            value={sel.foodId || ''}
+                            onChange={e => {
+                              setFeedingSelections(fs => ({ ...fs, [pid]: { ...fs[pid], foodId: e.target.value } }));
+                            }}
+                          >
+                            <option value="">Select food</option>
+                            {foodInventory.map(f => (
+                              <option key={f.id} value={f.id}>{f.name} ({f.stock} {f.unit})</option>
+                            ))}
+                          </select>
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            className="w-24 px-2 py-1 rounded border"
+                            placeholder="Portion"
+                            value={sel.portion || ''}
+                            onChange={e => {
+                              setFeedingSelections(fs => ({ ...fs, [pid]: { ...fs[pid], portion: e.target.value } }));
+                            }}
+                          />
+                          <span className="text-gray-500 text-sm">{(() => {
+                            const food = foodInventory.find(f => f.id == sel.foodId);
+                            return food ? food.unit : '';
+                          })()}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+            </div>
+          )}
+
           <div className="mb-6 flex flex-col md:flex-row items-start gap-6">
             <div className="flex-1">
               <label className="block text-lg font-medium text-gray-900 mb-3">
@@ -927,7 +1034,6 @@ export default function LogActivity({ petId, household, user, activity, onActivi
                 {timing === 'upcoming' ? `📅 Scheduled for ${new Date(timestamp).toLocaleString()}` : '✓ Logged as complete'}
               </p>
             </div>
-
             {/* photo UI moved to its own slide (step === 'photo') */}
           </div>
 

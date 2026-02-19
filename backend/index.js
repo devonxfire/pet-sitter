@@ -1034,11 +1034,17 @@ app.post('/api/pets/:petId/activities/photo', authenticateToken, upload.single('
 app.get('/api/households/:householdId/food-inventory', authenticateToken, async (req, res) => {
   try {
     const { householdId } = req.params;
+    const userId = req.user.userId || req.user.id;
+    // Check if user is a member of the household
+    const member = await prisma.householdMember.findFirst({
+      where: { householdId: parseInt(householdId), userId: parseInt(userId) }
+    });
     const inventory = await prisma.foodInventory.findMany({
       where: { householdId: parseInt(householdId) },
       include: { petLinks: true }
     });
-    res.json(inventory);
+    // Attach member info (or null) so frontend can determine permissions
+    res.json({ inventory, member });
   } catch (error) {
     console.error('Get food inventory error:', error);
     res.status(500).json({ error: 'Internal server error' });
